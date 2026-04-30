@@ -23,7 +23,7 @@ export const routes: RouteRecordRaw[] = [
         path: 'create',
         name: 'create',
         component: CreateView,
-        meta: { title: '创作新故事' },
+        meta: { title: '创作' },
       },
       {
         path: 'my',

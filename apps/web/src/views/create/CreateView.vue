@@ -1,75 +1,58 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { Sparkles } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { ref, h, onMounted, onUnmounted, inject } from 'vue'
+import { BookOpen, MessageCircle } from 'lucide-vue-next'
+import { createNovel } from '@/db/novels'
+import type { Novel } from '@/db/types'
+import type { Component } from 'vue'
+import AgentChat from '@/views/story/components/AgentChat.vue'
+import ReaderTab from './components/ReaderTab.vue'
 
-const router = useRouter()
-const idea = ref('')
-const selectedGenre = ref('')
+const setTopbarExtra = inject<(c: Component | null) => void>('setTopbarExtra')
 
-const genres = [
-  { emoji: '🏙️', label: '都市' },
-  { emoji: '🔮', label: '奇幻' },
-  { emoji: '🚀', label: '科幻' },
-  { emoji: '🕵️', label: '悬疑' },
-  { emoji: '❤️', label: '爱情' },
-  { emoji: '👻', label: '恐怖' },
-  { emoji: '⚔️', label: '武侠' },
-  { emoji: '📜', label: '历史' },
-]
+const mode = ref<'agent' | 'reader'>('agent')
+const novelId = ref('')
 
-function startStory() {
-  if (!idea.value.trim()) return
-  router.push('/story/new')
-}
-
-function selectGenre(genre: string) {
-  selectedGenre.value = genre
-  if (!idea.value.trim()) {
-    idea.value = `写一个${genre}题材的故事`
+onMounted(async () => {
+  const id = crypto.randomUUID()
+  const novel: Novel = {
+    id,
+    title: '新故事',
+    synopsis: '',
+    genre: '',
+    targetWordCount: 0,
+    currentWordCount: 0,
+    status: 'drafting' as const,
+    styleSettings: { narrativePerspective: '', tense: '', languageStyle: '' },
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    version: 1,
   }
-}
+  await createNovel(novel)
+  novelId.value = id
+
+  setTopbarExtra?.({
+    setup() {
+      return () => h('button', {
+        class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 cursor-pointer',
+        onClick: () => { mode.value = mode.value === 'agent' ? 'reader' : 'agent' },
+        title: mode.value === 'agent' ? '阅读模式' : '创作模式',
+      }, [
+        h(mode.value === 'agent' ? BookOpen : MessageCircle, { class: 'size-5' }),
+      ])
+    },
+  })
+})
+
+onUnmounted(() => {
+  setTopbarExtra?.(null)
+})
 </script>
 
 <template>
-  <div class="p-4">
-    <div class="mb-6">
-      <label class="block text-sm font-medium mb-2">你想写一个什么样的故事？</label>
-      <Textarea
-        v-model="idea"
-        placeholder="用自然语言描述你的想法…
-
-比如：
-  · 一个关于时间循环的科幻爱情故事
-  · 一个都市悬疑，主角能听见物品的记忆
-  · 当代武侠，一个外卖员意外获得古老剑谱"
-        :rows="6"
-        class="resize-none"
-      />
-      <Button class="mt-3 w-full" :disabled="!idea.trim()" @click="startStory">
-        <Sparkles class="size-4 mr-1.5" />
-        开始创作
-      </Button>
-    </div>
-
-    <div>
-      <p class="text-sm text-muted-foreground mb-3">或者选择一个类型快速开始：</p>
-      <div class="grid grid-cols-4 gap-2">
-        <button
-          v-for="g in genres"
-          :key="g.label"
-          class="flex flex-col items-center gap-1 rounded-lg border px-3 py-3 text-sm transition-colors"
-          :class="
-            selectedGenre === g.label ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
-          "
-          @click="selectGenre(g.label)"
-        >
-          <span class="text-xl">{{ g.emoji }}</span>
-          <span class="text-xs text-muted-foreground">{{ g.label }}</span>
-        </button>
-      </div>
-    </div>
+  <div class="flex-1 flex flex-col min-h-0">
+    <KeepAlive>
+      <AgentChat v-if="mode === 'agent'" :key="novelId" :novel-id="novelId" />
+      <ReaderTab v-else :key="novelId" :novel-id="novelId" />
+    </KeepAlive>
   </div>
 </template>
