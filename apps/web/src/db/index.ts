@@ -41,6 +41,7 @@ export interface StoryClawDBSchema extends DBSchema {
   operationHistory: {
     key: string
     value: import('./types').OperationRecord
+    indexes: { novelId: string }
   }
 }
 
@@ -78,7 +79,10 @@ export async function getDB(): Promise<IDBPDatabase<StoryClawDBSchema>> {
         db.createObjectStore('readingProgress', { keyPath: 'novelId' })
       }
       if (!db.objectStoreNames.contains('operationHistory')) {
-        db.createObjectStore('operationHistory', { keyPath: 'id' })
+        db.createObjectStore('operationHistory', { keyPath: 'id' }).createIndex(
+          'novelId',
+          'novelId',
+        )
       }
     },
   })

@@ -68,7 +68,18 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         const existing = await getCharacterById(context.novelId, args.characterId as string)
         if (!existing) return { error: '角色不存在' }
 
-        Object.assign(existing, args)
+        const allowed = [
+          'name',
+          'role',
+          'appearance',
+          'personality',
+          'background',
+          'motivation',
+          'arc',
+        ] as const
+        for (const key of allowed) {
+          if (key in args) (existing as unknown as Record<string, unknown>)[key] = args[key]
+        }
         existing.updatedAt = Date.now()
         await saveCharacter(existing)
         return { success: true, data: existing }

@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, MessageCircle, BookOpen } from 'lucide-vue-next'
 import ReaderView from '@/components/reader/ReaderView.vue'
 import ReaderControls from '@/components/reader/ReaderControls.vue'
 import AgentChat from './components/AgentChat.vue'
 import type { ReaderSettings } from '@/components/reader/types'
 
+const route = useRoute()
 const router = useRouter()
-const storyId = 'new'
+const storyId = computed(() => route.params.id as string)
 
 const mode = ref<'reader' | 'agent'>('reader')
 const showControls = ref(false)

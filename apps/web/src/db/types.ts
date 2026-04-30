@@ -226,5 +226,9 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   backendUrl: '',
   useBackendProxy: false,
-  updatedAt: Date.now(),
+  updatedAt: 0,
+}
+
+export function createDefaultConfig(): AppConfig {
+  return { ...DEFAULT_CONFIG, updatedAt: Date.now() }
 }

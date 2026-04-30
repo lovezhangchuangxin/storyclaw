@@ -8,10 +8,16 @@ import type { Novel } from '@/db/types'
 const router = useRouter()
 const novels = ref<Novel[]>([])
 const loading = ref(true)
+const error = ref(false)
 
 onMounted(async () => {
-  novels.value = await getAllNovels()
-  loading.value = false
+  try {
+    novels.value = await getAllNovels()
+  } catch {
+    error.value = true
+  } finally {
+    loading.value = false
+  }
 })
 
 function openStory(id: string) {
@@ -42,6 +48,15 @@ function openStory(id: string) {
         <Plus class="size-4" />
         开始你的第一个故事
       </button>
+    </div>
+
+    <!-- Error -->
+    <div
+      v-else-if="error"
+      class="flex flex-col items-center justify-center py-20 text-muted-foreground"
+    >
+      <p class="text-sm mb-2">加载失败</p>
+      <button class="text-sm text-primary underline" @click="router.go(0)">重试</button>
     </div>
 
     <!-- Grid -->

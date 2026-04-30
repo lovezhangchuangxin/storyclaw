@@ -38,12 +38,15 @@ function onScroll() {
 }
 
 function onPointerDown(e: PointerEvent) {
-  const target = e.target as HTMLElement
-  const rect = target.getBoundingClientRect()
-  const yFromBottom = rect.bottom - e.clientY
+  const yFromBottom = window.innerHeight - e.clientY
   if (yFromBottom < 60) {
     emit('showControls')
   }
+}
+
+function onScrollTop() {
+  if (!container.value) return
+  showTopBar.value = container.value.scrollTop > 100
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -75,9 +78,14 @@ defineExpose({ scrollToPos })
 <template>
   <div
     ref="container"
-    class="reader h-full overflow-y-auto select-none"
+    class="reader h-full overflow-y-auto"
     :style="readerStyle"
-    @scroll="onScroll"
+    @scroll="
+      () => {
+        onScroll()
+        onScrollTop()
+      }
+    "
     @pointerdown="onPointerDown"
   >
     <!-- Top bar: chapter info -->

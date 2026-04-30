@@ -30,10 +30,10 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
   }
 
   const modelConfig = config.models.find((m) => m.id === modelId) ?? config.models[0]
-  const client = createLLMClient({ config: modelConfig, onToken })
+  const client = createLLMClient({ config: modelConfig, onToken, signal })
   const toolContext: ToolContext = { novelId }
 
-  const messages: Message[] = [
+  const allMessages: Message[] = [
     {
       id: crypto.randomUUID(),
       role: 'user',
@@ -47,7 +47,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
   try {
     while (iterationCount < MAX_TOOL_ITERATIONS) {
       if (signal?.aborted) {
-        messages.push({
+        allMessages.push({
           id: crypto.randomUUID(),
           role: 'system',
           content: '[用户取消了生成]',
@@ -59,42 +59,26 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
       iterationCount++
 
       const ctx = await buildContext(novelId, userMessage)
-      const response = await client.chat(
-        [
-          ...(ctx.messages as any),
-          ...messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-            ...(m.toolCalls
-              ? {
-                  tool_calls: m.toolCalls.map((tc) => ({
-                    id: tc.id,
-                    function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
-                    type: 'function' as const,
-                  })),
-                }
-              : {}),
-            ...(m.toolCallId ? { tool_call_id: m.toolCallId } : {}),
-          })),
-        ],
-        (ctx as any).tools ?? [],
-      )
 
-      if (response.usage) {
-        messages.push({
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: response.content,
-          toolCalls: response.toolCalls?.map((tc) => ({
-            id: tc.id,
-            name: tc.function.name,
-            arguments: JSON.parse(tc.function.arguments),
-          })),
-          timestamp: Date.now(),
-          promptTokens: response.usage.prompt_tokens,
-          completionTokens: response.usage.completion_tokens,
-        })
-      }
+      const response = await client.chat(ctx.messages, ctx.tools)
+
+      const parsedToolCalls = response.toolCalls?.map((tc) => {
+        let args: Record<string, unknown> = {}
+        try {
+          args = JSON.parse(tc.function.arguments)
+        } catch {
+          args = { _parse_error: tc.function.arguments }
+        }
+        return { id: tc.id, name: tc.function.name, arguments: args }
+      })
+
+      allMessages.push({
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: response.content,
+        toolCalls: parsedToolCalls,
+        timestamp: Date.now(),
+      })
 
       if (response.toolCalls?.length) {
         for (const tc of response.toolCalls) {
@@ -106,7 +90,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
 
           onToolResult?.(tc.function.name, result)
 
-          messages.push({
+          allMessages.push({
             id: crypto.randomUUID(),
             role: 'tool',
             content: result,
@@ -121,24 +105,33 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
     }
 
     if (iterationCount >= MAX_TOOL_ITERATIONS) {
-      messages.push({
+      allMessages.push({
         id: crypto.randomUUID(),
         role: 'system',
         content: '[已达到最大工具调用次数，已自动停止]',
         timestamp: Date.now(),
       })
     }
-
-    await saveConversation({
-      novelId,
-      messages: [...messages],
-      updatedAt: Date.now(),
-    })
-
-    return messages
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     onError?.(msg)
-    return messages
+    allMessages.push({
+      id: crypto.randomUUID(),
+      role: 'system',
+      content: `[发生错误: ${msg}]`,
+      timestamp: Date.now(),
+    })
   }
+
+  try {
+    await saveConversation({
+      novelId,
+      messages: [...allMessages],
+      updatedAt: Date.now(),
+    })
+  } catch {
+    // silently fail — conversation save is best-effort
+  }
+
+  return allMessages
 }

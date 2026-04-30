@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 const router = useRouter()
 const idea = ref('')
+const selectedGenre = ref('')
 
 const genres = [
   { emoji: '🏙️', label: '都市' },
@@ -21,8 +22,12 @@ const genres = [
 
 function startStory() {
   if (!idea.value.trim()) return
-  // TODO: create novel in IndexedDB and navigate
   router.push('/story/new')
+}
+
+function selectGenre(genre: string) {
+  selectedGenre.value = genre
+  idea.value = `写一个${genre}题材的故事`
 }
 </script>
 
@@ -55,7 +60,11 @@ function startStory() {
         <button
           v-for="g in genres"
           :key="g.label"
-          class="flex flex-col items-center gap-1 rounded-lg border px-3 py-3 text-sm hover:border-primary/50 transition-colors"
+          class="flex flex-col items-center gap-1 rounded-lg border px-3 py-3 text-sm transition-colors"
+          :class="
+            selectedGenre === g.label ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+          "
+          @click="selectGenre(g.label)"
         >
           <span class="text-xl">{{ g.emoji }}</span>
           <span class="text-xs text-muted-foreground">{{ g.label }}</span>

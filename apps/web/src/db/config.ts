@@ -1,11 +1,11 @@
 import { getDB } from './index'
 import type { AppConfig } from './types'
-import { DEFAULT_CONFIG } from './types'
+import { createDefaultConfig } from './types'
 
 export async function getConfig(): Promise<AppConfig> {
   const db = await getDB()
   const config = await db.get('config', 'app-config')
-  return config ?? DEFAULT_CONFIG
+  return config ?? createDefaultConfig()
 }
 
 export async function saveConfig(config: AppConfig): Promise<void> {

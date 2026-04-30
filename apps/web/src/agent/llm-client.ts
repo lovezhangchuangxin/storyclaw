@@ -4,10 +4,11 @@ import type { ModelConfig } from '@/db/types'
 export interface LLMClientOptions {
   config: ModelConfig
   onToken?: (token: string) => void
+  signal?: AbortSignal
 }
 
 export function createLLMClient(options: LLMClientOptions) {
-  const { config, onToken } = options
+  const { config, onToken, signal } = options
 
   const client = new OpenAI({
     baseURL: config.apiBase,
@@ -20,20 +21,26 @@ export function createLLMClient(options: LLMClientOptions) {
       messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
       tools: OpenAI.Chat.Completions.ChatCompletionTool[],
     ) {
-      const stream = await client.chat.completions.create({
-        model: config.model,
-        messages,
-        tools,
-        max_tokens: config.maxTokens,
-        temperature: config.temperature,
-        top_p: config.topP,
-        stream: true,
-      })
+      const stream = await client.chat.completions.create(
+        {
+          model: config.model,
+          messages,
+          tools,
+          max_tokens: config.maxTokens,
+          temperature: config.temperature,
+          top_p: config.topP,
+          stream: true,
+          stream_options: { include_usage: true },
+        },
+        { signal },
+      )
 
       let content = ''
       const toolCalls: Map<number, { id: string; name: string; arguments: string }> = new Map()
 
       for await (const chunk of stream) {
+        if (signal?.aborted) break
+
         const delta = chunk.choices[0]?.delta
 
         if (delta?.content) {
@@ -45,41 +52,26 @@ export function createLLMClient(options: LLMClientOptions) {
           for (const tc of delta.tool_calls) {
             const idx = tc.index
             if (!toolCalls.has(idx)) {
-              toolCalls.set(idx, { id: tc.id ?? '', name: tc.function?.name ?? '', arguments: '' })
+              if (!tc.id) continue
+              toolCalls.set(idx, { id: tc.id, name: tc.function?.name ?? '', arguments: '' })
             }
             if (tc.function?.arguments) {
               toolCalls.get(idx)!.arguments += tc.function.arguments
             }
           }
         }
-
-        if (chunk.usage) {
-          return {
-            content,
-            toolCalls: [...toolCalls.values()].map((tc) => ({
-              id: tc.id,
-              function: {
-                name: tc.name,
-                arguments: tc.arguments,
-              },
-            })),
-            usage: chunk.usage,
-            finishReason: chunk.choices[0]?.finish_reason,
-          }
-        }
       }
+
+      const mappedToolCalls = [...toolCalls.values()].map((tc) => ({
+        id: tc.id,
+        function: { name: tc.name, arguments: tc.arguments },
+      }))
 
       return {
         content,
-        toolCalls: [...toolCalls.values()].map((tc) => ({
-          id: tc.id,
-          function: {
-            name: tc.name,
-            arguments: tc.arguments,
-          },
-        })),
+        toolCalls: mappedToolCalls,
         usage: undefined,
-        finishReason: 'stop',
+        finishReason: 'stop' as const,
       }
     },
   }
