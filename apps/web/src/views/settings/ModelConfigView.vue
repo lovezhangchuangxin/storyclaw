@@ -122,7 +122,7 @@ loadConfig()
           :key="m.id"
           class="flex items-center gap-3 rounded-lg border px-3.5 py-3 transition-all duration-200"
           :class="m.id === config.defaultModelId
-            ? 'border-primary/40 bg-primary/[0.07] shadow-sm'
+            ? 'border-primary/30 bg-card shadow-md'
             : 'hover:shadow-md hover:border-border'"
         >
           <!-- Provider icon -->
