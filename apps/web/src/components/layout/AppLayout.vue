@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { Menu } from 'lucide-vue-next'
+import { ref, watch, computed, provide } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Menu, ArrowLeft } from 'lucide-vue-next'
+import type { Component } from 'vue'
 import AppSidebar from './AppSidebar.vue'
 
 const route = useRoute()
+const router = useRouter()
 const collapsed = ref(loadCollapsed())
 const mobileOpen = ref(false)
 
 const title = (route.meta.title as string) ?? ''
+const showBack = computed(() => !!route.meta.back)
+
+const topbarExtra = ref<Component | null>(null)
+provide('setTopbarExtra', (c: Component | null) => { topbarExtra.value = c })
 
 function loadCollapsed(): boolean {
   try {
@@ -66,13 +72,25 @@ function closeMobile() {
       <!-- Top bar -->
       <header class="flex items-center h-12 shrink-0 border-b px-3 gap-3 bg-background">
         <button
-          aria-label="打开导航菜单"
-          class="size-8 flex items-center justify-center rounded-md hover:bg-muted md:hidden"
-          @click="mobileOpen = true"
+          v-if="showBack"
+          aria-label="返回"
+          class="size-8 flex items-center justify-center rounded-md hover:bg-muted"
+          @click="router.back()"
         >
-          <Menu class="size-5" aria-hidden="true" />
+          <ArrowLeft class="size-5" aria-hidden="true" />
         </button>
+        <template v-else>
+          <button
+            aria-label="打开导航菜单"
+            class="size-8 flex items-center justify-center rounded-md hover:bg-muted md:hidden"
+            @click="mobileOpen = true"
+          >
+            <Menu class="size-5" aria-hidden="true" />
+          </button>
+        </template>
         <h1 class="text-sm font-semibold truncate">{{ title }}</h1>
+        <div class="flex-1" />
+        <component :is="topbarExtra" v-if="topbarExtra" />
       </header>
 
       <!-- Page content -->

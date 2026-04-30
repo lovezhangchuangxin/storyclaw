@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next'
+import { Plus, Trash2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,8 +16,6 @@ import { Separator } from '@/components/ui/separator'
 import { saveConfig, getConfig } from '@/db/config'
 import type { AppConfig, ModelConfig } from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
-
-const router = useRouter()
 
 const config = ref<AppConfig>({ ...DEFAULT_CONFIG })
 const editingModel = ref<ModelConfig>({
@@ -53,12 +50,6 @@ loadConfig()
 
 <template>
   <div class="p-4">
-    <header class="flex items-center gap-3 mb-6">
-      <button class="size-8 flex items-center justify-center" @click="router.back()">
-        <ArrowLeft class="size-5" />
-      </button>
-      <h1 class="text-xl font-bold">模型配置</h1>
-    </header>
 
     <!-- Saved Models -->
     <div v-if="config.models.length > 0" class="mb-6">

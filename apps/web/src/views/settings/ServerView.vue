@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ArrowLeft, Server } from 'lucide-vue-next'
+import { Server } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,7 +8,6 @@ import { saveConfig, getConfig } from '@/db/config'
 import type { AppConfig } from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
 
-const router = useRouter()
 const config = ref<AppConfig>({ ...DEFAULT_CONFIG })
 const backendUrl = ref('')
 const email = ref('')
@@ -39,12 +37,6 @@ loadConfig()
 
 <template>
   <div class="p-4">
-    <header class="flex items-center gap-3 mb-6">
-      <button class="size-8 flex items-center justify-center" @click="router.back()">
-        <ArrowLeft class="size-5" />
-      </button>
-      <h1 class="text-xl font-bold">后端连接</h1>
-    </header>
 
     <div class="rounded-lg border p-4 mb-4">
       <div class="flex items-center gap-3 mb-4">

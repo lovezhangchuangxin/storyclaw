@@ -1,19 +1,38 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, MessageCircle, BookOpen } from 'lucide-vue-next'
+import { ref, computed, inject, h, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { MessageCircle, BookOpen } from 'lucide-vue-next'
 import ReaderView from '@/components/reader/ReaderView.vue'
 import ReaderControls from '@/components/reader/ReaderControls.vue'
 import AgentChat from './components/AgentChat.vue'
 import type { ReaderSettings } from '@/components/reader/types'
+import type { Component } from 'vue'
 
 const route = useRoute()
-const router = useRouter()
 const storyId = computed(() => route.params.id as string)
 
 const mode = ref<'reader' | 'agent'>('reader')
 const showControls = ref(false)
 const showChapters = ref(false)
+
+const setTopbarExtra = inject<(c: Component | null) => void>('setTopbarExtra')
+
+onMounted(() => {
+  setTopbarExtra?.({
+    setup() {
+      return () => h('button', {
+        class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0',
+        onClick: () => { mode.value = mode.value === 'reader' ? 'agent' : 'reader' },
+      }, [
+        h(mode.value === 'reader' ? BookOpen : MessageCircle, { class: 'size-5' }),
+      ])
+    },
+  })
+})
+
+onUnmounted(() => {
+  setTopbarExtra?.(null)
+})
 
 const settings = ref<ReaderSettings>({
   fontFamily: '"Noto Sans SC", Inter, system-ui, sans-serif',
@@ -46,21 +65,6 @@ function updateSettings(s: ReaderSettings) {
 
 <template>
   <div class="flex flex-col h-dvh">
-    <!-- Top bar -->
-    <header class="flex items-center justify-between shrink-0 px-3 py-2 border-b bg-background">
-      <button class="size-8 flex items-center justify-center" @click="router.back()">
-        <ArrowLeft class="size-5" />
-      </button>
-      <span class="text-sm font-medium truncate">故事标题</span>
-      <button
-        class="size-8 flex items-center justify-center"
-        @click="mode = mode === 'reader' ? 'agent' : 'reader'"
-      >
-        <BookOpen v-if="mode === 'reader'" class="size-5" />
-        <MessageCircle v-else class="size-5" />
-      </button>
-    </header>
-
     <!-- Reader mode -->
     <ReaderView
       v-if="mode === 'reader'"

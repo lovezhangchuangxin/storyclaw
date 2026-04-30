@@ -41,7 +41,7 @@ storyclaw/
 │       │   ├── my/          # 我的/设置页
 │       │   ├── story/       # 故事详情（阅读 + Agent 对话）
 │       │   └── settings/    # 模型配置等
-│       ├── components/      # 跨页面共享组件（reader/, ui/）
+│       ├── components/      # 跨页面共享组件（layout/, reader/, ui/）
 │       ├── agent/           # Agent 引擎（Web Worker 中运行）
 │       │   ├── loop.ts      # Agent 主循环
 │       │   ├── context.ts   # 上下文管理与 compaction
@@ -87,8 +87,18 @@ storyclaw/
 - `@/` 路径别名指向 `src/`
 - views 目录：一个页面一个文件夹，内部 components/ 放页面专属业务组件
 - shadcn-vue 组件放在 `components/ui/`
+- 通用布局组件放在 `components/layout/`
 - 通过 `pnpm add` / `pnpm add -D` 安装依赖，不手动编辑 package.json
 - API Key 明文存储于 IndexedDB
+
+### 布局系统
+
+- `AppLayout` + `AppSidebar` 提供统一的侧边栏 + 顶部导航栏布局
+- 桌面端：左侧可折叠侧边栏（展开 216px ↔ 收起 60px），展开/收起按钮位于侧边栏 header 右侧
+- 移动端：顶部 hamburger 按钮唤出浮层侧边栏，点击遮罩关闭，不影响内容布局
+- 侧边栏收起状态持久化到 localStorage (`storyclaw:sidebar-collapsed`)
+- 页面标题通过路由 `meta.title` 注入，由顶部导航栏渲染
+- 所有页面统一使用 AppLayout + AppSidebar 布局，故事详情页和设置页通过 `meta.back` 显示返回按钮
 
 ### 开发任务
 

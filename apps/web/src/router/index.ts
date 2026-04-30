@@ -30,21 +30,24 @@ export const routes: RouteRecordRaw[] = [
         component: MyView,
         meta: { title: '我的' },
       },
+      {
+        path: 'story/:id',
+        name: 'story',
+        component: StoryDetailView,
+        meta: { title: '阅读', back: true },
+      },
+      {
+        path: 'settings/model',
+        name: 'model-config',
+        component: ModelConfigView,
+        meta: { title: '模型配置', back: true },
+      },
+      {
+        path: 'settings/server',
+        name: 'server-config',
+        component: ServerView,
+        meta: { title: '后端连接', back: true },
+      },
     ],
-  },
-  {
-    path: '/story/:id',
-    name: 'story',
-    component: StoryDetailView,
-  },
-  {
-    path: '/settings/model',
-    name: 'model-config',
-    component: ModelConfigView,
-  },
-  {
-    path: '/settings/server',
-    name: 'server-config',
-    component: ServerView,
   },
 ]
