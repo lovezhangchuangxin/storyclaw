@@ -27,11 +27,18 @@ function openStory(id: string) {
 
 <template>
   <div class="p-4">
-    <h1 class="text-xl font-bold mb-4">书架</h1>
-
     <!-- Loading -->
     <div v-if="loading" class="grid grid-cols-2 gap-3">
       <div v-for="i in 4" :key="i" class="aspect-[3/4] rounded-lg bg-muted animate-pulse" />
+    </div>
+
+    <!-- Error -->
+    <div
+      v-else-if="error"
+      class="flex flex-col items-center justify-center py-20 text-muted-foreground"
+    >
+      <p class="text-sm mb-2">加载失败</p>
+      <button class="text-sm text-primary underline" @click="router.go(0)">重试</button>
     </div>
 
     <!-- Empty -->
@@ -48,15 +55,6 @@ function openStory(id: string) {
         <Plus class="size-4" />
         开始你的第一个故事
       </button>
-    </div>
-
-    <!-- Error -->
-    <div
-      v-else-if="error"
-      class="flex flex-col items-center justify-center py-20 text-muted-foreground"
-    >
-      <p class="text-sm mb-2">加载失败</p>
-      <button class="text-sm text-primary underline" @click="router.go(0)">重试</button>
     </div>
 
     <!-- Grid -->

@@ -28,8 +28,6 @@ const menuItems = [
 
 <template>
   <div class="p-4">
-    <h1 class="text-xl font-bold mb-4">我的</h1>
-
     <div class="rounded-lg border divide-y">
       <button
         v-for="item in menuItems"

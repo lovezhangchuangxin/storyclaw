@@ -27,14 +27,14 @@ function startStory() {
 
 function selectGenre(genre: string) {
   selectedGenre.value = genre
-  idea.value = `写一个${genre}题材的故事`
+  if (!idea.value.trim()) {
+    idea.value = `写一个${genre}题材的故事`
+  }
 }
 </script>
 
 <template>
   <div class="p-4">
-    <h1 class="text-xl font-bold mb-4">创作新故事</h1>
-
     <div class="mb-6">
       <label class="block text-sm font-medium mb-2">你想写一个什么样的故事？</label>
       <Textarea
