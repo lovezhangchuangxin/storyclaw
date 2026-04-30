@@ -19,6 +19,7 @@ async function loadConfig() {
   try {
     config.value = await getConfig()
     backendUrl.value = config.value.backendUrl ?? ''
+    connected.value = !!config.value.backendUrl
   } catch (e) {
     toast.error('加载配置失败', {
       description: e instanceof Error ? e.message : String(e),
@@ -27,9 +28,11 @@ async function loadConfig() {
 }
 
 async function connect() {
-  config.value.backendUrl = backendUrl.value
+  const snapshot = JSON.parse(JSON.stringify(config.value)) as AppConfig
+  snapshot.backendUrl = backendUrl.value
   try {
-    await saveConfig(config.value)
+    await saveConfig(snapshot)
+    config.value = snapshot
     connected.value = true
   } catch (e) {
     toast.error('保存失败', {
@@ -39,9 +42,11 @@ async function connect() {
 }
 
 async function disconnect() {
-  config.value.backendUrl = ''
+  const snapshot = JSON.parse(JSON.stringify(config.value)) as AppConfig
+  snapshot.backendUrl = ''
   try {
-    await saveConfig(config.value)
+    await saveConfig(snapshot)
+    config.value = snapshot
     connected.value = false
     backendUrl.value = ''
   } catch (e) {

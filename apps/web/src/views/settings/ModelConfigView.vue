@@ -34,17 +34,19 @@ function openEdit(model: ModelConfig) {
 }
 
 async function handleSave(model: ModelConfig) {
+  const snapshot = JSON.parse(JSON.stringify(config.value)) as AppConfig
   if (editingModel.value?.id) {
-    const idx = config.value.models.findIndex((m) => m.id === editingModel.value!.id)
-    if (idx !== -1) config.value.models[idx] = model
+    const idx = snapshot.models.findIndex((m) => m.id === editingModel.value!.id)
+    if (idx !== -1) snapshot.models[idx] = model
   } else {
-    config.value.models.push(model)
-    if (!config.value.defaultModelId) {
-      config.value.defaultModelId = model.id
+    snapshot.models.push(model)
+    if (!snapshot.defaultModelId) {
+      snapshot.defaultModelId = model.id
     }
   }
   try {
-    await saveConfig(config.value)
+    await saveConfig(snapshot)
+    config.value = snapshot
     toast.success(editingModel.value?.id ? '模型已更新' : '模型已添加')
   } catch (e) {
     toast.error('保存失败', {
@@ -54,17 +56,19 @@ async function handleSave(model: ModelConfig) {
 }
 
 async function removeModel(id: string) {
-  config.value.models = config.value.models.filter((m) => m.id !== id)
-  if (config.value.defaultModelId === id) {
-    config.value.defaultModelId = config.value.models[0]?.id ?? ''
+  const snapshot = JSON.parse(JSON.stringify(config.value)) as AppConfig
+  snapshot.models = snapshot.models.filter((m) => m.id !== id)
+  if (snapshot.defaultModelId === id) {
+    snapshot.defaultModelId = snapshot.models[0]?.id ?? ''
   }
-  for (const skill of Object.keys(config.value.skillModelMapping)) {
-    if (config.value.skillModelMapping[skill] === id) {
-      delete config.value.skillModelMapping[skill]
+  for (const skill of Object.keys(snapshot.skillModelMapping)) {
+    if (snapshot.skillModelMapping[skill] === id) {
+      delete snapshot.skillModelMapping[skill]
     }
   }
   try {
-    await saveConfig(config.value)
+    await saveConfig(snapshot)
+    config.value = snapshot
   } catch (e) {
     toast.error('删除失败', {
       description: e instanceof Error ? e.message : String(e),
@@ -73,9 +77,11 @@ async function removeModel(id: string) {
 }
 
 async function setDefault(id: string) {
-  config.value.defaultModelId = id
+  const snapshot = JSON.parse(JSON.stringify(config.value)) as AppConfig
+  snapshot.defaultModelId = id
   try {
-    await saveConfig(config.value)
+    await saveConfig(snapshot)
+    config.value = snapshot
   } catch (e) {
     toast.error('设置默认失败', {
       description: e instanceof Error ? e.message : String(e),
