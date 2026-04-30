@@ -51,12 +51,12 @@ watch(open, (val) => {
   <Popover v-model:open="open" class="w-full">
     <PopoverTrigger as-child>
       <button
-        class="flex items-center border rounded-md px-3 py-1.5 text-sm h-9 w-full hover:border-primary/50 transition-colors outline-none"
+        class="flex items-center border border-input rounded-lg px-2.5 py-1 text-sm h-8 w-full bg-transparent hover:border-primary/50 focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-3 transition-colors outline-none"
       >
         <span v-if="modelValue" class="flex-1 text-left truncate">{{ modelValue }}</span>
         <span v-else class="flex-1 text-left text-muted-foreground truncate">{{ placeholder }}</span>
         <ChevronDown
-          class="size-4 text-muted-foreground shrink-0 ml-2 transition-transform"
+          class="size-4 text-muted-foreground shrink-0 ml-1 transition-transform"
           :class="open ? 'rotate-180' : ''"
         />
       </button>
@@ -64,10 +64,10 @@ watch(open, (val) => {
     <PopoverContent
       align="start"
       side="bottom"
-      class="p-0"
-      :style="{ width: 'var(--radix-popover-trigger-width)' }"
+      class="p-0 gap-0"
+      :style="{ width: 'var(--reka-popover-trigger-width)' }"
     >
-      <div class="px-1 pt-1">
+      <div class="px-1 pt-1 pb-0.5">
         <Input
           :model-value="search"
           :placeholder="placeholder"
@@ -77,7 +77,7 @@ watch(open, (val) => {
           @keydown.escape="open = false"
         />
       </div>
-      <div v-if="filtered.length" class="max-h-48 overflow-auto border-t px-1 pb-1">
+      <div v-if="filtered.length" class="max-h-48 overflow-auto border-t border-border/50 px-1 pt-0.5 pb-1">
         <button
           v-for="opt in filtered"
           :key="opt"
