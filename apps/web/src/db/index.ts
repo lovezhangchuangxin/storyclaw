@@ -1,0 +1,87 @@
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
+
+const DB_NAME = 'storyclaw'
+const DB_VERSION = 1
+
+export interface StoryClawDBSchema extends DBSchema {
+  novels: {
+    key: string
+    value: import('./types').Novel
+  }
+  outlines: {
+    key: string
+    value: import('./types').Outline
+  }
+  characters: {
+    key: [string, string]
+    value: import('./types').Character
+    indexes: { novelId: string }
+  }
+  chapters: {
+    key: [string, number]
+    value: import('./types').Chapter
+    indexes: { novelId: string }
+  }
+  worldBuilding: {
+    key: string
+    value: import('./types').WorldBuilding
+  }
+  conversations: {
+    key: string
+    value: import('./types').Conversation
+  }
+  config: {
+    key: string
+    value: import('./types').AppConfig
+  }
+  readingProgress: {
+    key: string
+    value: import('./types').ReadingProgress
+  }
+  operationHistory: {
+    key: string
+    value: import('./types').OperationRecord
+  }
+}
+
+let dbInstance: IDBPDatabase<StoryClawDBSchema> | null = null
+
+export async function getDB(): Promise<IDBPDatabase<StoryClawDBSchema>> {
+  if (dbInstance) return dbInstance
+
+  dbInstance = await openDB<StoryClawDBSchema>(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains('novels')) {
+        db.createObjectStore('novels', { keyPath: 'id' })
+      }
+      if (!db.objectStoreNames.contains('outlines')) {
+        db.createObjectStore('outlines', { keyPath: 'novelId' })
+      }
+      if (!db.objectStoreNames.contains('characters')) {
+        const cs = db.createObjectStore('characters', { keyPath: ['novelId', 'id'] })
+        cs.createIndex('novelId', 'novelId')
+      }
+      if (!db.objectStoreNames.contains('chapters')) {
+        const cs = db.createObjectStore('chapters', { keyPath: ['novelId', 'index'] })
+        cs.createIndex('novelId', 'novelId')
+      }
+      if (!db.objectStoreNames.contains('worldBuilding')) {
+        db.createObjectStore('worldBuilding', { keyPath: 'novelId' })
+      }
+      if (!db.objectStoreNames.contains('conversations')) {
+        db.createObjectStore('conversations', { keyPath: 'novelId' })
+      }
+      if (!db.objectStoreNames.contains('config')) {
+        db.createObjectStore('config', { keyPath: 'id' })
+      }
+      if (!db.objectStoreNames.contains('readingProgress')) {
+        db.createObjectStore('readingProgress', { keyPath: 'novelId' })
+      }
+      if (!db.objectStoreNames.contains('operationHistory')) {
+        db.createObjectStore('operationHistory', { keyPath: 'id' })
+      }
+    },
+  })
+
+  return dbInstance
+}

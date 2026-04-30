@@ -9,7 +9,8 @@
   "rules": {
     "no-console": "warn",
     "no-debugger": "error",
-    "import/no-unassigned-import": "off"
+    "import/no-unassigned-import": "off",
+    "no-await-in-loop": "off"
   },
   "env": {
     "browser": true,

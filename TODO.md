@@ -11,48 +11,48 @@
 - [x] PWA manifest 与图标
 
 ### 1.2 IndexedDB 数据层 (`src/db/`)
-- [ ] 数据库初始化与 schema 迁移（8 个 object stores）
-- [ ] novels / outlines / characters / chapters / worldBuilding CRUD 封装
-- [ ] conversations 读写
-- [ ] config 与 readingProgress 读写
-- [ ] operationHistory 读写（undo/redo 栈）
+- [x] 数据库初始化与 schema 迁移（9 个 object stores）
+- [x] novels / outlines / characters / chapters / worldBuilding CRUD 封装
+- [x] conversations 读写
+- [x] config 与 readingProgress 读写
+- [x] operationHistory 读写（undo/redo 栈）
 
 ### 1.3 路由与基础 UI
-- [ ] 底部 Tab Bar（书架 / 创建 / 我的）
-- [ ] 书架页：故事卡片列表 + 空状态
-- [ ] 创建页：故事创意输入 + 类型快速开始
-- [ ] 我的页：设置入口列表
-- [ ] 模型配置页：API 地址、Key、模型名、参数
-- [ ] 后端连接/登录页 UI
+- [x] 底部 Tab Bar（书架 / 创建 / 我的）
+- [x] 书架页：故事卡片列表 + 空状态
+- [x] 创建页：故事创意输入 + 类型快速开始
+- [x] 我的页：设置入口列表
+- [x] 模型配置页：API 地址、Key、模型名、参数
+- [x] 后端连接/登录页 UI
 
 ### 1.4 故事详情页 — 阅读器
-- [ ] 沉浸式阅读器布局（内容居中，最大宽度 680px）
-- [ ] 字体/字号/行高/段间距调节
-- [ ] 文字颜色 + 阅读背景色
-- [ ] 6 套预设阅读主题
-- [ ] 上下滚动 / 左右翻页 / 自动滚动
-- [ ] 底部热区唤出控制栏
-- [ ] 点击唤出章节目录
-- [ ] PC 键盘快捷键
+- [x] 沉浸式阅读器布局（内容居中，最大宽度 680px）
+- [x] 字体/字号/行高/段间距调节
+- [x] 文字颜色 + 阅读背景色
+- [x] 6 套预设阅读主题
+- [x] 上下滚动 / 左右翻页 / 自动滚动
+- [x] 底部热区唤出控制栏
+- [x] 点击唤出章节目录
+- [x] PC 键盘快捷键
 
 ### 1.5 Agent 引擎 (`src/agent/`)
-- [ ] `llm-client.ts`：封装 openai SDK，baseURL 可配，流式 + tool calls
-- [ ] `context.ts`：构建上下文，四层 structure，token 追踪（从 API 响应取）
-- [ ] `tools/`：create_outline, update_outline, get_outline
-- [ ] `tools/`：create_character, update_character, delete_character, get_character, list_characters
-- [ ] `tools/`：plan_chapters, write_chapter, rewrite_chapter, get_chapter
-- [ ] `tools/`：set_world_building, get_world_building
-- [ ] `tools/`：set_style, apply_style_to_chapter
-- [ ] `tools/`：get_story_status, generate_title, generate_synopsis
-- [ ] `loop.ts`：Agent 主循环（max 15 次 tool-call 迭代，取消检查，compact）
-- [ ] Web Worker 集成与 postMessage 通信协议
+- [x] `llm-client.ts`：封装 openai SDK，baseURL 可配，流式 + tool calls
+- [x] `context.ts`：构建上下文，四层 structure，token 追踪（从 API 响应取）
+- [x] `tools/`：create_outline, update_outline, get_outline
+- [x] `tools/`：create_character, update_character, delete_character, get_character, list_characters
+- [x] `tools/`：plan_chapters, write_chapter, rewrite_chapter, get_chapter
+- [x] `tools/`：set_world_building, get_world_building
+- [x] `tools/`：set_style, apply_style_to_chapter
+- [x] `tools/`：get_story_status, generate_title, generate_synopsis
+- [x] `loop.ts`：Agent 主循环（max 15 次 tool-call 迭代，取消检查，compact）
+- [x] Web Worker 集成与 postMessage 通信协议
 
 ### 1.6 故事详情页 — Agent 对话
-- [ ] 聊天式界面，结构化卡片（大纲/角色/章节计划）
-- [ ] 流式渲染 Agent 输出（token by token）
-- [ ] 底部输入框 + 发送/中断按钮
-- [ ] 用户命令入口（undo/redo/revert_chapter）
-- [ ] 阅读模式 ↔ Agent 模式右上角切换
+- [x] 聊天式界面，结构化卡片（大纲/角色/章节计划）
+- [x] 流式渲染 Agent 输出（token by token）
+- [x] 底部输入框 + 发送/中断按钮
+- [x] 用户命令入口（undo/redo/revert_chapter）
+- [x] 阅读模式 ↔ Agent 模式右上角切换
 
 ---
 
