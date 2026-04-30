@@ -1,0 +1,9 @@
+# Editor
+.vscode
+.zed
+
+# AI Agent
+.codex
+.opencode
+.claude
+.omc
