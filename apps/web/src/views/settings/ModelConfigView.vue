@@ -102,7 +102,7 @@ loadConfig()
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto p-4 md:p-6 space-y-5">
+  <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
 
     <!-- Model List Section -->
     <section class="rounded-xl border bg-card shadow-sm p-5 space-y-4">

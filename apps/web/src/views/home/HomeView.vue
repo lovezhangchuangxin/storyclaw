@@ -75,7 +75,7 @@ async function handleDelete(novel: Novel) {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto p-4 md:p-6 space-y-5">
+  <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
     <!-- Loading State -->
     <template v-if="loading">
       <section class="rounded-xl border bg-card shadow-sm p-5">
@@ -131,14 +131,15 @@ async function handleDelete(novel: Novel) {
           @click="openStory(novel.id)"
           @keydown.enter="openStory(novel.id)"
         >
-          <!-- Color accent bar -->
-          <div class="h-1 shrink-0" :class="getCoverColor(novel.id)" />
           <!-- Content -->
           <div class="p-4">
             <div class="flex items-start justify-between gap-2">
-              <h3 class="font-semibold text-sm leading-snug line-clamp-1 group-hover:text-primary transition-colors flex-1">
-                {{ novel.title || '未命名故事' }}
-              </h3>
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="size-2 rounded-full shrink-0" :class="getCoverColor(novel.id)" />
+                <h3 class="font-semibold text-sm leading-snug line-clamp-1 group-hover:text-primary transition-colors">
+                  {{ novel.title || '未命名故事' }}
+                </h3>
+              </div>
               <button
                 class="size-7 shrink-0 flex items-center justify-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
                 @click.stop="handleDelete(novel)"
