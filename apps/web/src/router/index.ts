@@ -6,6 +6,7 @@ import MyView from '@/views/my/MyView.vue'
 import StoryDetailView from '@/views/story/StoryDetailView.vue'
 import ModelConfigView from '@/views/settings/ModelConfigView.vue'
 import ServerView from '@/views/settings/ServerView.vue'
+import ReadingPrefsView from '@/views/settings/ReadingPrefsView.vue'
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -47,6 +48,12 @@ export const routes: RouteRecordRaw[] = [
         name: 'server-config',
         component: ServerView,
         meta: { title: '后端连接', back: true },
+      },
+      {
+        path: 'settings/reading',
+        name: 'reading-prefs',
+        component: ReadingPrefsView,
+        meta: { title: '阅读偏好', back: true },
       },
     ],
   },
