@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { BookOpen, Plus } from 'lucide-vue-next'
-import { getAllNovels } from '@/db/novels'
+import { BookOpen, Plus, Trash2 } from 'lucide-vue-next'
+import { getAllNovels, deleteNovel } from '@/db/novels'
 import type { Novel } from '@/db/types'
+import { toast } from 'vue-sonner'
 
 const COVER_COLORS = [
   'bg-blue-500',
@@ -59,6 +60,18 @@ onMounted(async () => {
 function openStory(id: string) {
   router.push(`/story/${id}`)
 }
+
+async function handleDelete(novel: Novel) {
+  if (!window.confirm(`确定要删除《${novel.title || '未命名故事'}》吗？此操作不可撤销。`)) return
+  try {
+    await deleteNovel(novel.id)
+    novels.value = novels.value.filter((n) => n.id !== novel.id)
+  } catch (e) {
+    toast.error('删除失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  }
+}
 </script>
 
 <template>
@@ -66,11 +79,11 @@ function openStory(id: string) {
     <!-- Loading State -->
     <template v-if="loading">
       <section class="rounded-xl border bg-card shadow-sm p-5">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div
             v-for="i in 4"
             :key="i"
-            class="aspect-[3/4] rounded-xl bg-muted animate-pulse"
+            class="h-24 rounded-xl bg-muted animate-pulse"
           />
         </div>
       </section>
@@ -108,25 +121,36 @@ function openStory(id: string) {
 
     <!-- Novel Grid -->
     <template v-else>
-      <section class="grid grid-cols-2 gap-4">
-        <button
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div
           v-for="novel in novels"
           :key="novel.id"
-          class="rounded-xl border bg-card text-left overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/30 group aspect-[3/4] flex flex-col cursor-pointer"
+          class="relative rounded-xl border bg-card text-left overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/30 group cursor-pointer"
+          role="button"
+          tabindex="0"
           @click="openStory(novel.id)"
+          @keydown.enter="openStory(novel.id)"
         >
-          <!-- Color accent bar (book spine) -->
-          <div class="h-1.5 shrink-0" :class="getCoverColor(novel.id)" />
+          <!-- Color accent bar -->
+          <div class="h-1 shrink-0" :class="getCoverColor(novel.id)" />
           <!-- Content -->
-          <div class="p-4 flex flex-col flex-1 min-h-0">
-            <h3 class="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-              {{ novel.title || '未命名故事' }}
-            </h3>
+          <div class="p-4">
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="font-semibold text-sm leading-snug line-clamp-1 group-hover:text-primary transition-colors flex-1">
+                {{ novel.title || '未命名故事' }}
+              </h3>
+              <button
+                class="size-7 shrink-0 flex items-center justify-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
+                @click.stop="handleDelete(novel)"
+                title="删除"
+              >
+                <Trash2 class="size-3.5" />
+              </button>
+            </div>
             <p class="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
               {{ novel.synopsis || '暂无简介' }}
             </p>
-            <!-- Footer pushed to bottom -->
-            <div class="mt-auto pt-3 flex items-center justify-between">
+            <div class="mt-3 flex items-center justify-between">
               <span class="text-[11px] text-muted-foreground">{{ novel.currentWordCount }} 字</span>
               <span
                 class="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full font-medium"
@@ -136,7 +160,7 @@ function openStory(id: string) {
               </span>
             </div>
           </div>
-        </button>
+        </div>
       </section>
     </template>
   </div>

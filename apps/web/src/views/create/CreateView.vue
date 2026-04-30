@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, h, onMounted, onUnmounted, inject } from 'vue'
 import { BookOpen, MessageCircle } from 'lucide-vue-next'
-import { createNovel } from '@/db/novels'
-import type { Novel } from '@/db/types'
 import type { Component } from 'vue'
 import AgentChat from '@/views/story/components/AgentChat.vue'
 import ReaderTab from './components/ReaderTab.vue'
@@ -12,23 +10,8 @@ const setTopbarExtra = inject<(c: Component | null) => void>('setTopbarExtra')
 const mode = ref<'agent' | 'reader'>('agent')
 const novelId = ref('')
 
-onMounted(async () => {
-  const id = crypto.randomUUID()
-  const novel: Novel = {
-    id,
-    title: '新故事',
-    synopsis: '',
-    genre: '',
-    targetWordCount: 0,
-    currentWordCount: 0,
-    status: 'drafting' as const,
-    styleSettings: { narrativePerspective: '', tense: '', languageStyle: '' },
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    version: 1,
-  }
-  await createNovel(novel)
-  novelId.value = id
+onMounted(() => {
+  novelId.value = crypto.randomUUID()
 
   setTopbarExtra?.({
     setup() {
