@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { Eye, EyeOff } from 'lucide-vue-next'
+import { Eye, EyeOff, Loader2 } from 'lucide-vue-next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,6 +12,7 @@ import {
   getModelsForProvider,
   getApiBaseForProvider,
   getMaxTokensForModel,
+  fetchModels,
 } from '@/lib/provider-data'
 
 const props = defineProps<{
@@ -30,18 +31,25 @@ const apiKey = ref('')
 const model = ref('')
 const maxTokens = ref(4096)
 const showKey = ref(false)
+const modelsLoading = ref(false)
+const fetchedModels = ref<string[]>([])
 let populating = false
+let fetchSeq = 0
 
 const isEdit = computed(() => !!props.model?.id)
 const title = computed(() => isEdit.value ? '编辑模型' : '添加模型')
 
-const modelOptions = computed(() => getModelsForProvider(provider.value))
+const modelOptions = computed(() => {
+  if (fetchedModels.value.length) return fetchedModels.value
+  return getModelsForProvider(provider.value)
+})
 const tokenFromModel = computed(() => getMaxTokensForModel(model.value))
 const tokenEditable = computed(() => !tokenFromModel.value)
 
 watch(() => props.open, (val) => {
   if (!val) return
   populating = true
+  fetchedModels.value = []
   if (props.model) {
     provider.value = props.model.provider
     apiBase.value = props.model.apiBase
@@ -60,10 +68,30 @@ watch(() => props.open, (val) => {
 
 watch(provider, (p) => {
   if (populating) return
+  fetchedModels.value = []
   const base = getApiBaseForProvider(p)
   if (base) apiBase.value = base
-  if (!getModelsForProvider(p).includes(model.value)) {
+  if (!modelOptions.value.includes(model.value)) {
     model.value = ''
+  }
+})
+
+watch([apiBase, apiKey], async ([base, key]) => {
+  if (populating || !base || !key) {
+    fetchedModels.value = []
+    return
+  }
+  const seq = ++fetchSeq
+  modelsLoading.value = true
+  try {
+    const models = await fetchModels(base, key)
+    if (seq !== fetchSeq) return
+    fetchedModels.value = models
+  } catch {
+    if (seq !== fetchSeq) return
+    fetchedModels.value = []
+  } finally {
+    if (seq === fetchSeq) modelsLoading.value = false
   }
 })
 
@@ -131,7 +159,10 @@ function handleSave() {
         </div>
 
         <div class="space-y-1.5">
-          <Label>模型名</Label>
+          <Label class="flex items-center gap-1.5">
+            模型名
+            <Loader2 v-if="modelsLoading" class="size-3.5 animate-spin text-muted-foreground" />
+          </Label>
           <Combobox
             v-model="model"
             :options="modelOptions"
