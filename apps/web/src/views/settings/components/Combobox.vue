@@ -51,7 +51,7 @@ watch(open, (val) => {
   <Popover v-model:open="open" class="w-full">
     <PopoverTrigger as-child>
       <button
-        class="flex items-center border border-input rounded-lg px-2.5 py-1 text-sm h-8 w-full bg-transparent hover:border-primary/50 focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-3 transition-colors outline-none"
+        class="flex items-center border border-input rounded-lg px-2.5 py-1 text-sm h-8 w-full bg-transparent hover:border-primary/50 focus-within:border-ring transition-colors outline-none"
       >
         <span v-if="modelValue" class="flex-1 text-left truncate">{{ modelValue }}</span>
         <span v-else class="flex-1 text-left text-muted-foreground truncate">{{ placeholder }}</span>
