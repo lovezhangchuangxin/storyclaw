@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Plus, Trash2, Pen, Star } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { saveConfig, getConfig } from '@/db/config'
 import type { AppConfig, ModelConfig } from '@/db/types'
@@ -13,7 +14,13 @@ const dialogOpen = ref(false)
 const editingModel = ref<ModelConfig | null>(null)
 
 async function loadConfig() {
-  config.value = await getConfig()
+  try {
+    config.value = await getConfig()
+  } catch (e) {
+    toast.error('加载配置失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  }
 }
 
 function openAdd() {
@@ -26,7 +33,7 @@ function openEdit(model: ModelConfig) {
   dialogOpen.value = true
 }
 
-function handleSave(model: ModelConfig) {
+async function handleSave(model: ModelConfig) {
   if (editingModel.value?.id) {
     const idx = config.value.models.findIndex((m) => m.id === editingModel.value!.id)
     if (idx !== -1) config.value.models[idx] = model
@@ -36,10 +43,17 @@ function handleSave(model: ModelConfig) {
       config.value.defaultModelId = model.id
     }
   }
-  saveConfig(config.value)
+  try {
+    await saveConfig(config.value)
+    toast.success(editingModel.value?.id ? '模型已更新' : '模型已添加')
+  } catch (e) {
+    toast.error('保存失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  }
 }
 
-function removeModel(id: string) {
+async function removeModel(id: string) {
   config.value.models = config.value.models.filter((m) => m.id !== id)
   if (config.value.defaultModelId === id) {
     config.value.defaultModelId = config.value.models[0]?.id ?? ''
@@ -49,12 +63,24 @@ function removeModel(id: string) {
       delete config.value.skillModelMapping[skill]
     }
   }
-  saveConfig(config.value)
+  try {
+    await saveConfig(config.value)
+  } catch (e) {
+    toast.error('删除失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  }
 }
 
-function setDefault(id: string) {
+async function setDefault(id: string) {
   config.value.defaultModelId = id
-  saveConfig(config.value)
+  try {
+    await saveConfig(config.value)
+  } catch (e) {
+    toast.error('设置默认失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  }
 }
 
 loadConfig()

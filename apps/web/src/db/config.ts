@@ -10,5 +10,8 @@ export async function getConfig(): Promise<AppConfig> {
 
 export async function saveConfig(config: AppConfig): Promise<void> {
   const db = await getDB()
-  await db.put('config', { ...config, id: 'app-config' })
+  // JSON roundtrip strips Vue reactive proxies, which would otherwise
+  // cause structuredClone to throw DataCloneError (Proxies are not cloneable)
+  const plain = JSON.parse(JSON.stringify(config)) as AppConfig
+  await db.put('config', { ...plain, id: 'app-config' })
 }

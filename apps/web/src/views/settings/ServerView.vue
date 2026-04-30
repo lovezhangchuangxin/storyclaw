@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Server } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,21 +16,39 @@ const password = ref('')
 const connected = ref(false)
 
 async function loadConfig() {
-  config.value = await getConfig()
-  backendUrl.value = config.value.backendUrl ?? ''
+  try {
+    config.value = await getConfig()
+    backendUrl.value = config.value.backendUrl ?? ''
+  } catch (e) {
+    toast.error('加载配置失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  }
 }
 
-function connect() {
+async function connect() {
   config.value.backendUrl = backendUrl.value
-  saveConfig(config.value)
-  connected.value = true
+  try {
+    await saveConfig(config.value)
+    connected.value = true
+  } catch (e) {
+    toast.error('保存失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  }
 }
 
-function disconnect() {
+async function disconnect() {
   config.value.backendUrl = ''
-  saveConfig(config.value)
-  connected.value = false
-  backendUrl.value = ''
+  try {
+    await saveConfig(config.value)
+    connected.value = false
+    backendUrl.value = ''
+  } catch (e) {
+    toast.error('保存失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  }
 }
 
 loadConfig()
