@@ -139,8 +139,11 @@ loadConfig()
               <p class="text-sm font-medium truncate">{{ modelLabel(m) }}</p>
               <span
                 v-if="m.id === config.defaultModelId"
-                class="inline-flex items-center text-[11px] px-1.5 py-0.5 rounded-md bg-primary/15 text-primary font-medium shrink-0"
-              >默认</span>
+                class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-primary/15 text-primary/60 font-medium shrink-0"
+              >
+                <span class="size-1.5 rounded-full bg-primary/30" />
+                默认
+              </span>
             </div>
             <p class="text-xs text-muted-foreground truncate mt-0.5">{{ m.apiBase }}</p>
           </div>
