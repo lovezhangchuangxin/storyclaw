@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { Eye, EyeOff, Loader2 } from 'lucide-vue-next'
+import { Eye, EyeOff, Loader2, Zap } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,11 +10,10 @@ import Combobox from './Combobox.vue'
 import type { ModelConfig } from '@/db/types'
 import {
   PROVIDER_NAMES,
-  getModelsForProvider,
   getApiBaseForProvider,
-  getMaxTokensForModel,
   fetchModels,
 } from '@/lib/provider-data'
+import { testConnection } from '@/lib/test-connection'
 
 const props = defineProps<{
   open: boolean
@@ -29,9 +29,9 @@ const provider = ref('')
 const apiBase = ref('')
 const apiKey = ref('')
 const model = ref('')
-const maxTokens = ref(4096)
 const showKey = ref(false)
 const modelsLoading = ref(false)
+const testing = ref(false)
 const fetchedModels = ref<string[]>([])
 let populating = false
 let fetchSeq = 0
@@ -39,12 +39,7 @@ let fetchSeq = 0
 const isEdit = computed(() => !!props.model?.id)
 const title = computed(() => isEdit.value ? '编辑模型' : '添加模型')
 
-const modelOptions = computed(() => {
-  if (fetchedModels.value.length) return fetchedModels.value
-  return getModelsForProvider(provider.value)
-})
-const tokenFromModel = computed(() => getMaxTokensForModel(model.value))
-const tokenEditable = computed(() => !tokenFromModel.value)
+const modelOptions = computed(() => fetchedModels.value)
 
 watch(() => props.open, (val) => {
   if (!val) return
@@ -55,13 +50,11 @@ watch(() => props.open, (val) => {
     apiBase.value = props.model.apiBase
     apiKey.value = props.model.apiKey
     model.value = props.model.model
-    maxTokens.value = props.model.maxTokens
   } else {
     provider.value = ''
     apiBase.value = ''
     apiKey.value = ''
     model.value = ''
-    maxTokens.value = 4096
   }
   populating = false
 })
@@ -76,15 +69,17 @@ watch(provider, (p) => {
   }
 })
 
-watch([apiBase, apiKey], async ([base, key]) => {
-  if (populating || !base || !key) {
-    fetchedModels.value = []
-    return
-  }
+watch([apiBase, apiKey], () => {
+  fetchedModels.value = []
+})
+
+async function handleModelComboOpen() {
+  if (fetchedModels.value.length || modelsLoading.value) return
+  if (!apiBase.value || !apiKey.value) return
   const seq = ++fetchSeq
   modelsLoading.value = true
   try {
-    const models = await fetchModels(base, key)
+    const models = await fetchModels(apiBase.value, apiKey.value)
     if (seq !== fetchSeq) return
     fetchedModels.value = models
   } catch {
@@ -93,13 +88,21 @@ watch([apiBase, apiKey], async ([base, key]) => {
   } finally {
     if (seq === fetchSeq) modelsLoading.value = false
   }
-})
+}
 
-watch(model, (m) => {
-  if (populating) return
-  const t = getMaxTokensForModel(m)
-  if (t) maxTokens.value = t
-})
+async function handleTest() {
+  testing.value = true
+  try {
+    await testConnection(apiBase.value, apiKey.value, model.value)
+    toast.success('连接成功')
+  } catch (e: unknown) {
+    toast.error('连接失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  } finally {
+    testing.value = false
+  }
+}
 
 function handleSave() {
   emit('save', {
@@ -108,7 +111,7 @@ function handleSave() {
     apiBase: apiBase.value,
     apiKey: apiKey.value,
     model: model.value,
-    maxTokens: maxTokens.value,
+    maxTokens: 16384,
   })
   emit('update:open', false)
 }
@@ -167,22 +170,21 @@ function handleSave() {
             v-model="model"
             :options="modelOptions"
             placeholder="选择或输入模型名"
-          />
-        </div>
-
-        <div class="space-y-1.5">
-          <Label>最大 Token</Label>
-          <Input
-            v-model.number="maxTokens"
-            type="number"
-            :readonly="!tokenEditable"
-            :class="!tokenEditable ? 'text-muted-foreground' : ''"
-            class="focus-visible:ring-0"
+            @open="handleModelComboOpen"
           />
         </div>
       </div>
 
       <div class="flex justify-end gap-2 mt-4">
+        <Button
+          variant="outline"
+          :disabled="!apiBase || !apiKey || !model || testing"
+          @click="handleTest"
+        >
+          <Loader2 v-if="testing" class="size-4 animate-spin mr-1.5" />
+          <Zap v-else class="size-4 mr-1.5" />
+          测试
+        </Button>
         <Button variant="outline" @click="emit('update:open', false)">取消</Button>
         <Button :disabled="!provider || !apiBase || !apiKey || !model" @click="handleSave">
           {{ isEdit ? '保存' : '添加' }}

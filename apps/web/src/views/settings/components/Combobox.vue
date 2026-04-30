@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [v: string]
+  open: []
 }>()
 
 const open = ref(false)
@@ -41,7 +42,11 @@ function commit() {
 }
 
 watch(open, (val) => {
-  if (!val && search.value !== props.modelValue) {
+  if (val) {
+    emit('open')
+    return
+  }
+  if (search.value !== props.modelValue) {
     emit('update:modelValue', search.value)
   }
 })

@@ -10,6 +10,7 @@ import {
   XIcon,
 } from 'lucide-vue-next'
 import { Toaster as Sonner } from 'vue-sonner'
+import 'vue-sonner/style.css'
 import { cn } from '@/lib/utils'
 
 const props = defineProps<ToasterProps>()
@@ -22,6 +23,12 @@ const props = defineProps<ToasterProps>()
       '--normal-bg': 'var(--popover)',
       '--normal-text': 'var(--popover-foreground)',
       '--normal-border': 'var(--border)',
+      '--success-bg': 'oklch(0.97 0.03 145)',
+      '--success-text': 'oklch(0.35 0.1 145)',
+      '--success-border': 'oklch(0.8 0.08 145)',
+      '--error-bg': 'oklch(0.97 0.02 25)',
+      '--error-text': 'oklch(0.4 0.12 25)',
+      '--error-border': 'oklch(0.8 0.08 25)',
       '--border-radius': 'var(--radius)',
     }"
     v-bind="props"
