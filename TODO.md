@@ -5,10 +5,10 @@
 目标：Vite + Vue3 PWA，单 Agent 创作 + 阅读器，IndexedDB 存储，OpenAI 兼容模型直连。
 
 ### 1.1 项目基础设施
-- [ ] 初始化 shadcn-vue（`pnpm dlx shadcn-vue@latest init`）
-- [ ] 配置 Tailwind CSS v4（颜色、字体、阅读主题变量）
-- [ ] 安装 vite-plugin-pwa，配置 Service Worker 缓存策略
-- [ ] PWA manifest 与图标
+- [x] 初始化 shadcn-vue（`pnpm dlx shadcn-vue@latest init`）
+- [x] 配置 Tailwind CSS v4（颜色、字体、阅读主题变量）
+- [x] 安装 vite-plugin-pwa，配置 Service Worker 缓存策略
+- [x] PWA manifest 与图标
 
 ### 1.2 IndexedDB 数据层 (`src/db/`)
 - [ ] 数据库初始化与 schema 迁移（8 个 object stores）
