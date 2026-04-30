@@ -7,3 +7,10 @@
 .opencode
 .claude
 .omc
+
+# Build
+dist/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
