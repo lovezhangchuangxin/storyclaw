@@ -99,8 +99,8 @@ loadConfig()
       <div
         v-for="m in config.models"
         :key="m.id"
-        class="flex items-center gap-2 rounded-lg border px-3 py-2.5"
-        :class="m.id === config.defaultModelId ? 'border-primary/50 bg-primary/5' : ''"
+        class="flex items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors"
+        :class="m.id === config.defaultModelId ? 'border-primary/40 bg-primary/[0.07] shadow-sm' : ''"
       >
         <div class="flex-1 min-w-0">
           <p class="text-sm font-medium truncate">{{ modelLabel(m) }}</p>
@@ -116,7 +116,7 @@ loadConfig()
         </button>
         <span
           v-else
-          class="text-xs text-primary font-medium shrink-0"
+          class="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-medium shrink-0"
         >默认</span>
         <button
           class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
