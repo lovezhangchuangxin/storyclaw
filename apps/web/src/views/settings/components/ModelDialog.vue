@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { Eye, EyeOff } from 'lucide-vue-next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,6 +29,7 @@ const apiBase = ref('')
 const apiKey = ref('')
 const model = ref('')
 const maxTokens = ref(4096)
+const showKey = ref(false)
 let populating = false
 
 const isEdit = computed(() => !!props.model?.id)
@@ -108,7 +110,24 @@ function handleSave() {
 
         <div class="space-y-1.5">
           <Label>API Key</Label>
-          <Input v-model="apiKey" type="password" placeholder="sk-..." class="focus-visible:ring-0" />
+          <div class="group relative">
+            <Input
+              v-model="apiKey"
+              :type="showKey ? 'text' : 'password'"
+              autocomplete="off"
+              data-1p-ignore
+              placeholder="sk-······"
+              class="focus-visible:ring-0 pr-9"
+            />
+            <button
+              type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              @click="showKey = !showKey"
+            >
+              <Eye v-if="!showKey" class="size-4" />
+              <EyeOff v-else class="size-4" />
+            </button>
+          </div>
         </div>
 
         <div class="space-y-1.5">
