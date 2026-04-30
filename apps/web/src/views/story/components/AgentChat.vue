@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
-import { Send, Square, Undo2, Redo2 } from 'lucide-vue-next'
+import { ref, computed, nextTick, onMounted } from 'vue'
+import { Send, Square, Undo2, Redo2, ChevronDown } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { runAgentLoop } from '@/agent/loop'
-import type { Message } from '@/db/types'
+import { getConfig } from '@/db/config'
+import { modelLabel } from '@/lib/model-utils'
+import type { Message, ModelConfig } from '@/db/types'
 
 const props = defineProps<{
   novelId: string
@@ -15,6 +23,22 @@ const messages = ref<Message[]>([])
 const isGenerating = ref(false)
 const streamingContent = ref('')
 const abortController = ref<AbortController | null>(null)
+
+const models = ref<ModelConfig[]>([])
+const selectedModelId = ref('')
+
+const selectedModelLabel = computed(() => {
+  const m = models.value.find((m) => m.id === selectedModelId.value)
+  return m ? modelLabel(m) : '选择模型'
+})
+
+async function loadModels() {
+  const config = await getConfig()
+  models.value = config.models
+  selectedModelId.value = config.defaultModelId || config.models[0]?.id || ''
+}
+
+onMounted(loadModels)
 
 function pushMessage(msg: Message) {
   messages.value.push(msg)
@@ -48,27 +72,14 @@ async function send() {
     const result = await runAgentLoop({
       novelId: props.novelId,
       userMessage: text,
+      modelConfigId: selectedModelId.value,
       signal: abortController.value.signal,
       onToken(token) {
         streamingContent.value += token
         scrollToBottom()
       },
-      onToolCall(name) {
-        pushMessage({
-          id: crypto.randomUUID(),
-          role: 'tool',
-          content: `调用工具: ${name}`,
-          timestamp: Date.now(),
-        })
-      },
-      onToolResult(name) {
-        pushMessage({
-          id: crypto.randomUUID(),
-          role: 'tool',
-          content: `工具 ${name} 执行完成`,
-          timestamp: Date.now(),
-        })
-      },
+      onToolCall() {},
+      onToolResult() {},
       onError(err) {
         pushMessage({
           id: crypto.randomUUID(),
@@ -172,6 +183,24 @@ function redo() {
         >
           <Redo2 class="size-4" />
         </button>
+      </div>
+
+      <div v-if="models.length > 0" class="flex items-center gap-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger as="button" class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <span class="truncate max-w-[160px]">{{ selectedModelLabel }}</span>
+            <ChevronDown class="size-3" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem
+              v-for="m in models"
+              :key="m.id"
+              @click="selectedModelId = m.id"
+            >
+              <span class="text-xs">{{ modelLabel(m) }}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div class="flex gap-2">

@@ -164,14 +164,11 @@ export interface AppConfig {
 
 export interface ModelConfig {
   id: string
-  name: string
   provider: string
   apiBase: string
   apiKey: string
   model: string
   maxTokens: number
-  temperature: number
-  topP: number
 }
 
 export interface ReadingSettings {
