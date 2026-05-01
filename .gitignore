@@ -8,6 +8,9 @@
 .claude
 .omc
 
+# Playwright MCP debug artifacts
+.playwright-mcp/
+
 # Build
 dist/
 *.tsbuildinfo
