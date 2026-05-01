@@ -107,6 +107,7 @@ interface Tool {
 - `apply_style_to_chapter` — 将文风应用到已有章节
 
 **故事管理：**
+- `create_story` — 创建新故事（设置标题和简介）。如果小说记录已存在（预创建草稿），更新标题/简介
 - `get_story_status` — 获取当前故事整体状态
 - `generate_title` — 根据内容生成标题
 - `generate_synopsis` — 生成故事简介
