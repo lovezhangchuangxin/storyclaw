@@ -42,6 +42,9 @@ export function createLLMClient(options: LLMClientOptions) {
       )
 
       let content = ''
+      // thinking models (DeepSeek R1, etc.) emit reasoning_content in stream deltas.
+      // The API requires it back verbatim on the assistant message in subsequent requests.
+      let reasoningContent = ''
       const toolCalls: Map<number, { id: string; name: string; arguments: string }> = new Map()
       let usage: LLMUsage | undefined
       let finishReason: string = 'stop'
@@ -67,6 +70,12 @@ export function createLLMClient(options: LLMClientOptions) {
         if (delta?.content) {
           content += delta.content
           onToken?.(delta.content)
+        }
+
+        // reasoning_content is not in OpenAI SDK's Delta type — it's a
+        // provider-specific extension used by DeepSeek R1 and o1 models.
+        if ((delta as any)?.reasoning_content) {
+          reasoningContent += (delta as any).reasoning_content
         }
 
         if (delta?.tool_calls) {
@@ -98,6 +107,8 @@ export function createLLMClient(options: LLMClientOptions) {
         toolCalls: mappedToolCalls,
         usage,
         finishReason,
+        // pass reasoning content through so callers can relay it back to the API
+        reasoningContent: reasoningContent || undefined,
       }
     },
   }

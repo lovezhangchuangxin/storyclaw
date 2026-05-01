@@ -130,6 +130,11 @@ export interface Message {
   content: string
   toolCalls?: ToolCall[]
   toolCallId?: string
+  // reasoningContent is required by thinking models (DeepSeek R1, OpenAI o1).
+  // The API demands the assistant's reasoning_content be passed back in subsequent
+  // requests, so we must persist it across conversation rounds. Normal models
+  // don't emit this field — it stays undefined.
+  reasoningContent?: string
   timestamp: number
   promptTokens?: number
   completionTokens?: number

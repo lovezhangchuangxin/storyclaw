@@ -84,6 +84,44 @@ function findSafeSliceStart(messages: Message[], targetStart: number): number {
   return i
 }
 
+// Convert a stored Message (camelCase, toolCalls as objects) to the
+// OpenAI API format (snake_case, tool_calls with JSON-stringified arguments).
+// Also ensures tool messages contain tool_call_id, and assistant messages
+// include reasoning_content so thinking models don't reject subsequent requests.
+function convertToApiMessage(msg: Message): OpenAI.Chat.Completions.ChatCompletionMessageParam {
+  switch (msg.role) {
+    case 'system':
+    case 'user':
+      return { role: msg.role, content: msg.content }
+    case 'assistant': {
+      const m: Record<string, unknown> = {
+        role: 'assistant',
+        content: msg.content || null,
+      }
+      if (msg.toolCalls?.length) {
+        m.tool_calls = msg.toolCalls.map((tc) => ({
+          id: tc.id,
+          type: 'function' as const,
+          function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+        }))
+      }
+      if (msg.reasoningContent) {
+        m.reasoning_content = msg.reasoningContent
+      }
+      return m as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam
+    }
+    case 'tool':
+      // toolCallId (camelCase, our storage) → tool_call_id (snake_case, OpenAI API)
+      return { role: 'tool', content: msg.content, tool_call_id: msg.toolCallId ?? '' }
+    default:
+      return { role: 'user', content: msg.content }
+  }
+}
+
+function convertMessagesToApiFormat(messages: Message[]): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
+  return messages.map(convertToApiMessage)
+}
+
 export async function buildContext(
   novelId: string,
   userMessage: string,
@@ -122,11 +160,10 @@ export async function buildContext(
         role: 'system' as const,
         content: `[对话历史摘要]\n${conversation.compactedSummary.summary}`,
       },
-      ...(recentMessages as OpenAI.Chat.Completions.ChatCompletionMessageParam[]),
+      ...convertMessagesToApiFormat(recentMessages),
     ]
   } else {
-    historyMessages =
-      rawMessages as OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+    historyMessages = convertMessagesToApiFormat(rawMessages)
   }
 
   const totalTokensUsed =

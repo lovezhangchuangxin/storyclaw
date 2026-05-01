@@ -85,10 +85,15 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
 
       const response = await client.chat(localMessages, ctx.tools)
 
-      // Build OpenAI-format assistant message for local conversation
-      const openaiAssistantMsg: OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam = {
+      // Use Record<string, unknown> instead of ChatCompletionAssistantMessageParam
+      // because the SDK type doesn't include `reasoning_content` — a provider-specific
+      // extension required by thinking models. We add it conditionally, then cast.
+      const openaiAssistantMsg: Record<string, unknown> = {
         role: 'assistant',
         content: response.content || null,
+      }
+      if (response.reasoningContent) {
+        openaiAssistantMsg.reasoning_content = response.reasoningContent
       }
       if (response.toolCalls.length > 0) {
         openaiAssistantMsg.tool_calls = response.toolCalls.map((tc) => ({
@@ -97,7 +102,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
           function: { name: tc.function.name, arguments: tc.function.arguments },
         }))
       }
-      localMessages.push(openaiAssistantMsg)
+      localMessages.push(openaiAssistantMsg as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam)
 
       // Build storage-format Message
       const parsedToolCalls = response.toolCalls.map((tc) => {
@@ -115,6 +120,9 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
         role: 'assistant',
         content: response.content,
         toolCalls: parsedToolCalls.length > 0 ? parsedToolCalls : undefined,
+        // persist reasoning_content so it survives IndexedDB round-trips
+        // and can be passed back to the API in subsequent conversation turns
+        reasoningContent: response.reasoningContent,
         timestamp: Date.now(),
         promptTokens: response.usage?.promptTokens,
         completionTokens: response.usage?.completionTokens,
