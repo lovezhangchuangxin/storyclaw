@@ -45,7 +45,8 @@
 - [x] `tools/`：set_style, apply_style_to_chapter
 - [x] `tools/`：get_story_status, generate_title, generate_synopsis
 - [x] `loop.ts`：Agent 主循环（max 15 次 tool-call 迭代，取消检查，compact）
-- [x] Web Worker 集成与 postMessage 通信协议
+- [x] postMessage 通信协议定义（`worker-types.ts`）
+- [ ] Web Worker 集成（当前主线程运行，Phase 2 迁移到 Worker）
 
 ### 1.6 故事详情页 — Agent 对话
 - [x] 聊天式界面，结构化卡片（大纲/角色/章节计划）

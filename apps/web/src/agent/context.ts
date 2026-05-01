@@ -5,6 +5,7 @@ import { getCharactersByNovelId } from '@/db/characters'
 import { getConversationByNovelId } from '@/db/conversations'
 import { getToolDefinitions } from './tools'
 import type { ToolContext } from './tools/types'
+import type { Message } from '@/db/types'
 
 import type { ChatCompletionTool } from 'openai/resources/chat/completions'
 
@@ -61,6 +62,28 @@ function buildStoryStateBlock(outline: unknown, characters: unknown[]): string {
   return block
 }
 
+function findSafeSliceStart(messages: Message[], targetStart: number): number {
+  if (messages.length === 0) return 0
+  const MAX_WALKBACK = 10
+  let i = Math.min(targetStart, messages.length - 1)
+  let walked = 0
+  while (i > 0 && walked < MAX_WALKBACK) {
+    const msg = messages[i]
+    if (msg.role === 'tool') {
+      i--
+      walked++
+      continue
+    }
+    if (msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0) {
+      i--
+      walked++
+      continue
+    }
+    break
+  }
+  return i
+}
+
 export async function buildContext(
   novelId: string,
   userMessage: string,
@@ -85,17 +108,25 @@ export async function buildContext(
     })
   }
 
-  const historyMessages = conversation?.compactedSummary
-    ? [
-        {
-          role: 'system' as const,
-          content: `[对话历史摘要]\n${conversation.compactedSummary.summary}`,
-        },
-        ...(conversation.messages.slice(
-          -6,
-        ) as OpenAI.Chat.Completions.ChatCompletionMessageParam[]),
-      ]
-    : ((conversation?.messages ?? []) as OpenAI.Chat.Completions.ChatCompletionMessageParam[])
+  const rawMessages = conversation?.messages ?? []
+
+  let historyMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+
+  if (conversation?.compactedSummary) {
+    const targetStart = Math.max(0, rawMessages.length - 6)
+    const safeStart = findSafeSliceStart(rawMessages, targetStart)
+    const recentMessages = rawMessages.slice(safeStart)
+    historyMessages = [
+      {
+        role: 'system' as const,
+        content: `[对话历史摘要]\n${conversation.compactedSummary.summary}`,
+      },
+      ...(recentMessages as OpenAI.Chat.Completions.ChatCompletionMessageParam[]),
+    ]
+  } else {
+    historyMessages =
+      rawMessages as OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+  }
 
   const totalTokensUsed =
     conversation?.messages?.reduce(

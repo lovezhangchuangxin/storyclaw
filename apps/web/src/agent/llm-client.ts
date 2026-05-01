@@ -4,11 +4,18 @@ import type { ModelConfig } from '@/db/types'
 export interface LLMClientOptions {
   config: ModelConfig
   onToken?: (token: string) => void
+  onToolArgToken?: (toolName: string, token: string) => void
   signal?: AbortSignal
 }
 
+export interface LLMUsage {
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+}
+
 export function createLLMClient(options: LLMClientOptions) {
-  const { config, onToken, signal } = options
+  const { config, onToken, onToolArgToken, signal } = options
 
   const client = new OpenAI({
     baseURL: config.apiBase,
@@ -36,11 +43,26 @@ export function createLLMClient(options: LLMClientOptions) {
 
       let content = ''
       const toolCalls: Map<number, { id: string; name: string; arguments: string }> = new Map()
+      let usage: LLMUsage | undefined
+      let finishReason: string = 'stop'
 
       for await (const chunk of stream) {
         if (signal?.aborted) break
 
-        const delta = chunk.choices[0]?.delta
+        if (chunk.usage) {
+          usage = {
+            promptTokens: chunk.usage.prompt_tokens,
+            completionTokens: chunk.usage.completion_tokens,
+            totalTokens: chunk.usage.total_tokens,
+          }
+        }
+
+        const choice = chunk.choices?.[0]
+        if (choice?.finish_reason) {
+          finishReason = choice.finish_reason
+        }
+
+        const delta = choice?.delta
 
         if (delta?.content) {
           content += delta.content
@@ -54,8 +76,13 @@ export function createLLMClient(options: LLMClientOptions) {
               if (!tc.id) continue
               toolCalls.set(idx, { id: tc.id, name: tc.function?.name ?? '', arguments: '' })
             }
+            const entry = toolCalls.get(idx)!
+            if (tc.function?.name) entry.name = tc.function.name
             if (tc.function?.arguments) {
-              toolCalls.get(idx)!.arguments += tc.function.arguments
+              entry.arguments += tc.function.arguments
+              if (entry.name && onToolArgToken) {
+                onToolArgToken(entry.name, tc.function.arguments)
+              }
             }
           }
         }
@@ -69,8 +96,8 @@ export function createLLMClient(options: LLMClientOptions) {
       return {
         content,
         toolCalls: mappedToolCalls,
-        usage: undefined,
-        finishReason: 'stop' as const,
+        usage,
+        finishReason,
       }
     },
   }

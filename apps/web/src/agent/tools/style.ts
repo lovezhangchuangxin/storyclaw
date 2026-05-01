@@ -1,5 +1,6 @@
 import type { ToolContext, ToolDefinition } from './types'
 import { getNovelById, updateNovel } from '@/db/novels'
+import { getChapterByIndex } from '@/db/chapters'
 
 export function createStyleTools(context: ToolContext): ToolDefinition[] {
   return [
@@ -46,11 +47,21 @@ export function createStyleTools(context: ToolContext): ToolDefinition[] {
         const novel = await getNovelById(context.novelId)
         if (!novel) return { error: '小说不存在' }
 
+        const index = args.index as number
+        const chapter = await getChapterByIndex(context.novelId, index)
+        if (!chapter) return { error: '章节不存在，请先调用 plan_chapters' }
+
         const style = novel.styleSettings
         return {
           success: true,
-          index: args.index,
-          instruction: `请根据以下文风设定调整该章节：叙事视角=${style.narrativePerspective}，时态=${style.tense}，语言风格=${style.languageStyle}`,
+          chapter: {
+            index: chapter.index,
+            title: chapter.title,
+            wordCount: chapter.wordCount,
+            content: chapter.content,
+          },
+          styleSettings: style,
+          instruction: `请根据以上章节内容和文风设定，重写第 ${index} 章「${chapter.title}」：叙事视角=${style.narrativePerspective || '未指定'}，时态=${style.tense || '未指定'}，语言风格=${style.languageStyle || '未指定'}。请调用 rewrite_chapter 工具提交重写后的完整内容。`,
         }
       },
     },
