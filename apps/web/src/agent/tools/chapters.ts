@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { ToolContext, ToolDefinition } from './types'
 import { getChapterByIndex, saveChapter } from '@/db/chapters'
 import { getOutlineByNovelId, saveOutline } from '@/db/outlines'
@@ -7,6 +8,8 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
   return [
     {
       name: 'plan_chapters',
+      displayName: '规划章节',
+      icon: '📋',
       description: '根据大纲规划章节划分和各章节概要。在大纲确定后调用。',
       parameters: {
         type: 'object',
@@ -27,6 +30,16 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         },
         required: ['chapters'],
       },
+      validationSchema: z.object({
+        chapters: z.array(
+          z.object({
+            title: z.string(),
+            summary: z.string(),
+            estimatedWordCount: z.number(),
+            pointOfView: z.string().optional(),
+          }),
+        ),
+      }),
       async execute(args: Record<string, unknown>) {
         const chapters = args.chapters as Array<Record<string, unknown>>
         const outline = await getOutlineByNovelId(context.novelId)
@@ -69,6 +82,8 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'write_chapter',
+      displayName: '创作章节',
+      icon: '✍️',
       description: '创作指定章节的内容。这是流式输出，用户将看到内容逐步生成。',
       parameters: {
         type: 'object',
@@ -78,6 +93,10 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         },
         required: ['index', 'content'],
       },
+      validationSchema: z.object({
+        index: z.number(),
+        content: z.string(),
+      }),
       async execute(args: Record<string, unknown>) {
         const index = args.index as number
         const content = args.content as string
@@ -94,6 +113,8 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'rewrite_chapter',
+      displayName: '重写章节',
+      icon: '✍️',
       description: '根据用户反馈重写指定章节。',
       parameters: {
         type: 'object',
@@ -103,6 +124,10 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         },
         required: ['index', 'content'],
       },
+      validationSchema: z.object({
+        index: z.number(),
+        content: z.string(),
+      }),
       async execute(args: Record<string, unknown>) {
         const index = args.index as number
         const existing = await getChapterByIndex(context.novelId, index)
@@ -117,12 +142,17 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'get_chapter',
+      displayName: '获取章节',
+      icon: '📋',
       description: '获取指定章节的完整内容。',
       parameters: {
         type: 'object',
         properties: { index: { type: 'number' } },
         required: ['index'],
       },
+      validationSchema: z.object({
+        index: z.number(),
+      }),
       async execute(args: Record<string, unknown>) {
         const chapter = await getChapterByIndex(context.novelId, args.index as number)
         return chapter ?? { error: '章节不存在' }

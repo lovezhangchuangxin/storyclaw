@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { ToolContext, ToolDefinition } from './types'
 import { getOutlineByNovelId, saveOutline } from '@/db/outlines'
 
@@ -5,6 +6,8 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
   return [
     {
       name: 'create_outline',
+      displayName: '创建大纲',
+      icon: '📖',
       description: '创建故事大纲，包含标题、梗概和三幕结构。在首次设计大纲时调用。',
       parameters: {
         type: 'object',
@@ -16,6 +19,12 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
         },
         required: ['premise', 'act1', 'act2', 'act3'],
       },
+      validationSchema: z.object({
+        premise: z.string(),
+        act1: z.string(),
+        act2: z.string(),
+        act3: z.string(),
+      }),
       async execute(args: Record<string, unknown>) {
         const outline = {
           novelId: context.novelId,
@@ -34,6 +43,8 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'update_outline',
+      displayName: '更新大纲',
+      icon: '📖',
       description: '修改已有的大纲内容，可以更新某一幕或整体前提。',
       parameters: {
         type: 'object',
@@ -45,6 +56,12 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
         },
         required: [],
       },
+      validationSchema: z.object({
+        premise: z.string().optional(),
+        act1: z.string().optional(),
+        act2: z.string().optional(),
+        act3: z.string().optional(),
+      }),
       async execute(args: Record<string, unknown>) {
         const existing = await getOutlineByNovelId(context.novelId)
         if (!existing) return { error: '没有找到大纲，请先调用 create_outline' }
@@ -61,8 +78,11 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'get_outline',
+      displayName: '获取大纲',
+      icon: '📖',
       description: '获取当前故事的大纲。',
       parameters: { type: 'object', properties: {}, required: [] },
+      validationSchema: z.object({}),
       async execute() {
         const outline = await getOutlineByNovelId(context.novelId)
         return outline ?? { error: '没有找到大纲' }

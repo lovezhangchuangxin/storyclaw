@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { ToolContext, ToolDefinition } from './types'
 import { getNovelById, updateNovel, createNovel } from '@/db/novels'
 import { getChaptersByNovelId } from '@/db/chapters'
@@ -9,7 +10,10 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
   return [
     {
       name: 'create_story',
-      description: '创建一个新故事。用户描述故事想法后，调用此工具来在系统中创建故事。创建完成后可以使用 generate_title 和 generate_synopsis 来完善信息。',
+      displayName: '创建故事',
+      icon: '📚',
+      description:
+        '创建一个新故事。用户描述故事想法后，调用此工具来在系统中创建故事。创建完成后可以使用 generate_title 和 generate_synopsis 来完善信息。',
       parameters: {
         type: 'object',
         properties: {
@@ -18,6 +22,10 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
         },
         required: ['title', 'synopsis'],
       },
+      validationSchema: z.object({
+        title: z.string(),
+        synopsis: z.string(),
+      }),
       async execute(args: Record<string, unknown>) {
         const existing = await getNovelById(context.novelId)
         if (existing) {
@@ -52,8 +60,11 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
     },
     {
       name: 'get_story_status',
+      displayName: '获取故事状态',
+      icon: '📚',
       description: '获取当前故事的整体状态，包括进度、章节完成情况、角色数量等。',
       parameters: { type: 'object', properties: {}, required: [] },
+      validationSchema: z.object({}),
       async execute() {
         const novel = await getNovelById(context.novelId)
         if (!novel) return { error: '小说不存在' }
@@ -65,6 +76,7 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
         return {
           id: novel.id,
           title: novel.title,
+          synopsis: novel.synopsis,
           status: novel.status,
           currentWordCount: novel.currentWordCount,
           targetWordCount: novel.targetWordCount,
@@ -72,17 +84,23 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
           completedChapters: chapters.filter((c) => c.status === 'completed').length,
           characterCount: characters.length,
           hasOutline: !!outline,
+          styleSettings: novel.styleSettings,
         }
       },
     },
     {
       name: 'generate_title',
+      displayName: '生成标题',
+      icon: '🏷️',
       description: '根据故事内容生成标题，并更新小说标题。',
       parameters: {
         type: 'object',
         properties: { title: { type: 'string', description: '新标题' } },
         required: ['title'],
       },
+      validationSchema: z.object({
+        title: z.string(),
+      }),
       async execute(args: Record<string, unknown>) {
         const novel = await getNovelById(context.novelId)
         if (!novel) return { error: '小说不存在' }
@@ -95,12 +113,17 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
     },
     {
       name: 'generate_synopsis',
+      displayName: '生成简介',
+      icon: '🏷️',
       description: '根据故事内容生成简介，并更新小说简介。',
       parameters: {
         type: 'object',
         properties: { synopsis: { type: 'string', description: '故事简介' } },
         required: ['synopsis'],
       },
+      validationSchema: z.object({
+        synopsis: z.string(),
+      }),
       async execute(args: Record<string, unknown>) {
         const novel = await getNovelById(context.novelId)
         if (!novel) return { error: '小说不存在' }

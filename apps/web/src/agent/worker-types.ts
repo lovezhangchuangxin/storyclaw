@@ -11,6 +11,7 @@ export interface WorkerRequest {
 export interface WorkerResponse {
   type:
     | 'token'
+    | 'reasoning_token'
     | 'tool_stream_token'
     | 'tool_call'
     | 'tool_result'

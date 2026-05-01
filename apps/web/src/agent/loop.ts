@@ -12,14 +12,36 @@ export interface AgentLoopOptions {
   userMessage: string
   modelConfigId?: string
   onToken?: (token: string) => void
-  onToolCall?: (name: string, args: string) => void
-  onToolResult?: (name: string, result: string) => void
-  onToolStreamToken?: (toolName: string, token: string) => void
+  onToolCall?: (toolCallId: string, name: string, args: Record<string, unknown>) => void
+  onToolResult?: (toolCallId: string, name: string, result: string) => void
+  onToolStreamToken?: (toolCallId: string, toolName: string, token: string) => void
+  onReasoningToken?: (token: string) => void
   onError?: (error: string) => void
   signal?: AbortSignal
 }
 
 const MAX_TOOL_ITERATIONS = 15
+
+function repairDanglingToolCalls(messages: Message[]): void {
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i]
+    if (msg.role !== 'tool_call') continue
+
+    const tcId = msg.toolCallId!
+    const hasResult = messages.some(
+      (m, j) => j > i && m.role === 'tool' && m.toolCallId === tcId,
+    )
+    if (!hasResult) {
+      messages.splice(i + 1, 0, {
+        id: crypto.randomUUID(),
+        role: 'tool',
+        content: JSON.stringify({ error: '操作被用户中断' }),
+        toolCallId: tcId,
+        timestamp: Date.now(),
+      })
+    }
+  }
+}
 
 export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]> {
   const {
@@ -29,6 +51,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
     onToolCall,
     onToolResult,
     onToolStreamToken,
+    onReasoningToken,
     onError,
     signal,
   } = options
@@ -44,7 +67,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
   const client = createLLMClient({
     config: modelConfig,
     onToken,
-    onToolArgToken: onToolStreamToken,
+    onReasoningToken,
+    onToolStreamToken,
     signal,
   })
   const toolContext: ToolContext = { novelId }
@@ -62,9 +86,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
   ]
   const newStartIndex = historyMessages.length
 
-  // Build context once — system messages + history + user message + tools
   const ctx = await buildContext(novelId, userMessage, existingConv)
-  // Maintain local OpenAI-format messages for multi-turn conversation within the loop
   const localMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [...ctx.messages]
 
   let iterationCount = 0
@@ -85,9 +107,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
 
       const response = await client.chat(localMessages, ctx.tools)
 
-      // Use Record<string, unknown> instead of ChatCompletionAssistantMessageParam
-      // because the SDK type doesn't include `reasoning_content` — a provider-specific
-      // extension required by thinking models. We add it conditionally, then cast.
+      const tokensUsed = response.usage
+
       const openaiAssistantMsg: Record<string, unknown> = {
         role: 'assistant',
         content: response.content || null,
@@ -102,9 +123,20 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
           function: { name: tc.function.name, arguments: tc.function.arguments },
         }))
       }
-      localMessages.push(openaiAssistantMsg as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam)
+      localMessages.push(
+        openaiAssistantMsg as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam,
+      )
 
-      // Build storage-format Message
+      if (response.reasoningContent) {
+        allMessages.push({
+          id: crypto.randomUUID(),
+          role: 'reasoning',
+          content: response.reasoningContent,
+          reasoningContent: response.reasoningContent,
+          timestamp: Date.now(),
+        })
+      }
+
       const parsedToolCalls = response.toolCalls.map((tc) => {
         let args: Record<string, unknown> = {}
         try {
@@ -115,30 +147,27 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
         return { id: tc.id, name: tc.function.name, arguments: args }
       })
 
-      allMessages.push({
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: response.content,
-        toolCalls: parsedToolCalls.length > 0 ? parsedToolCalls : undefined,
-        // persist reasoning_content so it survives IndexedDB round-trips
-        // and can be passed back to the API in subsequent conversation turns
-        reasoningContent: response.reasoningContent,
-        timestamp: Date.now(),
-        promptTokens: response.usage?.promptTokens,
-        completionTokens: response.usage?.completionTokens,
-      })
-
       if (response.toolCalls.length > 0) {
         for (const tc of response.toolCalls) {
           if (signal?.aborted) break
 
-          onToolCall?.(tc.function.name, tc.function.arguments)
+          const parsedArgs = parsedToolCalls.find((p) => p.id === tc.id)?.arguments ?? {}
+          onToolCall?.(tc.id, tc.function.name, parsedArgs)
+
+          allMessages.push({
+            id: crypto.randomUUID(),
+            role: 'tool_call',
+            content: '',
+            toolCallId: tc.id,
+            toolName: tc.function.name,
+            arguments: parsedArgs,
+            timestamp: Date.now(),
+          })
 
           const result = await executeToolCall(tc.function.name, tc.function.arguments, toolContext)
 
-          onToolResult?.(tc.function.name, result)
+          onToolResult?.(tc.id, tc.function.name, result)
 
-          // Add tool result to local messages so next iteration sees it
           localMessages.push({
             role: 'tool' as const,
             content: result,
@@ -153,7 +182,30 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
             timestamp: Date.now(),
           })
         }
+
+        if (response.content && !signal?.aborted) {
+          allMessages.push({
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: response.content,
+            timestamp: Date.now(),
+            promptTokens: tokensUsed?.promptTokens,
+            completionTokens: tokensUsed?.completionTokens,
+          })
+        }
+
         continue
+      }
+
+      if (response.content) {
+        allMessages.push({
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: response.content,
+          timestamp: Date.now(),
+          promptTokens: tokensUsed?.promptTokens,
+          completionTokens: tokensUsed?.completionTokens,
+        })
       }
 
       break
@@ -177,6 +229,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
       timestamp: Date.now(),
     })
   }
+
+  repairDanglingToolCalls(allMessages)
 
   try {
     await saveConversation({

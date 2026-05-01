@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { ToolContext, ToolDefinition } from './types'
 import {
   getCharactersByNovelId,
@@ -11,6 +12,8 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
   return [
     {
       name: 'create_character',
+      displayName: '创建角色',
+      icon: '👤',
       description: '创建新角色。调用此工具来添加角色到故事中。',
       parameters: {
         type: 'object',
@@ -29,6 +32,15 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         },
         required: ['name', 'role', 'personality'],
       },
+      validationSchema: z.object({
+        name: z.string(),
+        role: z.enum(['protagonist', 'antagonist', 'supporting', 'minor']),
+        appearance: z.string().optional(),
+        personality: z.string(),
+        background: z.string().optional(),
+        motivation: z.string().optional(),
+        arc: z.string().optional(),
+      }),
       async execute(args: Record<string, unknown>) {
         const character: Character = {
           id: crypto.randomUUID(),
@@ -49,6 +61,8 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'update_character',
+      displayName: '更新角色',
+      icon: '👤',
       description: '修改已有角色的信息。',
       parameters: {
         type: 'object',
@@ -64,6 +78,16 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         },
         required: ['characterId'],
       },
+      validationSchema: z.object({
+        characterId: z.string(),
+        name: z.string().optional(),
+        role: z.enum(['protagonist', 'antagonist', 'supporting', 'minor']).optional(),
+        appearance: z.string().optional(),
+        personality: z.string().optional(),
+        background: z.string().optional(),
+        motivation: z.string().optional(),
+        arc: z.string().optional(),
+      }),
       async execute(args: Record<string, unknown>) {
         const existing = await getCharacterById(context.novelId, args.characterId as string)
         if (!existing) return { error: '角色不存在' }
@@ -87,12 +111,17 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'delete_character',
+      displayName: '删除角色',
+      icon: '👤',
       description: '从故事中删除角色。',
       parameters: {
         type: 'object',
         properties: { characterId: { type: 'string', description: '角色ID' } },
         required: ['characterId'],
       },
+      validationSchema: z.object({
+        characterId: z.string(),
+      }),
       async execute(args: Record<string, unknown>) {
         await deleteCharacter(context.novelId, args.characterId as string)
         return { success: true }
@@ -100,12 +129,17 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'get_character',
+      displayName: '获取角色',
+      icon: '👤',
       description: '获取指定角色的详细信息。',
       parameters: {
         type: 'object',
         properties: { characterId: { type: 'string' } },
         required: ['characterId'],
       },
+      validationSchema: z.object({
+        characterId: z.string(),
+      }),
       async execute(args: Record<string, unknown>) {
         const character = await getCharacterById(context.novelId, args.characterId as string)
         return character ?? { error: '角色不存在' }
@@ -113,8 +147,11 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'list_characters',
+      displayName: '列出角色',
+      icon: '👤',
       description: '列出当前故事的所有角色。',
       parameters: { type: 'object', properties: {}, required: [] },
+      validationSchema: z.object({}),
       async execute() {
         const characters = await getCharactersByNovelId(context.novelId)
         return { count: characters.length, characters }

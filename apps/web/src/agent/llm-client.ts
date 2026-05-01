@@ -4,7 +4,8 @@ import type { ModelConfig } from '@/db/types'
 export interface LLMClientOptions {
   config: ModelConfig
   onToken?: (token: string) => void
-  onToolArgToken?: (toolName: string, token: string) => void
+  onToolStreamToken?: (toolCallId: string, toolName: string, token: string) => void
+  onReasoningToken?: (token: string) => void
   signal?: AbortSignal
 }
 
@@ -15,7 +16,7 @@ export interface LLMUsage {
 }
 
 export function createLLMClient(options: LLMClientOptions) {
-  const { config, onToken, onToolArgToken, signal } = options
+  const { config, onToken, onToolStreamToken, onReasoningToken, signal } = options
 
   const client = new OpenAI({
     baseURL: config.apiBase,
@@ -76,6 +77,7 @@ export function createLLMClient(options: LLMClientOptions) {
         // provider-specific extension used by DeepSeek R1 and o1 models.
         if ((delta as any)?.reasoning_content) {
           reasoningContent += (delta as any).reasoning_content
+          onReasoningToken?.((delta as any).reasoning_content)
         }
 
         if (delta?.tool_calls) {
@@ -89,8 +91,8 @@ export function createLLMClient(options: LLMClientOptions) {
             if (tc.function?.name) entry.name = tc.function.name
             if (tc.function?.arguments) {
               entry.arguments += tc.function.arguments
-              if (entry.name && onToolArgToken) {
-                onToolArgToken(entry.name, tc.function.arguments)
+              if (entry.name && onToolStreamToken) {
+                onToolStreamToken(entry.id, entry.name, tc.function.arguments)
               }
             }
           }

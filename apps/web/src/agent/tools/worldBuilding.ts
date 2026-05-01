@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { ToolContext, ToolDefinition } from './types'
 import { getWorldBuildingByNovelId, saveWorldBuilding } from '@/db/worldBuilding'
 import type { WorldBuilding } from '@/db/types'
@@ -6,6 +7,8 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
   return [
     {
       name: 'set_world_building',
+      displayName: '设定世界观',
+      icon: '🌍',
       description: '设定故事的世界观，包括时代背景、地点、规则、文化等。',
       parameters: {
         type: 'object',
@@ -18,6 +21,13 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
         },
         required: ['era', 'location'],
       },
+      validationSchema: z.object({
+        era: z.string(),
+        location: z.string(),
+        rules: z.string().optional(),
+        culture: z.string().optional(),
+        notes: z.string().optional(),
+      }),
       async execute(args: Record<string, unknown>) {
         const wb: WorldBuilding = {
           novelId: context.novelId,
@@ -35,8 +45,11 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
     },
     {
       name: 'get_world_building',
+      displayName: '获取世界观',
+      icon: '🌍',
       description: '获取当前故事的世界观设定。',
       parameters: { type: 'object', properties: {}, required: [] },
+      validationSchema: z.object({}),
       async execute() {
         const wb = await getWorldBuildingByNovelId(context.novelId)
         return wb ?? { error: '世界观设定不存在' }

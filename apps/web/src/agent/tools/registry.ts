@@ -6,8 +6,12 @@ import { createWorldBuildingTools } from './worldBuilding'
 import { createStyleTools } from './style'
 import { createStoryManagementTools } from './story'
 
-export function getAllTools(context: ToolContext): ToolDefinition[] {
-  return [
+let cachedMap: Map<string, ToolDefinition> | null = null
+
+export function getToolRegistry(context: ToolContext): Map<string, ToolDefinition> {
+  if (cachedMap) return cachedMap
+
+  const tools: ToolDefinition[] = [
     ...createOutlineTools(context),
     ...createCharacterTools(context),
     ...createChapterTools(context),
@@ -15,4 +19,12 @@ export function getAllTools(context: ToolContext): ToolDefinition[] {
     ...createStyleTools(context),
     ...createStoryManagementTools(context),
   ]
+
+  cachedMap = new Map(tools.map((t) => [t.name, t]))
+  return cachedMap
+}
+
+/** Reset cache (useful for testing or when context changes) */
+export function clearToolRegistryCache(): void {
+  cachedMap = null
 }

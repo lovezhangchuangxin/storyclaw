@@ -1,7 +1,4 @@
 import type OpenAI from 'openai'
-import { getNovelById } from '@/db/novels'
-import { getOutlineByNovelId } from '@/db/outlines'
-import { getCharactersByNovelId } from '@/db/characters'
 import { getConversationByNovelId } from '@/db/conversations'
 import { getToolDefinitions } from './tools'
 import type { ToolContext } from './tools/types'
@@ -24,42 +21,16 @@ function buildPersonaPrompt(): string {
 3. 根据用户反馈调整内容
 4. 保持文风一致，角色行为符合设定
 
+工作流程：
+- 收到用户请求后，先调用 get_outline, list_characters, get_story_status, get_world_building, get_style 等工具了解当前故事状态
+- 不要假设故事状态，必须通过工具读取最新数据
+- 根据读取到的实际状态，再决定如何行动
+
 创作原则：
 - 专注于中短篇小说，控制节奏和篇幅
 - 所有故事内容通过工具调用来完成，不要直接输出长篇故事文本到对话中
 - 创作章节时，先通过 write_chapter 工具提交内容
 - 主动使用工具，不要让用户催促`
-}
-
-function buildStoryStateBlock(outline: unknown, characters: unknown[]): string {
-  let block = '[STORY STATE]\n'
-
-  if (outline) {
-    const o = outline as {
-      premise: string
-      chapterPlan: Array<{ index: number; title: string; status: string; summary: string }>
-    }
-    block += `\n大纲: ${o.premise}\n`
-    if (o.chapterPlan?.length) {
-      const completed = o.chapterPlan.filter((c) => c.status === 'completed').length
-      block += `章节规划: ${completed}/${o.chapterPlan.length} 章完成\n`
-      block += `最近章节: ${o.chapterPlan
-        .slice(-3)
-        .map((c) => `Ch ${c.index} "${c.title}": ${c.summary.slice(0, 50)}`)
-        .join(' | ')}\n`
-    }
-  }
-
-  if (characters?.length) {
-    const top5 = characters.slice(0, 5)
-    block += `\n角色 (${characters.length}个):\n`
-    for (const c of top5) {
-      const ch = c as { name: string; role: string; personality: string }
-      block += `- ${ch.name}(${ch.role}): ${ch.personality.slice(0, 80)}\n`
-    }
-  }
-
-  return block
 }
 
 function findSafeSliceStart(messages: Message[], targetStart: number): number {
@@ -69,12 +40,7 @@ function findSafeSliceStart(messages: Message[], targetStart: number): number {
   let walked = 0
   while (i > 0 && walked < MAX_WALKBACK) {
     const msg = messages[i]
-    if (msg.role === 'tool') {
-      i--
-      walked++
-      continue
-    }
-    if (msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0) {
+    if (msg.role === 'tool' || msg.role === 'tool_call' || msg.role === 'reasoning') {
       i--
       walked++
       continue
@@ -84,42 +50,79 @@ function findSafeSliceStart(messages: Message[], targetStart: number): number {
   return i
 }
 
-// Convert a stored Message (camelCase, toolCalls as objects) to the
-// OpenAI API format (snake_case, tool_calls with JSON-stringified arguments).
-// Also ensures tool messages contain tool_call_id, and assistant messages
-// include reasoning_content so thinking models don't reject subsequent requests.
-function convertToApiMessage(msg: Message): OpenAI.Chat.Completions.ChatCompletionMessageParam {
-  switch (msg.role) {
-    case 'system':
-    case 'user':
-      return { role: msg.role, content: msg.content }
-    case 'assistant': {
-      const m: Record<string, unknown> = {
-        role: 'assistant',
-        content: msg.content || null,
-      }
-      if (msg.toolCalls?.length) {
-        m.tool_calls = msg.toolCalls.map((tc) => ({
-          id: tc.id,
-          type: 'function' as const,
-          function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
-        }))
-      }
-      if (msg.reasoningContent) {
-        m.reasoning_content = msg.reasoningContent
-      }
-      return m as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam
-    }
-    case 'tool':
-      // toolCallId (camelCase, our storage) → tool_call_id (snake_case, OpenAI API)
-      return { role: 'tool', content: msg.content, tool_call_id: msg.toolCallId ?? '' }
-    default:
-      return { role: 'user', content: msg.content }
-  }
-}
+function convertToApiMessages(messages: Message[]): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
+  const result: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = []
 
-function convertMessagesToApiFormat(messages: Message[]): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
-  return messages.map(convertToApiMessage)
+  let pendingReasoning: string | undefined
+  let pendingToolCalls: Array<{ id: string; name: string; args: string }> = []
+
+  function flushToolGroup(): void {
+    if (pendingToolCalls.length === 0) return
+
+    const assistantMsg: Record<string, unknown> = {
+      role: 'assistant',
+      content: null,
+    }
+    if (pendingReasoning) {
+      assistantMsg.reasoning_content = pendingReasoning
+      pendingReasoning = undefined
+    }
+    assistantMsg.tool_calls = pendingToolCalls.map((tc) => ({
+      id: tc.id,
+      type: 'function' as const,
+      function: { name: tc.name, arguments: tc.args },
+    }))
+    result.push(
+      assistantMsg as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam,
+    )
+
+    for (const tc of pendingToolCalls) {
+      const toolMsg = messages.find(
+        (m) => m.role === 'tool' && m.toolCallId === tc.id,
+      )
+      result.push({
+        role: 'tool',
+        content: toolMsg?.content ?? JSON.stringify({ error: '工具结果缺失' }),
+        tool_call_id: tc.id,
+      })
+    }
+
+    pendingToolCalls = []
+  }
+
+  for (const msg of messages) {
+    switch (msg.role) {
+      case 'system':
+        result.push({ role: 'system', content: msg.content })
+        break
+      case 'user':
+        flushToolGroup()
+        pendingReasoning = undefined
+        result.push({ role: 'user', content: msg.content })
+        break
+      case 'reasoning':
+        pendingReasoning = msg.content
+        break
+      case 'tool_call':
+        pendingToolCalls.push({
+          id: msg.toolCallId!,
+          name: msg.toolName!,
+          args: JSON.stringify(msg.arguments),
+        })
+        break
+      case 'tool':
+        break
+      case 'assistant':
+        flushToolGroup()
+        pendingReasoning = undefined
+        result.push({ role: 'assistant', content: msg.content || null })
+        break
+    }
+  }
+
+  flushToolGroup()
+
+  return result
 }
 
 export async function buildContext(
@@ -127,9 +130,6 @@ export async function buildContext(
   userMessage: string,
   existingConversation?: Conversation,
 ): Promise<ContextBuildResult> {
-  const novel = await getNovelById(novelId)
-  const outline = await getOutlineByNovelId(novelId)
-  const characters = await getCharactersByNovelId(novelId)
   const conversation = existingConversation ?? (await getConversationByNovelId(novelId))
 
   const toolContext: ToolContext = { novelId }
@@ -137,15 +137,7 @@ export async function buildContext(
 
   const systemMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: 'system', content: buildPersonaPrompt() },
-    { role: 'system', content: buildStoryStateBlock(outline, characters) },
   ]
-
-  if (novel) {
-    systemMessages.push({
-      role: 'system',
-      content: `文风设定: 叙事视角=${novel.styleSettings.narrativePerspective || '未指定'}，时态=${novel.styleSettings.tense || '未指定'}，语言风格=${novel.styleSettings.languageStyle || '未指定'}`,
-    })
-  }
 
   const rawMessages = conversation?.messages ?? []
 
@@ -160,10 +152,10 @@ export async function buildContext(
         role: 'system' as const,
         content: `[对话历史摘要]\n${conversation.compactedSummary.summary}`,
       },
-      ...convertMessagesToApiFormat(recentMessages),
+      ...convertToApiMessages(recentMessages),
     ]
   } else {
-    historyMessages = convertMessagesToApiFormat(rawMessages)
+    historyMessages = convertToApiMessages(rawMessages)
   }
 
   const totalTokensUsed =

@@ -126,17 +126,14 @@ export interface Conversation {
 
 export interface Message {
   id: string
-  role: 'system' | 'user' | 'assistant' | 'tool'
+  role: 'system' | 'user' | 'assistant' | 'tool_call' | 'tool' | 'reasoning'
   content: string
-  toolCalls?: ToolCall[]
+  // tool-call identity (tool_call & tool roles)
   toolCallId?: string
-  // name of the tool this result belongs to (tool-role messages only).
-  // used by the chat UI to display a human-readable label and icon.
   toolName?: string
-  // reasoningContent is required by thinking models (DeepSeek R1, OpenAI o1).
-  // The API demands the assistant's reasoning_content be passed back in subsequent
-  // requests, so we must persist it across conversation rounds. Normal models
-  // don't emit this field — it stays undefined.
+  // parsed tool arguments (tool_call role only)
+  arguments?: Record<string, unknown>
+  // persisted reasoning for API round-trips (reasoning role)
   reasoningContent?: string
   timestamp: number
   promptTokens?: number
