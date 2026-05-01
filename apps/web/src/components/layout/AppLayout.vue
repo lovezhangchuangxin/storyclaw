@@ -72,6 +72,13 @@ function closeMobile() {
       <!-- Top bar -->
       <header class="flex items-center h-12 shrink-0 border-b px-3 gap-3 bg-background">
         <button
+          aria-label="打开导航菜单"
+          class="size-8 flex items-center justify-center rounded-md hover:bg-muted md:hidden"
+          @click="mobileOpen = true"
+        >
+          <Menu class="size-5" aria-hidden="true" />
+        </button>
+        <button
           v-if="showBack"
           aria-label="返回"
           class="size-8 flex items-center justify-center rounded-md hover:bg-muted"
@@ -79,15 +86,6 @@ function closeMobile() {
         >
           <ArrowLeft class="size-5" aria-hidden="true" />
         </button>
-        <template v-else>
-          <button
-            aria-label="打开导航菜单"
-            class="size-8 flex items-center justify-center rounded-md hover:bg-muted md:hidden"
-            @click="mobileOpen = true"
-          >
-            <Menu class="size-5" aria-hidden="true" />
-          </button>
-        </template>
         <h1 class="text-sm font-semibold truncate">{{ title }}</h1>
         <div class="flex-1" />
         <component :is="topbarExtra" v-if="topbarExtra" />
