@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, inject, h, onMounted, onUnmounted } from 'vue'
+import { ref, computed, inject, h, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { MessageCircle, BookOpen } from 'lucide-vue-next'
 import ReaderView from '@/components/reader/ReaderView.vue'
 import ReaderControls from '@/components/reader/ReaderControls.vue'
 import AgentChat from './components/AgentChat.vue'
+import { getChaptersByNovelId } from '@/db/chapters'
 import type { ReaderSettings } from '@/components/reader/types'
+import type { Chapter } from '@/db/types'
 import type { Component } from 'vue'
 
 const route = useRoute()
@@ -46,14 +48,26 @@ const settings = ref<ReaderSettings>({
   autoScrollSpeed: 50,
 })
 
-// Placeholder data — will be replaced with IndexedDB reads
-const currentChapter = computed(() => ({
-  index: 0,
-  title: '第一章',
-  content: '<p>故事内容加载中...</p>',
-}))
+const chapters = ref<Chapter[]>([])
+const chapterIndex = ref(0)
 
-const totalChapters = 1
+const currentChapter = computed(() => chapters.value[chapterIndex.value])
+const totalChapters = computed(() => chapters.value.length)
+
+watch(storyId, async (id) => {
+  if (!id) return
+  chapters.value = await getChaptersByNovelId(id)
+  chapters.value.sort((a, b) => a.index - b.index)
+  chapterIndex.value = 0
+}, { immediate: true })
+
+function prevChapter() {
+  if (chapterIndex.value > 0) chapterIndex.value--
+}
+
+function nextChapter() {
+  if (chapterIndex.value < chapters.value.length - 1) chapterIndex.value++
+}
 
 function onShowControls() {
   showControls.value = !showControls.value
@@ -65,30 +79,34 @@ function updateSettings(s: ReaderSettings) {
 </script>
 
 <template>
-    <div class="h-full flex flex-col overflow-hidden">
-    <!-- Reader mode -->
-    <ReaderView
-      v-if="mode === 'reader'"
-      :content="currentChapter.content"
-      :title="currentChapter.title"
-      :chapter-index="currentChapter.index"
-      :total-chapters="totalChapters"
-      :settings="settings"
-      @prev-chapter="() => {}"
-      @next-chapter="() => {}"
-      @show-controls="onShowControls"
-      @update-progress="() => {}"
-    />
-
-    <!-- Agent mode -->
-    <AgentChat v-else :novel-id="storyId" />
+  <div class="h-full flex flex-col overflow-hidden">
+    <KeepAlive>
+      <ReaderView
+        v-if="mode === 'reader'"
+        key="reader"
+        :content="currentChapter?.content ?? '<p>暂无内容</p>'"
+        :title="currentChapter?.title ?? '无标题'"
+        :chapter-index="chapterIndex"
+        :total-chapters="totalChapters"
+        :settings="settings"
+        @prev-chapter="prevChapter"
+        @next-chapter="nextChapter"
+        @show-controls="onShowControls"
+        @update-progress="() => {}"
+      />
+      <AgentChat
+        v-else
+        key="agent"
+        :novel-id="storyId"
+      />
+    </KeepAlive>
 
     <!-- Bottom controls sheet -->
     <Transition name="controls-slide">
       <ReaderControls
         v-if="mode === 'reader' && showControls"
         :settings="settings"
-        :chapter-index="currentChapter.index"
+        :chapter-index="chapterIndex"
         :total-chapters="totalChapters"
         @update:settings="updateSettings"
         @close="showControls = false"

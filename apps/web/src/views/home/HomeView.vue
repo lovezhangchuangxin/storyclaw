@@ -61,6 +61,10 @@ function openStory(id: string) {
   router.push(`/story/${id}`)
 }
 
+function startNewStory() {
+  router.push(`/story/${window.crypto.randomUUID()}?new=true`)
+}
+
 async function handleDelete(novel: Novel) {
   if (!window.confirm(`确定要删除《${novel.title || '未命名故事'}》吗？此操作不可撤销。`)) return
   try {
@@ -94,12 +98,12 @@ async function handleDelete(novel: Novel) {
       <section class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center">
         <h3 class="text-sm font-medium mb-1">加载失败</h3>
         <p class="text-xs text-muted-foreground mb-4">请检查后重试</p>
-        <a
+        <button
           class="text-sm text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer"
           @click="router.go(0)"
         >
           重试
-        </a>
+        </button>
       </section>
     </template>
 
@@ -109,13 +113,13 @@ async function handleDelete(novel: Novel) {
         <BookOpen class="size-12 mb-4 text-muted-foreground/30" />
         <h3 class="text-sm font-medium mb-1">还没有故事</h3>
         <p class="text-xs text-muted-foreground mb-6">创建一个新故事，开始你的创作之旅</p>
-        <a
-          class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors cursor-pointer no-underline"
-          @click="router.push(`/story/${crypto.randomUUID()}?new=true`)"
+        <button
+          class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors cursor-pointer"
+          @click="startNewStory"
         >
           <Plus class="size-4" />
           开始第一个故事
-        </a>
+        </button>
       </section>
     </template>
 

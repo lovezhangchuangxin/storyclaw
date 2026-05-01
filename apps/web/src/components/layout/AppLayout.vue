@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed, provide } from 'vue'
+import { ref, watch, computed, provide, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Menu, ArrowLeft } from 'lucide-vue-next'
 import type { Component } from 'vue'
@@ -10,10 +10,10 @@ const router = useRouter()
 const collapsed = ref(loadCollapsed())
 const mobileOpen = ref(false)
 
-const title = (route.meta.title as string) ?? ''
+const title = computed(() => (route.meta.title as string) ?? '')
 const showBack = computed(() => !!route.meta.back)
 
-const topbarExtra = ref<Component | null>(null)
+const topbarExtra = shallowRef<Component | null>(null)
 provide('setTopbarExtra', (c: Component | null) => { topbarExtra.value = c })
 
 function loadCollapsed(): boolean {

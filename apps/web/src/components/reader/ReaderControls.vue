@@ -11,6 +11,12 @@ import {
 import { PRESET_THEMES, FONT_OPTIONS } from './types'
 import type { ReaderSettings } from './types'
 
+const scrollOptions = [
+  { value: 'scroll' as const, label: '滚动' },
+  { value: 'paged' as const, label: '翻页' },
+  { value: 'auto' as const, label: '自动' },
+]
+
 const props = defineProps<{
   settings: ReaderSettings
   chapterIndex: number
@@ -175,6 +181,47 @@ function applyTheme(themeId: string) {
           @update:model-value="
             (v) => {
               if (v) updateSetting('paragraphSpacing', v[0])
+            }
+          "
+        />
+      </div>
+
+      <!-- Scroll mode -->
+      <div>
+        <p class="text-xs font-medium text-muted-foreground mb-2.5">阅读模式</p>
+        <div class="flex rounded-lg border border-input overflow-hidden">
+          <button
+            v-for="opt in scrollOptions"
+            :key="opt.value"
+            class="flex-1 px-3 py-1.5 text-xs font-medium transition-colors"
+            :class="
+              settings.scrollMode === opt.value
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-transparent text-muted-foreground hover:bg-muted'
+            "
+            @click="updateSetting('scrollMode', opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Auto scroll speed (only in auto mode) -->
+      <div v-if="settings.scrollMode === 'auto'">
+        <div class="flex items-center justify-between mb-2.5">
+          <p class="text-xs font-medium text-muted-foreground">自动速度</p>
+          <span class="text-xs tabular-nums text-muted-foreground">
+            {{ settings.autoScrollSpeed }}
+          </span>
+        </div>
+        <Slider
+          :model-value="[settings.autoScrollSpeed]"
+          :min="10"
+          :max="200"
+          :step="10"
+          @update:model-value="
+            (v) => {
+              if (v) updateSetting('autoScrollSpeed', v[0])
             }
           "
         />

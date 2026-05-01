@@ -12,23 +12,25 @@ const emit = defineEmits<{
   navigate: []
 }>()
 
+const CREATE_PATH = '__create__'
+
 const router = useRouter()
 const route = useRoute()
 
 const items = [
   { path: '/', label: '书架', icon: BookOpen },
-  { path: '__create__', label: '创作', icon: Pen },
+  { path: CREATE_PATH, label: '创作', icon: Pen },
   { path: '/my', label: '我的', icon: User },
 ]
 
 function isActive(path: string) {
   if (path === '/') return route.path === '/'
-  if (path === '__create__') return route.path.startsWith('/story')
+  if (path === CREATE_PATH) return route.path.startsWith('/story')
   return route.path.startsWith(path)
 }
 
 function navigate(path: string) {
-  if (path === '__create__') {
+  if (path === CREATE_PATH) {
     router.push(`/story/${crypto.randomUUID()}?new=true`)
   } else {
     router.push(path)

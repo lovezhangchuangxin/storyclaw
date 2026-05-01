@@ -37,7 +37,6 @@ storyclaw/
 │   └── src/
 │       ├── views/           # 页面组件，按页面分目录，每目录含 components/ 放页面专属组件
 │       │   ├── home/        # 书架页
-│       │   ├── create/      # 创作入口页
 │       │   ├── my/          # 我的/设置页
 │       │   ├── story/       # 故事详情（阅读 + Agent 对话）
 │       │   └── settings/    # 模型配置等

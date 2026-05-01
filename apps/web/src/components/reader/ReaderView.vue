@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import DOMPurify from 'dompurify'
 import { PRESET_THEMES } from './types'
 import type { ReaderSettings } from './types'
 
@@ -36,11 +37,6 @@ const readerStyle = computed(() => ({
   '--reader-text': props.settings.textColor,
   '--reader-bg': props.settings.backgroundColor,
   '--reader-accent': accentColor.value,
-  fontFamily: props.settings.fontFamily,
-  fontSize: `${props.settings.fontSize}px`,
-  lineHeight: props.settings.lineHeight,
-  color: props.settings.textColor,
-  background: props.settings.backgroundColor,
 }))
 
 const progressPercent = computed(() =>
@@ -128,7 +124,7 @@ defineExpose({ scrollToPos })
           lineHeight: 'inherit',
           color: 'inherit',
         }"
-        v-html="content"
+        v-html="DOMPurify.sanitize(content)"
       />
 
       <!-- Chapter navigation -->

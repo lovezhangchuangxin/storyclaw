@@ -200,4 +200,13 @@
     @apply bg-background text-foreground;
     @apply font-sans;
   }
+
+  /* Remove ring glow on all form inputs */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  button:focus-visible {
+    box-shadow: none !important;
+    outline: none;
+  }
 }
