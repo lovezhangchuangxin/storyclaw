@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { BookOpen, Plus, Trash2 } from 'lucide-vue-next'
-import { getAllNovels, deleteNovel } from '@/db/novels'
+import { BookOpen, Plus, Trash2, Search } from 'lucide-vue-next'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { getAllNovels, deleteNovel, createNovel } from '@/db/novels'
 import type { Novel } from '@/db/types'
+import { relativeTime } from '@/lib/time'
 import { toast } from 'vue-sonner'
 
 const COVER_COLORS = [
@@ -46,10 +49,22 @@ const router = useRouter()
 const novels = ref<Novel[]>([])
 const loading = ref(true)
 const error = ref(false)
+const searchQuery = ref('')
+
+const filteredNovels = computed(() => {
+  if (!searchQuery.value.trim()) return novels.value
+  const q = searchQuery.value.toLowerCase()
+  return novels.value.filter(
+    (n) =>
+      n.title.toLowerCase().includes(q) ||
+      n.synopsis.toLowerCase().includes(q),
+  )
+})
 
 onMounted(async () => {
   try {
-    novels.value = await getAllNovels()
+    const all = await getAllNovels()
+    novels.value = all.sort((a, b) => b.updatedAt - a.updatedAt)
   } catch {
     error.value = true
   } finally {
@@ -57,12 +72,34 @@ onMounted(async () => {
   }
 })
 
-function openStory(id: string) {
-  router.push(`/story/${id}`)
+function openStory(novel: Novel) {
+  if (novel.status === 'drafting' && !novel.synopsis) {
+    router.push(`/story/${novel.id}?tab=agent`)
+  } else {
+    router.push(`/story/${novel.id}`)
+  }
 }
 
-function startNewStory() {
-  router.push(`/story/${window.crypto.randomUUID()}?new=true`)
+async function startNewStory() {
+  const id = crypto.randomUUID()
+  await createNovel({
+    id,
+    title: '新故事',
+    synopsis: '',
+    genre: '',
+    targetWordCount: 0,
+    currentWordCount: 0,
+    status: 'drafting',
+    styleSettings: {
+      narrativePerspective: '',
+      tense: '',
+      languageStyle: '',
+    },
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    version: 1,
+  })
+  router.push(`/story/${id}?tab=agent`)
 }
 
 async function handleDelete(novel: Novel) {
@@ -107,35 +144,61 @@ async function handleDelete(novel: Novel) {
       </section>
     </template>
 
-    <!-- Empty State -->
-    <template v-else-if="novels.length === 0">
-      <section class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center">
-        <BookOpen class="size-12 mb-4 text-muted-foreground/30" />
-        <h3 class="text-sm font-medium mb-1">还没有故事</h3>
-        <p class="text-xs text-muted-foreground mb-6">创建一个新故事，开始你的创作之旅</p>
-        <button
-          class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors cursor-pointer"
+    <!-- Loaded State -->
+    <template v-else>
+      <!-- Toolbar: search + create button -->
+      <div class="flex items-center gap-2">
+        <div class="relative flex-1">
+          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+          <Input
+            v-model="searchQuery"
+            placeholder="搜索小说标题或简介..."
+            class="pl-8"
+          />
+        </div>
+        <Button
+          v-if="novels.length > 0"
+          size="sm"
+          class="shrink-0 gap-1.5"
           @click="startNewStory"
         >
           <Plus class="size-4" />
-          开始第一个故事
-        </button>
-      </section>
-    </template>
+          创建
+        </Button>
+      </div>
 
-    <!-- Novel Grid -->
-    <template v-else>
-      <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Empty State (no novels at all) -->
+      <template v-if="novels.length === 0">
+        <section class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center">
+          <BookOpen class="size-12 mb-4 text-muted-foreground/30" />
+          <h3 class="text-sm font-medium mb-1">还没有故事</h3>
+          <p class="text-xs text-muted-foreground mb-6">创建一个新故事，开始你的创作之旅</p>
+          <Button @click="startNewStory">
+            <Plus class="size-4" />
+            开始第一个故事
+          </Button>
+        </section>
+      </template>
+
+      <!-- Empty search results -->
+      <template v-else-if="filteredNovels.length === 0">
+        <section class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center">
+          <Search class="size-8 mb-3 text-muted-foreground/30" />
+          <p class="text-sm text-muted-foreground">没有找到匹配的小说</p>
+        </section>
+      </template>
+
+      <!-- Novel Grid -->
+      <section v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
-          v-for="novel in novels"
+          v-for="novel in filteredNovels"
           :key="novel.id"
           class="relative rounded-xl border bg-card text-left overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/30 group cursor-pointer"
           role="button"
           tabindex="0"
-          @click="openStory(novel.id)"
-          @keydown.enter="openStory(novel.id)"
+          @click="openStory(novel)"
+          @keydown.enter="openStory(novel)"
         >
-          <!-- Content -->
           <div class="p-4">
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2 min-w-0">
@@ -163,6 +226,9 @@ async function handleDelete(novel: Novel) {
               >
                 {{ statusLabel(novel.status) }}
               </span>
+            </div>
+            <div class="mt-1 text-[11px] text-muted-foreground/60">
+              {{ relativeTime(novel.updatedAt) }}
             </div>
           </div>
         </div>

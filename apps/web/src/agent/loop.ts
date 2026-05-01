@@ -5,7 +5,7 @@ import { executeToolCall } from './tools'
 import type { ToolContext } from './tools/types'
 import type { Message } from '@/db/types'
 import { getConfig } from '@/db/config'
-import { saveConversation } from '@/db/conversations'
+import { getConversationByNovelId, saveConversation } from '@/db/conversations'
 
 export interface AgentLoopOptions {
   novelId: string
@@ -49,7 +49,10 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
   })
   const toolContext: ToolContext = { novelId }
 
+  const existingConv = await getConversationByNovelId(novelId)
+  const historyMessages = existingConv?.messages ?? []
   const allMessages: Message[] = [
+    ...historyMessages,
     {
       id: crypto.randomUUID(),
       role: 'user',
@@ -57,9 +60,10 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
       timestamp: Date.now(),
     },
   ]
+  const newStartIndex = historyMessages.length
 
   // Build context once — system messages + history + user message + tools
-  const ctx = await buildContext(novelId, userMessage)
+  const ctx = await buildContext(novelId, userMessage, existingConv)
   // Maintain local OpenAI-format messages for multi-turn conversation within the loop
   const localMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [...ctx.messages]
 
@@ -176,5 +180,5 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
     // silently fail — conversation save is best-effort
   }
 
-  return allMessages
+  return allMessages.slice(newStartIndex)
 }

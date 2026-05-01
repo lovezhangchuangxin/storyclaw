@@ -20,7 +20,18 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
       },
       async execute(args: Record<string, unknown>) {
         const existing = await getNovelById(context.novelId)
-        if (existing) return { success: true, id: existing.id, title: existing.title }
+        if (existing) {
+          const changed =
+            (args.title && args.title !== existing.title) ||
+            (args.synopsis && args.synopsis !== existing.synopsis)
+          if (changed) {
+            if (args.title) existing.title = args.title as string
+            if (args.synopsis) existing.synopsis = args.synopsis as string
+            existing.updatedAt = Date.now()
+            await updateNovel(existing)
+          }
+          return { success: true, id: existing.id, title: existing.title }
+        }
 
         const novel: Novel = {
           id: context.novelId,

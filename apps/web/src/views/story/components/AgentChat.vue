@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { runAgentLoop } from '@/agent/loop'
 import { getConfig } from '@/db/config'
+import { getConversationByNovelId } from '@/db/conversations'
 import { modelLabel } from '@/lib/model-utils'
 import type { Message, ModelConfig } from '@/db/types'
 
@@ -41,7 +42,13 @@ async function loadModels() {
   selectedModelId.value = config.defaultModelId || config.models[0]?.id || ''
 }
 
-onMounted(loadModels)
+onMounted(async () => {
+  await loadModels()
+  const conv = await getConversationByNovelId(props.novelId)
+  if (conv?.messages) {
+    messages.value = conv.messages
+  }
+})
 
 function pushMessage(msg: Message) {
   messages.value.push(msg)

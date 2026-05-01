@@ -14,7 +14,7 @@ const route = useRoute()
 const storyId = computed(() => route.params.id as string)
 
 const mode = ref<'reader' | 'agent'>(
-  route.query.new !== undefined ? 'agent' : 'reader'
+  route.query.tab === 'agent' ? 'agent' : 'reader'
 )
 const showControls = ref(false)
 

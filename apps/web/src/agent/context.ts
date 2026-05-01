@@ -5,7 +5,7 @@ import { getCharactersByNovelId } from '@/db/characters'
 import { getConversationByNovelId } from '@/db/conversations'
 import { getToolDefinitions } from './tools'
 import type { ToolContext } from './tools/types'
-import type { Message } from '@/db/types'
+import type { Conversation, Message } from '@/db/types'
 
 import type { ChatCompletionTool } from 'openai/resources/chat/completions'
 
@@ -87,11 +87,12 @@ function findSafeSliceStart(messages: Message[], targetStart: number): number {
 export async function buildContext(
   novelId: string,
   userMessage: string,
+  existingConversation?: Conversation,
 ): Promise<ContextBuildResult> {
   const novel = await getNovelById(novelId)
   const outline = await getOutlineByNovelId(novelId)
   const characters = await getCharactersByNovelId(novelId)
-  const conversation = await getConversationByNovelId(novelId)
+  const conversation = existingConversation ?? (await getConversationByNovelId(novelId))
 
   const toolContext: ToolContext = { novelId }
   const tools = getToolDefinitions(toolContext)

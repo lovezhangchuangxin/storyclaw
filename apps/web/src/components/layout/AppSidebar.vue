@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { BookOpen, Pen, User, PanelLeftClose, PanelLeft } from 'lucide-vue-next'
+import { BookOpen, User, PanelLeftClose, PanelLeft } from 'lucide-vue-next'
 
 const props = defineProps<{
   collapsed: boolean
@@ -12,29 +12,21 @@ const emit = defineEmits<{
   navigate: []
 }>()
 
-const CREATE_PATH = '__create__'
-
 const router = useRouter()
 const route = useRoute()
 
 const items = [
   { path: '/', label: '书架', icon: BookOpen },
-  { path: CREATE_PATH, label: '创作', icon: Pen },
   { path: '/my', label: '我的', icon: User },
 ]
 
 function isActive(path: string) {
   if (path === '/') return route.path === '/'
-  if (path === CREATE_PATH) return route.path.startsWith('/story')
   return route.path.startsWith(path)
 }
 
 function navigate(path: string) {
-  if (path === CREATE_PATH) {
-    router.push(`/story/${crypto.randomUUID()}?new=true`)
-  } else {
-    router.push(path)
-  }
+  router.push(path)
   emit('navigate')
 }
 </script>
