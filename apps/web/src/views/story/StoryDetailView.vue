@@ -11,9 +11,10 @@ import type { Component } from 'vue'
 const route = useRoute()
 const storyId = computed(() => route.params.id as string)
 
-const mode = ref<'reader' | 'agent'>('reader')
+const mode = ref<'reader' | 'agent'>(
+  route.query.new !== undefined ? 'agent' : 'reader'
+)
 const showControls = ref(false)
-const showChapters = ref(false)
 
 const setTopbarExtra = inject<(c: Component | null) => void>('setTopbarExtra')
 
@@ -64,7 +65,7 @@ function updateSettings(s: ReaderSettings) {
 </script>
 
 <template>
-  <div class="flex flex-col h-dvh">
+    <div class="h-full flex flex-col overflow-hidden">
     <!-- Reader mode -->
     <ReaderView
       v-if="mode === 'reader'"
@@ -83,14 +84,27 @@ function updateSettings(s: ReaderSettings) {
     <AgentChat v-else :novel-id="storyId" />
 
     <!-- Bottom controls sheet -->
-    <ReaderControls
-      v-if="mode === 'reader' && showControls"
-      :settings="settings"
-      :chapter-index="currentChapter.index"
-      :total-chapters="totalChapters"
-      @update:settings="updateSettings"
-      @open-chapters="showChapters = true"
-      @close="showControls = false"
-    />
+    <Transition name="controls-slide">
+      <ReaderControls
+        v-if="mode === 'reader' && showControls"
+        :settings="settings"
+        :chapter-index="currentChapter.index"
+        :total-chapters="totalChapters"
+        @update:settings="updateSettings"
+        @close="showControls = false"
+      />
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.controls-slide-enter-active,
+.controls-slide-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.controls-slide-enter-from,
+.controls-slide-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+</style>

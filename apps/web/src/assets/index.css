@@ -94,7 +94,6 @@
   --reader-font-size: 18px;
   --reader-line-height: 1.8;
   --reader-paragraph-spacing: 1em;
-  --reader-max-width: 680px;
 }
 
 .dark {
@@ -177,8 +176,6 @@
 
 /* Reader utility classes */
 .reader {
-  max-width: var(--reader-max-width);
-  margin-inline: auto;
   background-color: var(--reader-bg);
   color: var(--reader-text);
   font-family: var(--reader-font);

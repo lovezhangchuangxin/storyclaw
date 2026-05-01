@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { List, Palette, Type, ChevronUp } from 'lucide-vue-next'
+import { List, Check } from 'lucide-vue-next'
 import { Slider } from '@/components/ui/slider'
 import {
   Select,
@@ -23,7 +23,10 @@ const emit = defineEmits<{
   close: []
 }>()
 
-function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSettings[K]) {
+function updateSetting<K extends keyof ReaderSettings>(
+  key: K,
+  value: ReaderSettings[K],
+) {
   emit('update:settings', { ...props.settings, [key]: value })
 }
 
@@ -40,49 +43,57 @@ function applyTheme(themeId: string) {
 </script>
 
 <template>
-  <div class="border-t bg-background rounded-t-xl shadow-lg">
-    <!-- Handle bar -->
+  <div class="border-t bg-background rounded-t-2xl shadow-lg">
+    <!-- Drag handle -->
     <div class="flex justify-center pt-2 pb-1">
-      <button class="size-8 flex items-center justify-center" @click="emit('close')">
-        <ChevronUp class="size-4 text-muted-foreground" />
-      </button>
-    </div>
-
-    <!-- Chapter info row -->
-    <div class="flex items-center justify-between px-4 pb-2">
       <button
-        class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        @click="emit('openChapters')"
-      >
-        <List class="size-4" />
-        目录 {{ chapterIndex + 1 }}/{{ totalChapters }}
-      </button>
+        class="w-10 h-1 rounded-full bg-muted-foreground/20 hover:bg-muted-foreground/30 transition-colors"
+        @click="emit('close')"
+      />
     </div>
 
-    <div class="px-4 pb-4 space-y-3">
+    <!-- Chapter info -->
+    <button
+      class="flex items-center gap-2 px-5 pb-3 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+      @click="emit('openChapters')"
+    >
+      <List class="size-4 shrink-0" />
+      <span>目录</span>
+      <span class="tabular-nums text-xs opacity-60">
+        {{ chapterIndex + 1 }} / {{ totalChapters }}
+      </span>
+    </button>
+
+    <div class="px-5 pb-5 space-y-5">
       <!-- Theme -->
-      <div class="flex items-center gap-3">
-        <Palette class="size-4 text-muted-foreground shrink-0" />
-        <div class="flex gap-2 overflow-x-auto flex-1">
+      <div>
+        <p class="text-xs font-medium text-muted-foreground mb-2.5">主题</p>
+        <div class="flex gap-2.5">
           <button
             v-for="t in PRESET_THEMES"
             :key="t.id"
-            class="size-7 rounded-full border-2 shrink-0 transition-transform"
+            class="relative size-8 rounded-full border-2 shrink-0 transition-all hover:scale-110"
             :class="
               settings.backgroundColor === t.backgroundColor
-                ? 'scale-110 border-primary'
-                : 'border-border'
+                ? 'border-primary'
+                : 'border-border hover:border-muted-foreground/40'
             "
             :style="{ backgroundColor: t.backgroundColor }"
             :title="t.name"
             @click="applyTheme(t.id)"
-          />
+          >
+            <Check
+              v-if="settings.backgroundColor === t.backgroundColor"
+              class="absolute inset-0 m-auto size-3"
+              :style="{ color: t.accentColor }"
+            />
+          </button>
         </div>
       </div>
 
       <!-- Font family -->
-      <div class="flex items-center gap-3">
-        <Type class="size-4 text-muted-foreground shrink-0" />
+      <div>
+        <p class="text-xs font-medium text-muted-foreground mb-2.5">字体</p>
         <Select
           :model-value="settings.fontFamily"
           @update:model-value="
@@ -91,11 +102,15 @@ function applyTheme(themeId: string) {
             }
           "
         >
-          <SelectTrigger class="h-8 text-xs">
+          <SelectTrigger class="h-9 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem v-for="f in FONT_OPTIONS" :key="f.value" :value="f.value">
+            <SelectItem
+              v-for="f in FONT_OPTIONS"
+              :key="f.value"
+              :value="f.value"
+            >
               {{ f.label }}
             </SelectItem>
           </SelectContent>
@@ -103,59 +118,66 @@ function applyTheme(themeId: string) {
       </div>
 
       <!-- Font size -->
-      <div class="flex items-center gap-3">
-        <span class="text-xs text-muted-foreground shrink-0 w-8">字号</span>
+      <div>
+        <div class="flex items-center justify-between mb-2.5">
+          <p class="text-xs font-medium text-muted-foreground">字号</p>
+          <span class="text-xs tabular-nums text-muted-foreground">
+            {{ settings.fontSize }}px
+          </span>
+        </div>
         <Slider
           :model-value="[settings.fontSize]"
           :min="12"
           :max="24"
           :step="1"
-          class="flex-1"
           @update:model-value="
             (v) => {
               if (v) updateSetting('fontSize', v[0])
             }
           "
         />
-        <span class="text-xs text-muted-foreground w-8 text-right">{{ settings.fontSize }}</span>
       </div>
 
       <!-- Line height -->
-      <div class="flex items-center gap-3">
-        <span class="text-xs text-muted-foreground shrink-0 w-8">行距</span>
+      <div>
+        <div class="flex items-center justify-between mb-2.5">
+          <p class="text-xs font-medium text-muted-foreground">行距</p>
+          <span class="text-xs tabular-nums text-muted-foreground">
+            {{ settings.lineHeight }}
+          </span>
+        </div>
         <Slider
           :model-value="[settings.lineHeight]"
           :min="1.4"
           :max="2.4"
           :step="0.1"
-          class="flex-1"
           @update:model-value="
             (v) => {
               if (v) updateSetting('lineHeight', v[0])
             }
           "
         />
-        <span class="text-xs text-muted-foreground w-8 text-right">{{ settings.lineHeight }}</span>
       </div>
 
       <!-- Paragraph spacing -->
-      <div class="flex items-center gap-3">
-        <span class="text-xs text-muted-foreground shrink-0 w-8">段距</span>
+      <div>
+        <div class="flex items-center justify-between mb-2.5">
+          <p class="text-xs font-medium text-muted-foreground">段距</p>
+          <span class="text-xs tabular-nums text-muted-foreground">
+            {{ settings.paragraphSpacing }}em
+          </span>
+        </div>
         <Slider
           :model-value="[settings.paragraphSpacing]"
           :min="0"
           :max="2"
           :step="0.1"
-          class="flex-1"
           @update:model-value="
             (v) => {
               if (v) updateSetting('paragraphSpacing', v[0])
             }
           "
         />
-        <span class="text-xs text-muted-foreground w-8 text-right"
-          >{{ settings.paragraphSpacing }}em</span
-        >
       </div>
     </div>
   </div>

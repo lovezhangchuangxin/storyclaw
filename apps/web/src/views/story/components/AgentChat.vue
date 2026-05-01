@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue'
-import { Send, Square, Undo2, Redo2, ChevronDown } from 'lucide-vue-next'
+import { Send, Square, ChevronDown } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -122,14 +122,6 @@ async function send() {
 function cancel() {
   abortController.value?.abort()
 }
-
-function undo() {
-  // TODO: implement undo via operationHistory
-}
-
-function redo() {
-  // TODO: implement redo via operationHistory
-}
 </script>
 
 <template>
@@ -168,25 +160,17 @@ function redo() {
     </div>
 
     <div class="shrink-0 border-t bg-background px-3 py-2 space-y-2">
-      <div class="flex items-center gap-1">
-        <button
-          class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground"
-          title="撤销"
-          @click="undo"
-        >
-          <Undo2 class="size-4" />
-        </button>
-        <button
-          class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground"
-          title="重做"
-          @click="redo"
-        >
-          <Redo2 class="size-4" />
-        </button>
-      </div>
+      <Textarea
+        v-model="input"
+        placeholder="输入你的想法或反馈..."
+        :rows="3"
+        class="resize-none min-h-0 w-full"
+        :disabled="isGenerating"
+        @keydown.enter.exact.prevent="send"
+      />
 
-      <div v-if="models.length > 0" class="flex items-center gap-1">
-        <DropdownMenu>
+      <div class="flex items-center">
+        <DropdownMenu v-if="models.length > 0">
           <DropdownMenuTrigger as="button" class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
             <span class="truncate max-w-[160px]">{{ selectedModelLabel }}</span>
             <ChevronDown class="size-3" />
@@ -201,27 +185,23 @@ function redo() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
 
-      <div class="flex gap-2">
-        <Textarea
-          v-model="input"
-          placeholder="输入你的想法或反馈..."
-          :rows="2"
-          class="resize-none min-h-0 flex-1"
-          :disabled="isGenerating"
-          @keydown.enter.exact.prevent="send"
-        />
         <Button
           v-if="!isGenerating"
           size="icon"
-          class="shrink-0"
+          class="shrink-0 ml-auto"
           :disabled="!input.trim()"
           @click="send"
         >
           <Send class="size-4" />
         </Button>
-        <Button v-else variant="destructive" size="icon" class="shrink-0" @click="cancel">
+        <Button
+          v-else
+          variant="destructive"
+          size="icon"
+          class="shrink-0 ml-auto"
+          @click="cancel"
+        >
           <Square class="size-4" />
         </Button>
       </div>

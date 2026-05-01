@@ -111,7 +111,7 @@ async function handleDelete(novel: Novel) {
         <p class="text-xs text-muted-foreground mb-6">创建一个新故事，开始你的创作之旅</p>
         <a
           class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors cursor-pointer no-underline"
-          @click="router.push('/create')"
+          @click="router.push(`/story/${crypto.randomUUID()}?new=true`)"
         >
           <Plus class="size-4" />
           开始第一个故事

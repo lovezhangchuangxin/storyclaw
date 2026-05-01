@@ -1,7 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import HomeView from '@/views/home/HomeView.vue'
-import CreateView from '@/views/create/CreateView.vue'
 import MyView from '@/views/my/MyView.vue'
 import StoryDetailView from '@/views/story/StoryDetailView.vue'
 import ModelConfigView from '@/views/settings/ModelConfigView.vue'
@@ -18,12 +17,6 @@ export const routes: RouteRecordRaw[] = [
         name: 'home',
         component: HomeView,
         meta: { title: '书架' },
-      },
-      {
-        path: 'create',
-        name: 'create',
-        component: CreateView,
-        meta: { title: '创作' },
       },
       {
         path: 'my',
