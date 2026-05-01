@@ -76,24 +76,6 @@ function scrollToBottom() {
   })
 }
 
-function formatToolResult(content: string): string {
-  try {
-    const parsed = JSON.parse(content)
-    if (parsed.error) return `错误: ${parsed.error}`
-    if (parsed.success !== undefined) {
-      const parts: string[] = []
-      if (parsed.count !== undefined) parts.push(`${parsed.count} 项`)
-      if (parsed.wordCount !== undefined) parts.push(`${parsed.wordCount} 字`)
-      if (parsed.title) parts.push(parsed.title)
-      if (parsed.id) parts.push(`ID: ${typeof parsed.id === 'string' ? parsed.id.slice(0, 8) : parsed.id}`)
-      return parts.length > 0 ? parts.join(' | ') : '操作成功'
-    }
-    return content.slice(0, 200)
-  } catch {
-    return content.slice(0, 200)
-  }
-}
-
 function getToolDisplayName(name: string): string {
   const names: Record<string, string> = {
     create_outline: '创建大纲',
@@ -118,6 +100,101 @@ function getToolDisplayName(name: string): string {
     generate_synopsis: '生成简介',
   }
   return names[name] ?? name
+}
+
+// ---- Tool display helpers ----
+
+const toolIconMap: Record<string, string> = {
+  write_chapter: '✍️', rewrite_chapter: '✍️',
+  plan_chapters: '📋', get_chapter: '📋',
+  create_character: '👤', update_character: '👤', delete_character: '👤',
+  get_character: '👤', list_characters: '👤',
+  create_outline: '📖', update_outline: '📖', get_outline: '📖',
+  set_world_building: '🌍', get_world_building: '🌍',
+  set_style: '🎨', apply_style_to_chapter: '🎨',
+  create_story: '📚', get_story_status: '📚',
+  generate_title: '🏷️', generate_synopsis: '🏷️',
+}
+
+function getToolIcon(name: string): string {
+  return toolIconMap[name] ?? '🔧'
+}
+
+function getToolArgSummary(name: string, args: Record<string, unknown>): string {
+  switch (name) {
+    case 'write_chapter':
+    case 'rewrite_chapter': {
+      const idx = args.index as number
+      const chapter = typeof idx === 'number' ? `第${idx + 1}章` : ''
+      const preview = typeof args.content === 'string' ? args.content.slice(0, 30).replace(/\n/g, ' ') : ''
+      return [chapter, preview].filter(Boolean).join(' · ')
+    }
+    case 'plan_chapters': {
+      const chapters = args.chapters as Array<{ title: string }> | undefined
+      return chapters?.length ? `${chapters.length} 章 · ${chapters.map(c => c.title).join(', ')}` : ''
+    }
+    case 'create_character':
+    case 'update_character': {
+      const charName = args.name as string | undefined
+      const role = args.role as string | undefined
+      return `${charName || '未命名'}${role ? ` (${role})` : ''}`
+    }
+    default: {
+      const keys = Object.keys(args).slice(0, 3)
+      return keys.length ? keys.join(', ') : ''
+    }
+  }
+}
+
+function parseToolResultDisplay(content: string): { success: boolean; summary: string; detail: string } {
+  const parsed = JSON.parse(content)
+  if (parsed.error) {
+    return { success: false, summary: parsed.error, detail: content }
+  }
+  const parts: string[] = []
+  if (parsed.count !== undefined) parts.push(`${parsed.count} 项`)
+  if (parsed.wordCount !== undefined) parts.push(`${parsed.wordCount} 字`)
+  if (parsed.title) parts.push(parsed.title)
+  if (parsed.index !== undefined) parts.push(`第${parsed.index + 1}章`)
+  if (typeof parsed.name === 'string') parts.push(parsed.name)
+  return {
+    success: true,
+    summary: parts.join(' · ') || '操作成功',
+    detail: JSON.stringify(parsed, null, 2),
+  }
+}
+
+// Extract useful preview info from a streaming tool argument JSON (may be incomplete).
+function extractStreamingToolPreview(name: string, raw: string): { label: string; preview?: string; wordCount: number } {
+  if (name !== 'write_chapter' && name !== 'rewrite_chapter') {
+    return { label: '', wordCount: 0 }
+  }
+  const idxMatch = raw.match(/"index"\s*:\s*(\d+)/)
+  const index = idxMatch ? parseInt(idxMatch[1]) : undefined
+  const contentMatch = raw.match(/"content"\s*:\s*"((?:[^"\\]|\\.)*)/)
+  let preview = ''
+  let wordCount = 0
+  if (contentMatch) {
+    preview = contentMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').slice(0, 80)
+    wordCount = (contentMatch[1].match(/[\u4e00-\u9fa5]|[a-zA-Z]+/g) || []).length
+  }
+  return {
+    label: index !== undefined ? `第${index + 1}章` : '',
+    preview: preview || undefined,
+    wordCount,
+  }
+}
+
+// Expand/collapse state for tool call cards and tool result cards
+const expandedToolCalls = ref<Record<string, boolean>>({})
+const expandedToolResults = ref<Record<string, boolean>>({})
+
+function toggleToolCall(key: string) {
+  expandedToolCalls.value[key] = !expandedToolCalls.value[key]
+}
+
+function toggleToolResult(key: string) {
+  expandedToolResults.value[key] = !expandedToolResults.value[key]
 }
 
 async function send() {
@@ -157,11 +234,11 @@ async function send() {
         scrollToBottom()
       },
       onToolResult(name, result) {
-        // Push a formatted tool result indicator
         pushMessage({
           id: crypto.randomUUID(),
           role: 'tool',
-          content: `${getToolDisplayName(name)}: ${formatToolResult(result)}`,
+          content: result,
+          toolName: name,
           timestamp: Date.now(),
         })
         toolStatus.value = ''
@@ -237,21 +314,58 @@ function cancel() {
               msg.role === 'user'
                 ? 'bg-primary text-primary-foreground'
                 : msg.role === 'tool'
-                  ? 'bg-muted/50 text-muted-foreground text-xs font-mono'
+                  ? 'bg-muted/50 text-xs'
                   : 'bg-muted text-foreground'
             "
           >
             <!-- Assistant with only tool calls, no text -->
             <template v-if="msg.role === 'assistant' && msg.toolCalls?.length && !msg.content">
-              <div class="text-xs text-muted-foreground space-y-0.5">
+              <div class="space-y-1">
                 <div v-for="tc in msg.toolCalls" :key="tc.id">
-                  -> {{ getToolDisplayName(tc.name) }}
+                  <button
+                    class="w-full text-left flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-0.5 group"
+                    @click="toggleToolCall(tc.id)"
+                  >
+                    <span class="shrink-0">{{ getToolIcon(tc.name) }}</span>
+                    <span class="font-medium">{{ getToolDisplayName(tc.name) }}</span>
+                    <span v-if="getToolArgSummary(tc.name, tc.arguments)" class="text-muted-foreground/60 truncate">
+                      — {{ getToolArgSummary(tc.name, tc.arguments) }}
+                    </span>
+                    <ChevronDown
+                      class="size-3 shrink-0 ml-auto transition-transform duration-150"
+                      :class="!!expandedToolCalls[tc.id] ? 'rotate-180' : ''"
+                    />
+                  </button>
+                  <div
+                    v-if="!!expandedToolCalls[tc.id]"
+                    class="mt-1 text-xs font-mono bg-muted/30 rounded p-2 overflow-x-auto"
+                  >
+                    <pre class="whitespace-pre-wrap break-all text-muted-foreground">{{ JSON.stringify(tc.arguments, null, 2) }}</pre>
+                  </div>
                 </div>
               </div>
             </template>
             <!-- Tool result -->
             <template v-else-if="msg.role === 'tool'">
-              {{ msg.content }}
+              <button
+                class="w-full text-left flex items-center gap-1.5 text-xs py-0.5 group"
+                :class="parseToolResultDisplay(msg.content).success ? 'text-muted-foreground hover:text-foreground' : 'text-destructive'"
+                @click="toggleToolResult(msg.id)"
+              >
+                <span class="shrink-0">{{ getToolIcon(msg.toolName!) }}</span>
+                <span class="font-medium">{{ getToolDisplayName(msg.toolName!) }}</span>
+                <span class="truncate">{{ parseToolResultDisplay(msg.content).summary }}</span>
+                <ChevronDown
+                  class="size-3 shrink-0 ml-auto transition-transform duration-150"
+                  :class="!!expandedToolResults[msg.id] ? 'rotate-180' : ''"
+                />
+              </button>
+              <div
+                v-if="!!expandedToolResults[msg.id]"
+                class="mt-1 text-xs font-mono bg-muted/30 rounded p-2 overflow-x-auto max-h-40 overflow-y-auto"
+              >
+                <pre class="whitespace-pre-wrap break-all text-muted-foreground">{{ parseToolResultDisplay(msg.content).detail }}</pre>
+              </div>
             </template>
             <!-- Assistant markdown content -->
             <template v-else-if="msg.role === 'assistant'">
@@ -262,6 +376,30 @@ function cancel() {
                 :is-dark="isDark"
                 render-code-blocks-as-pre
               />
+              <div v-if="msg.toolCalls?.length" class="border-t border-border/50 space-y-1" :class="msg.content ? 'mt-2 pt-2' : ''">
+                <div v-for="tc in msg.toolCalls" :key="tc.id">
+                  <button
+                    class="w-full text-left flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-0.5 group"
+                    @click="toggleToolCall(tc.id)"
+                  >
+                    <span class="shrink-0">{{ getToolIcon(tc.name) }}</span>
+                    <span class="font-medium">{{ getToolDisplayName(tc.name) }}</span>
+                    <span v-if="getToolArgSummary(tc.name, tc.arguments)" class="text-muted-foreground/60 truncate">
+                      — {{ getToolArgSummary(tc.name, tc.arguments) }}
+                    </span>
+                    <ChevronDown
+                      class="size-3 shrink-0 ml-auto transition-transform duration-150"
+                      :class="!!expandedToolCalls[tc.id] ? 'rotate-180' : ''"
+                    />
+                  </button>
+                  <div
+                    v-if="!!expandedToolCalls[tc.id]"
+                    class="mt-1 text-xs font-mono bg-muted/30 rounded p-2 overflow-x-auto"
+                  >
+                    <pre class="whitespace-pre-wrap break-all text-muted-foreground">{{ JSON.stringify(tc.arguments, null, 2) }}</pre>
+                  </div>
+                </div>
+              </div>
             </template>
             <!-- Other role text (system messages) -->
             <template v-else>
@@ -278,10 +416,36 @@ function cancel() {
           </div>
         </div>
 
-        <!-- Streaming tool content (raw arg tokens) -->
+        <!-- Streaming tool content -->
         <div v-if="streamingToolContent && !streamingContent" class="flex justify-start">
-          <div class="max-w-[85%] rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground font-mono max-h-40 overflow-y-auto whitespace-pre-wrap">
-            {{ streamingToolContent }}
+          <div class="max-w-[85%] rounded-lg bg-muted/50 px-3 py-2 text-xs">
+            <template v-if="streamingToolName === 'write_chapter' || streamingToolName === 'rewrite_chapter'">
+              <div class="flex items-center gap-1.5 text-muted-foreground mb-1">
+                <span>{{ getToolIcon(streamingToolName) }}</span>
+                <span class="font-medium">{{ getToolDisplayName(streamingToolName) }}</span>
+                <template v-if="extractStreamingToolPreview(streamingToolName, streamingToolContent).label">
+                  · {{ extractStreamingToolPreview(streamingToolName, streamingToolContent).label }}
+                </template>
+                <template v-if="extractStreamingToolPreview(streamingToolName, streamingToolContent).wordCount > 0">
+                  · <span class="tabular-nums">{{ extractStreamingToolPreview(streamingToolName, streamingToolContent).wordCount }} 字</span>
+                </template>
+              </div>
+              <div
+                v-if="extractStreamingToolPreview(streamingToolName, streamingToolContent).preview"
+                class="text-muted-foreground/70 whitespace-pre-wrap leading-relaxed"
+              >
+                {{ extractStreamingToolPreview(streamingToolName, streamingToolContent).preview }}...
+              </div>
+              <div v-else class="text-muted-foreground/50 italic">
+                正在接收内容...
+              </div>
+            </template>
+            <template v-else>
+              <div class="flex items-center gap-1.5 text-muted-foreground">
+                <Loader2 class="size-3 animate-spin" />
+                <span>{{ getToolDisplayName(streamingToolName) || '工具' }} — 处理中...</span>
+              </div>
+            </template>
           </div>
         </div>
 

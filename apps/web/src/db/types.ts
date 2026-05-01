@@ -130,6 +130,9 @@ export interface Message {
   content: string
   toolCalls?: ToolCall[]
   toolCallId?: string
+  // name of the tool this result belongs to (tool-role messages only).
+  // used by the chat UI to display a human-readable label and icon.
+  toolName?: string
   // reasoningContent is required by thinking models (DeepSeek R1, OpenAI o1).
   // The API demands the assistant's reasoning_content be passed back in subsequent
   // requests, so we must persist it across conversation rounds. Normal models
