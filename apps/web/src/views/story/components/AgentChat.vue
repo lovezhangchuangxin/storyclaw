@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue'
+import { useDark } from '@vueuse/core'
 import { Send, Square, ChevronDown, Loader2 } from 'lucide-vue-next'
+import MarkdownRender, { getMarkdown, parseMarkdownToStructure } from 'markstream-vue'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -34,6 +36,15 @@ const selectedModelId = ref('')
 const selectedModelLabel = computed(() => {
   const m = models.value.find((m) => m.id === selectedModelId.value)
   return m ? modelLabel(m) : '选择模型'
+})
+
+const isDark = useDark()
+
+const md = getMarkdown('agent-chat')
+
+const streamingNodes = computed(() => {
+  if (!streamingContent.value) return []
+  return parseMarkdownToStructure(streamingContent.value, md, { final: false })
 })
 
 async function loadModels() {
@@ -242,7 +253,17 @@ function cancel() {
             <template v-else-if="msg.role === 'tool'">
               {{ msg.content }}
             </template>
-            <!-- Normal text content -->
+            <!-- Assistant markdown content -->
+            <template v-else-if="msg.role === 'assistant'">
+              <MarkdownRender
+                custom-id="agent-chat"
+                :content="msg.content"
+                :final="true"
+                :is-dark="isDark"
+                render-code-blocks-as-pre
+              />
+            </template>
+            <!-- Other role text (system messages) -->
             <template v-else>
               {{ msg.content }}
             </template>
@@ -267,7 +288,14 @@ function cancel() {
         <!-- Streaming text content -->
         <div v-if="streamingContent" class="flex justify-start">
           <div class="max-w-[85%] rounded-lg bg-muted px-3 py-2 text-sm">
-            {{ streamingContent }}
+            <MarkdownRender
+              custom-id="agent-chat"
+              :nodes="streamingNodes"
+              :final="false"
+              :is-dark="isDark"
+              :typewriter="false"
+              render-code-blocks-as-pre
+            />
             <span
               class="inline-block w-1.5 h-4 bg-foreground animate-pulse ml-0.5 align-text-bottom"
             />

@@ -8,6 +8,8 @@
 
 @import 'shadcn-vue/tailwind.css';
 
+@import 'markstream-vue/index.tailwind.css';
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -209,4 +211,42 @@
     box-shadow: none !important;
     outline: none;
   }
+}
+
+/* ---- markdown chat tweaks ---- */
+[data-custom-id="agent-chat"].markstream-vue,
+[data-custom-id="agent-chat"] .markstream-vue {
+  /* tighten vertical rhythm for chat UI */
+  --ms-flow-paragraph-y: 0.75em;
+  --ms-flow-heading-1-mt: 0;
+  --ms-flow-heading-1-mb: 0.5em;
+  --ms-flow-heading-2-mt: 1em;
+  --ms-flow-heading-2-mb: 0.5em;
+  --ms-flow-heading-3-mt: 0.75em;
+  --ms-flow-heading-3-mb: 0.4em;
+  --ms-flow-heading-4-mt: 0.625em;
+  --ms-flow-heading-4-mb: 0.25em;
+  --ms-flow-heading-5-mt: 0.5em;
+  --ms-flow-heading-5-mb: 0.125em;
+  --ms-flow-heading-6-mt: 0.5em;
+  --ms-flow-heading-6-mb: 0.125em;
+  --ms-flow-list-y: 0.5em;
+  --ms-flow-list-item-y: 0.125em;
+  --ms-flow-hr-y: 1.25em;
+  --ms-flow-blockquote-y: 0.75em;
+  --ms-flow-codeblock-y: 0.875em;
+
+  /* slightly tighter line-height */
+  --ms-leading-body: 1.6;
+  --ms-leading-h1: 1.15;
+  --ms-leading-h2: 1.25;
+  --ms-leading-h3: 1.35;
+
+  /* smaller heading sizes for chat */
+  --ms-text-h1: 1.625rem;
+  --ms-text-h2: 1.25rem;
+  --ms-text-h3: 1.1rem;
+  --ms-text-h4: 1rem;
+  --ms-text-h5: 0.95rem;
+  --ms-text-h6: 0.9rem;
 }
