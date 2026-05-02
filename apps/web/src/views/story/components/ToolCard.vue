@@ -38,6 +38,13 @@ function normalizeJsonValue(value: unknown, seen = new WeakMap<object, unknown>(
     return value
   }
 
+  // Unwrap boxed primitives (new String, new Number, new Boolean) before
+  // they are treated as plain objects — Object.keys(new String("true"))
+  // returns ["0","1","2","3"] which splits the string into characters.
+  if (value instanceof String) return value.valueOf()
+  if (value instanceof Number) return value.valueOf()
+  if (value instanceof Boolean) return value.valueOf()
+
   const raw = toRaw(value as object) as unknown
 
   if (raw === null || raw === undefined) {
@@ -51,6 +58,11 @@ function normalizeJsonValue(value: unknown, seen = new WeakMap<object, unknown>(
   if (typeof raw !== 'object') {
     return raw
   }
+
+  // Double-check after toRaw — reactive proxies may hide boxed primitives
+  if (raw instanceof String) return raw.valueOf()
+  if (raw instanceof Number) return raw.valueOf()
+  if (raw instanceof Boolean) return raw.valueOf()
 
   if (seen.has(raw)) {
     return '[Circular]'

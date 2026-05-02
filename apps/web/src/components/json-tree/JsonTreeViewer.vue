@@ -22,21 +22,16 @@ const props = withDefaults(
   },
 )
 
-// shallowRef avoids deep Proxy wrapping of WeakSet — mutations to the
-// WeakSet must NOT trigger Vue reactivity, otherwise the collection-proxy
-// trigger causes a re-render which re-evaluates isCircular and falsely
-// reports the root node as a circular reference.
+// shallowRef avoids deep Proxy wrapping of WeakSet
 const visited = shallowRef(new WeakSet<object>())
 
-// Reset the visited set when input data changes to avoid stale state
-// leaking across different render cycles.
 watch(() => props.data, () => {
   visited.value = new WeakSet<object>()
 })
 </script>
 
 <template>
-  <div class="json-tree-viewer font-mono text-xs select-none">
+  <div class="jt-viewer">
     <JsonNode
       :key-name="null"
       :value="props.data"
@@ -51,3 +46,33 @@ watch(() => props.data, () => {
     />
   </div>
 </template>
+
+<style scoped>
+.jt-viewer {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--jt-key);
+  user-select: none;
+  overflow-x: auto;
+}
+@media (min-width: 768px) {
+  .jt-viewer {
+    font-size: 13px;
+  }
+}
+
+.jt-viewer::-webkit-scrollbar {
+  height: 4px;
+}
+.jt-viewer::-webkit-scrollbar-track {
+  background: transparent;
+}
+.jt-viewer::-webkit-scrollbar-thumb {
+  background: var(--jt-guide);
+  border-radius: 2px;
+}
+.jt-viewer::-webkit-scrollbar-thumb:hover {
+  background: var(--jt-bracket);
+}
+</style>

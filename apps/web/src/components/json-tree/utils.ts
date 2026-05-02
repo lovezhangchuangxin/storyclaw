@@ -6,6 +6,11 @@ export function getJsonType(value: unknown): JsonType {
 
   const tag = Object.prototype.toString.call(value)
 
+  // Boxed primitives: new String("true") has typeof "object" but should be treated as string
+  if (tag === '[object String]') return 'string'
+  if (tag === '[object Number]') return 'number'
+  if (tag === '[object Boolean]') return 'boolean'
+
   if (typeof value === 'string') return 'string'
   if (typeof value === 'number') return 'number'
   if (typeof value === 'boolean') return 'boolean'
@@ -28,7 +33,14 @@ export function isExpandable(type: JsonType): boolean {
 export function stringifyValue(value: unknown, maxLength?: number): string {
   let result: string
 
-  if (value === null) {
+  // Unwrap boxed primitives first
+  if (value instanceof String) {
+    result = JSON.stringify(value.valueOf())
+  } else if (value instanceof Number) {
+    result = String(value.valueOf())
+  } else if (value instanceof Boolean) {
+    result = String(value.valueOf())
+  } else if (value === null) {
     result = 'null'
   } else if (value === undefined) {
     result = 'undefined'
@@ -59,5 +71,8 @@ export function stringifyValue(value: unknown, maxLength?: number): string {
 export function isObjectOrArray(val: unknown): val is Record<string, unknown> | unknown[] {
   if (val === null || val === undefined) return false
   if (typeof val !== 'object') return false
+  // Exclude boxed primitives — they are not expandable containers
+  const tag = Object.prototype.toString.call(val)
+  if (tag === '[object String]' || tag === '[object Number]' || tag === '[object Boolean]') return false
   return true
 }

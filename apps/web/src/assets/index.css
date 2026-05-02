@@ -254,29 +254,53 @@
 /* ==== JSON Tree Viewer theme variables ==== */
 
 :root {
-  --jt-string:    #059669;
-  --jt-number:    #2563eb;
-  --jt-boolean:   #7c3aed;
-  --jt-null:      #9ca3af;
-  --jt-undefined: #a78bfa;
-  --jt-key:       oklch(0.145 0 0);
-  --jt-bracket:   oklch(0.556 0 0);
-  --jt-bg:        oklch(0.97 0 0 / 0.5);
-  --jt-bg-hover:  oklch(0.97 0 0 / 0.8);
-  --jt-guide:     oklch(0.922 0 0);
-  --jt-guide-hover: oklch(0.556 0 0);
+  --jt-string:      oklch(0.527 0.14 163);
+  --jt-number:      oklch(0.546 0.215 262);
+  --jt-boolean:     oklch(0.491 0.27 292);
+  --jt-null:        oklch(0.551 0.02 260);
+  --jt-undefined:   oklch(0.558 0.18 292);
+  --jt-date:        oklch(0.527 0.14 63);
+  --jt-regexp:      oklch(0.527 0.14 30);
+  --jt-function:    oklch(0.546 0.14 255);
+  --jt-key:         oklch(0.298 0.02 262);
+  --jt-key-hover:   oklch(0.372 0.04 262);
+  --jt-bracket:     oklch(0.551 0.02 260);
+  --jt-count:       oklch(0.546 0.12 262);
+  --jt-arrow:       oklch(0.551 0.02 260);
+  --jt-arrow-hover: oklch(0.372 0.04 262);
+  --jt-bg:          oklch(0.977 0 0 / 0.4);
+  --jt-bg-hover:    oklch(0.955 0.01 262 / 0.6);
+  --jt-bg-active:   oklch(0.94 0.015 262 / 0.8);
+  --jt-guide:       oklch(0.913 0.01 262);
+  --jt-toggle-bg:   oklch(0.953 0.02 262);
+  --jt-toggle-text: oklch(0.491 0.18 262);
+  --jt-toggle-hover: oklch(0.91 0.04 262);
+  --jt-copy:        oklch(0.551 0.02 260);
+  --jt-copy-hover:  oklch(0.527 0.14 163);
 }
 
 .dark {
-  --jt-string:    #34d399;
-  --jt-number:    #60a5fa;
-  --jt-boolean:   #a78bfa;
-  --jt-null:      #6b7280;
-  --jt-undefined: #8b5cf6;
-  --jt-key:       oklch(0.985 0 0);
-  --jt-bracket:   oklch(0.708 0 0);
-  --jt-bg:        oklch(0.269 0 0 / 0.5);
-  --jt-bg-hover:  oklch(0.269 0 0 / 0.8);
-  --jt-guide:     oklch(1 0 0 / 10%);
-  --jt-guide-hover: oklch(0.708 0 0);
+  --jt-string:      oklch(0.765 0.14 163);
+  --jt-number:      oklch(0.727 0.18 262);
+  --jt-boolean:     oklch(0.741 0.2 292);
+  --jt-null:        oklch(0.606 0.02 262);
+  --jt-undefined:   oklch(0.713 0.18 292);
+  --jt-date:        oklch(0.765 0.14 63);
+  --jt-regexp:      oklch(0.765 0.14 30);
+  --jt-function:    oklch(0.727 0.12 255);
+  --jt-key:         oklch(0.922 0.02 262);
+  --jt-key-hover:   oklch(0.87 0.06 262);
+  --jt-bracket:     oklch(0.708 0.02 262);
+  --jt-count:       oklch(0.727 0.1 262);
+  --jt-arrow:       oklch(0.708 0.02 262);
+  --jt-arrow-hover: oklch(0.87 0.06 262);
+  --jt-bg:          oklch(0.269 0.01 262 / 0.4);
+  --jt-bg-hover:    oklch(0.302 0.03 262 / 0.6);
+  --jt-bg-active:   oklch(0.32 0.04 262 / 0.8);
+  --jt-guide:       oklch(1 0 0 / 8%);
+  --jt-toggle-bg:   oklch(0.32 0.03 262);
+  --jt-toggle-text: oklch(0.741 0.15 262);
+  --jt-toggle-hover: oklch(0.37 0.06 262);
+  --jt-copy:        oklch(0.606 0.02 262);
+  --jt-copy-hover:  oklch(0.765 0.14 163);
 }
