@@ -250,3 +250,33 @@
   --ms-text-h5: 0.95rem;
   --ms-text-h6: 0.9rem;
 }
+
+/* ==== JSON Tree Viewer theme variables ==== */
+
+:root {
+  --jt-string:    #059669;
+  --jt-number:    #2563eb;
+  --jt-boolean:   #7c3aed;
+  --jt-null:      #9ca3af;
+  --jt-undefined: #a78bfa;
+  --jt-key:       oklch(0.145 0 0);
+  --jt-bracket:   oklch(0.556 0 0);
+  --jt-bg:        oklch(0.97 0 0 / 0.5);
+  --jt-bg-hover:  oklch(0.97 0 0 / 0.8);
+  --jt-guide:     oklch(0.922 0 0);
+  --jt-guide-hover: oklch(0.556 0 0);
+}
+
+.dark {
+  --jt-string:    #34d399;
+  --jt-number:    #60a5fa;
+  --jt-boolean:   #a78bfa;
+  --jt-null:      #6b7280;
+  --jt-undefined: #8b5cf6;
+  --jt-key:       oklch(0.985 0 0);
+  --jt-bracket:   oklch(0.708 0 0);
+  --jt-bg:        oklch(0.269 0 0 / 0.5);
+  --jt-bg-hover:  oklch(0.269 0 0 / 0.8);
+  --jt-guide:     oklch(1 0 0 / 10%);
+  --jt-guide-hover: oklch(0.708 0 0);
+}

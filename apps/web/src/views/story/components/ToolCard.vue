@@ -5,6 +5,7 @@ import {
   PenLine, ListOrdered, UserPlus, UserPen,
 } from 'lucide-vue-next'
 import { getToolDisplayInfo } from '@/agent/tools'
+import JsonTreeViewer from '@/components/json-tree/JsonTreeViewer.vue'
 
 const props = defineProps<{
   toolName: string
@@ -170,7 +171,7 @@ const resultSummary = computed(() => {
   }
 })
 
-// ── Preserved: hasDetail, parsedArgumentsText ──────────────────
+// ── hasDetail / parsedResult ───────────────────────────────────
 
 const hasDetail = computed(() =>
   !!props.rawArguments
@@ -178,16 +179,16 @@ const hasDetail = computed(() =>
   || !!props.result,
 )
 
-const parsedArgumentsText = computed(() => {
-  if (!props.parsedArguments || Object.keys(props.parsedArguments).length === 0) {
-    return ''
-  }
+const parsedResult = computed<unknown | null>(() => {
+  if (!props.result) return null
   try {
-    return safeStringify(props.parsedArguments)
+    return normalizeJsonValue(JSON.parse(props.result))
   } catch {
-    return '[Unserializable arguments]'
+    return null
   }
 })
+
+defineExpose({ safeStringify })
 
 // ── Preserved (updated): cardClass ─────────────────────────────
 
@@ -278,7 +279,7 @@ const headerSummary = computed(() => {
   <div class="flex justify-start">
     <div
       class="max-w-[85%] rounded-lg border bg-card shadow-sm
-        text-xs transition-colors duration-200"
+        text-xs transition-colors duration-200 overflow-x-auto tool-card-scroll"
       :class="cardClass"
     >
       <!-- ── Interactive header (has detail to expand) ── -->
@@ -376,36 +377,44 @@ const headerSummary = computed(() => {
       <!-- ── Expandable detail section ── -->
       <div
         v-show="expanded && hasDetail"
-        class="border-t transition-all duration-200 ease-out
-          motion-reduce:transition-none"
+        class="border-t transition-all duration-200 ease-out"
         :class="expanded && hasDetail
-          ? 'max-h-72 opacity-100 overflow-y-auto tool-detail-scroll'
+          ? 'max-h-96 opacity-100 overflow-y-auto tool-detail-scroll'
           : 'max-h-0 opacity-0 overflow-hidden border-transparent'"
       >
-        <div class="px-3.5 py-2.5 space-y-2.5">
+        <div class="px-3.5 py-2.5 space-y-3">
           <!-- Arguments -->
-          <div v-if="parsedArgumentsText">
-            <div class="text-muted-foreground/40 mb-1.5 font-medium">参数</div>
-            <pre
-              class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70
-                whitespace-pre-wrap break-all overflow-x-auto"
-            >{{ parsedArgumentsText }}</pre>
+          <div v-if="parsedArguments && Object.keys(parsedArguments).length > 0">
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">参数</div>
+            <div class="bg-muted/40 rounded-lg p-2.5">
+              <JsonTreeViewer
+                :data="parsedArguments"
+                :root-key="toolName"
+                :max-depth="2"
+                :collapsed-node-length="5"
+              />
+            </div>
           </div>
           <div v-else-if="rawArguments">
-            <div class="text-muted-foreground/40 mb-1.5 font-medium">参数</div>
-            <pre
-              class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70
-                whitespace-pre-wrap break-all overflow-x-auto"
-            >{{ rawArguments }}</pre>
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">参数</div>
+            <pre class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto">{{ rawArguments }}</pre>
           </div>
 
           <!-- Result -->
-          <div v-if="result">
-            <div class="text-muted-foreground/40 mb-1.5 font-medium">结果</div>
-            <pre
-              class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70
-                whitespace-pre-wrap break-all overflow-x-auto"
-            >{{ result }}</pre>
+          <div v-if="parsedResult !== null">
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
+            <div class="bg-muted/40 rounded-lg p-2.5">
+              <JsonTreeViewer
+                :data="parsedResult"
+                :root-key="toolName"
+                :max-depth="2"
+                :collapsed-node-length="5"
+              />
+            </div>
+          </div>
+          <div v-else-if="result">
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
+            <pre class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto">{{ result }}</pre>
           </div>
         </div>
       </div>
@@ -431,6 +440,26 @@ const headerSummary = computed(() => {
   background: oklch(0.269 0 0);
 }
 .dark .tool-detail-scroll::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.371 0 0);
+}
+
+.tool-card-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.tool-card-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tool-card-scroll::-webkit-scrollbar-thumb {
+  background: oklch(0.922 0 0);
+  border-radius: 2px;
+}
+.tool-card-scroll::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.87 0 0);
+}
+.dark .tool-card-scroll::-webkit-scrollbar-thumb {
+  background: oklch(0.269 0 0);
+}
+.dark .tool-card-scroll::-webkit-scrollbar-thumb:hover {
   background: oklch(0.371 0 0);
 }
 </style>
