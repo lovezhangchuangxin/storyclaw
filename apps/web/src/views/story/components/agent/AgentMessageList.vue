@@ -91,7 +91,7 @@ const emit = defineEmits<{
               </div>
 
               <!-- Content area -->
-              <div class="min-w-0">
+              <div class="min-w-0 flex-1">
                 <!-- Assistant text bubble -->
                 <div
                   v-if="item.type === 'assistant'"
@@ -129,14 +129,15 @@ const emit = defineEmits<{
                 </div>
 
                 <!-- Tool card -->
-                <ToolCard
-                  v-else-if="item.type === 'tool_card'"
-                  :tool-name="item.toolName"
-                  :raw-arguments="item.rawArguments"
-                  :parsed-arguments="item.parsedArguments"
-                  :result="item.result"
-                  :status="item.status"
-                />
+                <div v-else-if="item.type === 'tool_card'" class="max-w-[85%]">
+                  <ToolCard
+                    :tool-name="item.toolName"
+                    :raw-arguments="item.rawArguments"
+                    :parsed-arguments="item.parsedArguments"
+                    :result="item.result"
+                    :status="item.status"
+                  />
+                </div>
               </div>
             </div>
           </template>

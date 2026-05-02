@@ -22,7 +22,7 @@ const preview = computed(() => {
   <div class="flex flex-col w-full">
     <button
       class="flex items-center gap-1.5 text-xs w-full text-left
-        border-l-2 border-muted-foreground/[0.10] pl-2.5 py-0.5
+        border-l-2 border-muted-foreground/[0.10] pl-2.5 pr-3 py-0.5
         hover:border-muted-foreground/[0.18]
         transition-colors duration-200
         group cursor-pointer select-none"
@@ -36,7 +36,7 @@ const preview = computed(() => {
       <!-- Collapsed: label + preview -->
       <template v-if="!expanded">
         <span class="font-medium text-muted-foreground/50 shrink-0">思考过程</span>
-        <span class="text-muted-foreground/35 truncate">{{ preview }}</span>
+        <span class="text-muted-foreground/35 truncate min-w-0">{{ preview }}</span>
       </template>
 
       <!-- Expanded: label + word count + chevron -->
@@ -57,7 +57,7 @@ const preview = computed(() => {
     >
       <div class="think-scroll bg-muted/30 rounded-lg px-3 py-2.5 max-h-72 overflow-y-auto">
         <pre
-          class="whitespace-pre-wrap break-all text-xs font-mono
+          class="whitespace-pre-wrap text-xs font-mono
             text-muted-foreground/65 leading-relaxed"
         >{{ content }}</pre>
       </div>
