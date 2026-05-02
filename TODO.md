@@ -42,7 +42,7 @@
 - [x] `tools/`：create_character, update_character, delete_character, get_character, list_characters
 - [x] `tools/`：plan_chapters, write_chapter, rewrite_chapter, get_chapter
 - [x] `tools/`：set_world_building, get_world_building
-- [x] `tools/`：set_style, apply_style_to_chapter
+- [x] `tools/`：set_style, get_style
 - [x] `tools/`：get_story_status, generate_title, generate_synopsis
 - [x] `loop.ts`：Agent 主循环（max 15 次 tool-call 迭代，取消检查，compact）
 - [x] postMessage 通信协议定义（`worker-types.ts`）

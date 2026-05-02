@@ -82,7 +82,7 @@ PC 端（侧边栏 + 顶部栏）：
 1. 生成随机 UUID 作为 novelId
 2. 预创建一条 `status: 'drafting'` 的 Novel 记录（标题"新故事"）
 3. 跳转至 `/story/:id?tab=agent`，直接进入 Agent 模式
-4. 用户与 Agent 对话，Agent 调用 `create_story` 工具更新标题/简介
+4. 用户与 Agent 对话，Agent 调用 `upsert_story` 工具更新标题/简介
 5. 草稿即刻在书架可见，用户可随时离开再回来继续
 
 ### 3. 故事详情页 — 阅读模式

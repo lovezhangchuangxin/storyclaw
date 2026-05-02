@@ -103,10 +103,10 @@ interface Tool {
 
 **文风控制：**
 - `set_style` — 设定文风偏好（叙事视角、时态、语言风格等）
-- `apply_style_to_chapter` — 将文风应用到已有章节
+- `get_style` — 获取文风设定
 
 **故事管理：**
-- `create_story` — 创建新故事（设置标题和简介）。如果小说记录已存在（预创建草稿），更新标题/简介
+- `upsert_story` — 创建新故事或更新已有故事信息。如果故事记录已存在则更新标题/简介，不存在则创建
 - `get_story_status` — 获取当前故事整体状态
 - `generate_title` — 根据内容生成标题
 - `generate_synopsis` — 生成故事简介

@@ -18,6 +18,19 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
           rules: { type: 'string', description: '世界观规则（魔法体系、科技设定等）' },
           culture: { type: 'string', description: '文化背景' },
           notes: { type: 'string', description: '其他备注' },
+          factions: {
+            type: 'array',
+            description: '势力/派系列表（可选）',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', description: '势力名称' },
+                description: { type: 'string', description: '势力描述' },
+                goals: { type: 'string', description: '势力目标' },
+              },
+              required: ['name'],
+            },
+          },
         },
         required: ['era', 'location'],
       },
@@ -27,6 +40,15 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
         rules: z.string().optional(),
         culture: z.string().optional(),
         notes: z.string().optional(),
+        factions: z
+          .array(
+            z.object({
+              name: z.string(),
+              description: z.string().optional(),
+              goals: z.string().optional(),
+            }),
+          )
+          .optional(),
       }),
       async execute(args: Record<string, unknown>) {
         const wb: WorldBuilding = {
@@ -35,7 +57,13 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
           location: args.location as string,
           rules: (args.rules as string) ?? '',
           culture: (args.culture as string) ?? '',
-          factions: [],
+          factions: args.factions
+            ? (args.factions as Array<Record<string, unknown>>).map((f) => ({
+                name: f.name as string,
+                description: (f.description as string) ?? '',
+                goals: (f.goals as string) ?? '',
+              }))
+            : [],
           notes: (args.notes as string) ?? '',
           updatedAt: Date.now(),
         }

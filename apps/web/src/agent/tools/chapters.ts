@@ -1,8 +1,19 @@
 import { z } from 'zod'
 import type { ToolContext, ToolDefinition } from './types'
-import { getChapterByIndex, saveChapter } from '@/db/chapters'
+import { getChapterByIndex, getChaptersByNovelId, saveChapter } from '@/db/chapters'
+import { getNovelById, updateNovel } from '@/db/novels'
 import { getOutlineByNovelId, saveOutline } from '@/db/outlines'
 import type { Chapter } from '@/db/types'
+
+/** Recalculate novel.currentWordCount from all chapters and persist it. */
+async function syncNovelWordCount(novelId: string): Promise<void> {
+  const novel = await getNovelById(novelId)
+  if (!novel) return
+  const chapters = await getChaptersByNovelId(novelId)
+  novel.currentWordCount = chapters.reduce((sum, ch) => sum + ch.wordCount, 0)
+  novel.updatedAt = Date.now()
+  await updateNovel(novel)
+}
 
 export function createChapterTools(context: ToolContext): ToolDefinition[] {
   return [
@@ -53,18 +64,14 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
           status: 'planned' as const,
         }))
 
-        if (outline) {
-          outline.chapterPlan = chapterPlans
-          outline.updatedAt = Date.now()
-          await saveOutline(outline)
-        }
-
+        // Write chapters first so the store is fully populated before updating the outline.
         await Promise.all(
           chapterPlans.map((plan) => {
             const chapter: Chapter = {
               novelId: context.novelId,
               index: plan.index,
               title: plan.title,
+              summary: plan.summary,
               content: '',
               wordCount: 0,
               status: 'planned',
@@ -76,6 +83,12 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
             return saveChapter(chapter)
           }),
         )
+
+        if (outline) {
+          outline.chapterPlan = chapterPlans
+          outline.updatedAt = Date.now()
+          await saveOutline(outline)
+        }
 
         return { success: true, count: chapterPlans.length, chapters: chapterPlans }
       },
@@ -108,6 +121,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         existing.status = 'completed'
         existing.updatedAt = Date.now()
         await saveChapter(existing)
+        await syncNovelWordCount(context.novelId)
         return { success: true, index, wordCount: existing.wordCount }
       },
     },
@@ -135,8 +149,10 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
 
         existing.content = args.content as string
         existing.wordCount = (args.content as string).length
+        existing.status = 'completed'
         existing.updatedAt = Date.now()
         await saveChapter(existing)
+        await syncNovelWordCount(context.novelId)
         return { success: true, index, wordCount: existing.wordCount }
       },
     },

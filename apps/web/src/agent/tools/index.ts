@@ -3,13 +3,20 @@ import { z } from 'zod'
 import { getToolRegistry } from './registry'
 import type { ToolContext } from './types'
 
-export { getToolRegistry } from './registry'
+export { getToolRegistry, clearToolRegistryCache as clearRegistryCache } from './registry'
 export type { ToolContext } from './types'
+
+/** Reset all caches. Call when tool definitions may have changed (e.g. hot-reload). */
+export function clearToolRegistryCache(): void {
+  _displayMap = null
+}
 
 let _displayMap: Map<string, { displayName: string; icon: string }> | null = null
 
+/** Build the display-info cache once. Display info is static (same across all contexts). */
 function ensureDisplayMap(): Map<string, { displayName: string; icon: string }> {
   if (!_displayMap) {
+    // Use a minimal context — only name/displayName/icon are collected, which are context-independent.
     const tools = getToolRegistry({ novelId: '' })
     _displayMap = new Map(
       [...tools.values()].map((t) => [t.name, { displayName: t.displayName, icon: t.icon }]),

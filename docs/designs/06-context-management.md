@@ -103,16 +103,20 @@ type AssistantPart =
 构建顺序：
 
 1. 固定 persona system prompt
-2. 过滤并转换历史消息
-3. 当前用户消息
+2. 上下文快照（如有）
+3. 过滤并转换后的历史消息
+4. 当前用户消息（首次对话或上下文压缩后，前面会自动注入【当前故事状态】作为前缀）
 
 ```text
 [
   { role: 'system', content: personaPrompt },
+  { role: 'system', content: 'Context Snapshot\n{...}' },  // 如有
   ...replayedHistory,
-  { role: 'user', content: currentUserMessage }
+  { role: 'user', content: '【当前故事状态】\n{...}\n\n---\n...' }  // 首次/压缩后注入
 ]
 ```
+
+> **状态注入策略：** story state 不作为 system message 固定注入，而是在 `user` role 中按需前缀注入。仅在首次对话（无历史消息）或上下文压缩后注入，日常对话中 LLM 通过工具调用结果自然感知状态变化。这样可以最大化前缀缓存命中率，避免每轮都打断 persona + history 缓存。
 
 ### 历史消息过滤规则
 

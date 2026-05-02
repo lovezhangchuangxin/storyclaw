@@ -75,6 +75,20 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
           background: { type: 'string' },
           motivation: { type: 'string' },
           arc: { type: 'string' },
+          relationships: {
+            type: 'array',
+            description: '角色关系列表（可选，设置后会替换全部已有关系）',
+            items: {
+              type: 'object',
+              properties: {
+                characterId: { type: 'string', description: '目标角色ID' },
+                characterName: { type: 'string', description: '目标角色姓名' },
+                relation: { type: 'string', description: '关系类型（如：挚友、宿敌、师徒）' },
+                description: { type: 'string', description: '关系描述' },
+              },
+              required: ['characterId', 'characterName', 'relation'],
+            },
+          },
         },
         required: ['characterId'],
       },
@@ -87,23 +101,38 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         background: z.string().optional(),
         motivation: z.string().optional(),
         arc: z.string().optional(),
+        relationships: z
+          .array(
+            z.object({
+              characterId: z.string(),
+              characterName: z.string(),
+              relation: z.string(),
+              description: z.string().optional(),
+            }),
+          )
+          .optional(),
       }),
       async execute(args: Record<string, unknown>) {
         const existing = await getCharacterById(context.novelId, args.characterId as string)
         if (!existing) return { error: '角色不存在' }
 
-        const allowed = [
-          'name',
-          'role',
-          'appearance',
-          'personality',
-          'background',
-          'motivation',
-          'arc',
-        ] as const
-        for (const key of allowed) {
-          if (key in args) (existing as unknown as Record<string, unknown>)[key] = args[key]
+        if ('name' in args) existing.name = args.name as string
+        if ('role' in args) existing.role = args.role as Character['role']
+        if ('appearance' in args) existing.appearance = args.appearance as string
+        if ('personality' in args) existing.personality = args.personality as string
+        if ('background' in args) existing.background = args.background as string
+        if ('motivation' in args) existing.motivation = args.motivation as string
+        if ('arc' in args) existing.arc = args.arc as string
+
+        if (args.relationships) {
+          existing.relationships = (args.relationships as Array<Record<string, unknown>>).map((r) => ({
+            characterId: r.characterId as string,
+            characterName: r.characterName as string,
+            relation: r.relation as string,
+            description: (r.description as string) ?? '',
+          }))
         }
+
         existing.updatedAt = Date.now()
         await saveCharacter(existing)
         return { success: true, data: existing }

@@ -27,9 +27,9 @@ function buildPersonaPrompt(): string {
 3. 根据用户反馈调整内容
 4. 保持文风一致，角色行为符合设定
 
-工作流程：
-- 收到用户请求后，先调用 get_outline, list_characters, get_story_status, get_world_building, get_style 等工具了解当前故事状态
-- 不要假设故事状态，必须通过工具读取最新数据
+ 工作流程：
+- 系统会在必要时（首次对话或上下文压缩后）自动在用户消息前附上【当前故事状态】，包含大纲、角色、章节进度、世界观、文风设定等摘要
+- 日常对话中故事状态会随工具调用结果自然更新，无需额外查询
 - 根据读取到的实际状态，再决定如何行动
 
 创作原则：
@@ -128,20 +128,18 @@ export async function maybeCompactBeforeBuild(
   novelId: string,
   modelConfig: ModelConfig,
   conversation?: Conversation,
-): Promise<void> {
+): Promise<boolean> {
   const conv = conversation ?? (await getConversationByNovelId(novelId))
   const snapshot = await getLatestContextSnapshot(novelId, CONTEXT_SCOPE_MAIN)
   const messages = getEffectiveConversationMessages(
     conv?.messages ?? [],
     snapshot?.compactedThroughMessageId ?? null,
   )
-  const storyState = await loadStoryState(novelId)
   const tools = getToolDefinitions({ novelId })
   const tokens = estimatePromptTokens(
     [
       buildPersonaPrompt(),
       snapshot ? serializeContextSnapshot(snapshot) : '',
-      serializeStoryState(storyState),
       ...messages,
     ],
     tools,
@@ -153,8 +151,9 @@ export async function maybeCompactBeforeBuild(
     modelConfig.compactionTriggerRatio,
   )
 
-  if (tokens < triggerAt) return
+  if (tokens < triggerAt) return false
 
+  const storyState = await loadStoryState(novelId)
   await compactConversationContext({
     novelId,
     modelConfig,
@@ -163,6 +162,7 @@ export async function maybeCompactBeforeBuild(
     reason: 'auto',
     force: true,
   })
+  return true
 }
 
 export async function buildContext(
@@ -170,6 +170,7 @@ export async function buildContext(
   userMessage: string,
   modelConfig: ModelConfig,
   existingConversation?: Conversation,
+  options?: { compacted?: boolean },
 ): Promise<ContextBuildResult> {
   const conversation = existingConversation ?? (await getConversationByNovelId(novelId))
   const toolContext: ToolContext = { novelId }
@@ -184,6 +185,16 @@ export async function buildContext(
     snapshot?.compactedThroughMessageId ?? null,
   )
   const historyMessages = convertToApiMessages(historyMessagesSource, includeReasoningContent)
+
+  // Inject story state into the user message when the LLM has no recent context:
+  // - First turn (no history): LLM knows nothing about the story yet
+  // - Right after compaction: LLM has lost the detailed conversation history
+  const compacted = options?.compacted ?? false
+  const shouldInjectState = compacted || historyMessagesSource.length === 0
+  const statePayload = shouldInjectState
+    ? `【当前故事状态】\n${serializeStoryState(storyState)}\n\n---\n${userMessage}`
+    : userMessage
+
   const contextMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: 'system', content: personaPrompt },
   ]
@@ -195,20 +206,15 @@ export async function buildContext(
     })
   }
 
-  contextMessages.push({
-    role: 'system',
-    content: `Story State\n${serializeStoryState(storyState)}`,
-  })
   contextMessages.push(...historyMessages)
-  contextMessages.push({ role: 'user', content: userMessage })
+  contextMessages.push({ role: 'user', content: statePayload })
 
   const totalTokensUsed = estimatePromptTokens(
     [
       personaPrompt,
       snapshot ? serializeContextSnapshot(snapshot) : '',
-      serializeStoryState(storyState),
       ...historyMessagesSource,
-      userMessage,
+      statePayload,
     ],
     tools,
   )

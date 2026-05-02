@@ -6,11 +6,7 @@ import { createWorldBuildingTools } from './worldBuilding'
 import { createStyleTools } from './style'
 import { createStoryManagementTools } from './story'
 
-let cachedMap: Map<string, ToolDefinition> | null = null
-
 export function getToolRegistry(context: ToolContext): Map<string, ToolDefinition> {
-  if (cachedMap) return cachedMap
-
   const tools: ToolDefinition[] = [
     ...createOutlineTools(context),
     ...createCharacterTools(context),
@@ -20,11 +16,17 @@ export function getToolRegistry(context: ToolContext): Map<string, ToolDefinitio
     ...createStoryManagementTools(context),
   ]
 
-  cachedMap = new Map(tools.map((t) => [t.name, t]))
-  return cachedMap
+  const map = new Map<string, ToolDefinition>()
+  for (const tool of tools) {
+    if (map.has(tool.name)) {
+      console.warn(`[ToolRegistry] Duplicate tool name: "${tool.name}" — overwriting previous definition`)
+    }
+    map.set(tool.name, tool)
+  }
+  return map
 }
 
-/** Reset cache (useful for testing or when context changes) */
+/** Kept for backward compatibility; no longer needed since registry is stateless. */
 export function clearToolRegistryCache(): void {
-  cachedMap = null
+  /* no-op */
 }

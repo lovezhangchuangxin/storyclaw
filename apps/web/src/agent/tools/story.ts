@@ -9,11 +9,11 @@ import type { Novel } from '@/db/types'
 export function createStoryManagementTools(context: ToolContext): ToolDefinition[] {
   return [
     {
-      name: 'create_story',
-      displayName: '创建故事',
+      name: 'upsert_story',
+      displayName: '创建或更新故事',
       icon: '📚',
       description:
-        '创建一个新故事。用户描述故事想法后，调用此工具来在系统中创建故事。创建完成后可以使用 generate_title 和 generate_synopsis 来完善信息。',
+        '创建新故事或更新已有故事信息。如果当前故事记录已存在，则更新标题和简介（用于在创作过程中修改故事元信息）；如果不存在则新建。创建完成后可以使用 generate_title 和 generate_synopsis 来完善信息。',
       parameters: {
         type: 'object',
         properties: {
@@ -30,11 +30,11 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
         const existing = await getNovelById(context.novelId)
         if (existing) {
           const changed =
-            (args.title && args.title !== existing.title) ||
-            (args.synopsis && args.synopsis !== existing.synopsis)
+            ('title' in args && args.title !== existing.title) ||
+            ('synopsis' in args && args.synopsis !== existing.synopsis)
           if (changed) {
-            if (args.title) existing.title = args.title as string
-            if (args.synopsis) existing.synopsis = args.synopsis as string
+            if ('title' in args) existing.title = args.title as string
+            if ('synopsis' in args) existing.synopsis = args.synopsis as string
             existing.updatedAt = Date.now()
             await updateNovel(existing)
           }

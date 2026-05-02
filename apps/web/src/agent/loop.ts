@@ -176,7 +176,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
     return { messages: turnMessages, ...persistence }
   }
 
-  await maybeCompactBeforeBuild(novelId, modelConfig, {
+  const compacted = await maybeCompactBeforeBuild(novelId, modelConfig, {
     novelId,
     messages: historyMessages,
     updatedAt: existingConversation?.updatedAt ?? Date.now(),
@@ -191,6 +191,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
       messages: historyMessages,
       updatedAt: existingConversation?.updatedAt ?? Date.now(),
     },
+    { compacted },
   )
   const localMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [...context.messages]
   const toolContext: ToolContext = { novelId }
