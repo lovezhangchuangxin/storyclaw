@@ -1,20 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useDark } from '@vueuse/core'
-import { BookOpen, Bot, BrainCircuit, ChevronDown, Copy, Loader2, Send, Square } from 'lucide-vue-next'
-import MarkdownRender from 'markstream-vue'
+import { ChevronDown } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { runAgentLoop } from '@/agent/loop'
 import { cloneMessages } from '@/agent/message-state'
 import { compactConversationContext } from '@/agent/context-compaction'
 import { loadStoryState } from '@/agent/story-state'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { getConfig } from '@/db/config'
 import { getConversationByNovelId } from '@/db/conversations'
 import type {
@@ -25,57 +17,14 @@ import type {
   StatusMessage,
 } from '@/db/types'
 import { modelLabel } from '@/lib/model-utils'
-import { relativeTime } from '@/lib/time'
-import ThinkingCard from './ThinkingCard.vue'
-import ToolCard from './ToolCard.vue'
+import AgentWelcome from './agent/AgentWelcome.vue'
+import AgentMessageList from './agent/AgentMessageList.vue'
+import AgentInputBar from './agent/AgentInputBar.vue'
+import type { DisplayItem, TurnGroup } from './agent/types'
 
 const props = defineProps<{
   novelId: string
 }>()
-
-type DisplayItem =
-  | {
-      type: 'user'
-      id: string
-      content: string
-      timestamp: number
-    }
-  | {
-      type: 'status'
-      id: string
-      content: string
-      timestamp: number
-      kind: StatusMessage['kind']
-    }
-  | {
-      type: 'reasoning'
-      id: string
-      content: string
-      timestamp: number
-    }
-  | {
-      type: 'assistant'
-      id: string
-      content: string
-      timestamp: number
-      isStreaming: boolean
-    }
-  | {
-      type: 'tool_card'
-      id: string
-      toolName: string
-      rawArguments: string
-      parsedArguments: Record<string, unknown> | null
-      result: string | null
-      timestamp: number
-      status: 'pending' | 'completed' | 'cancelled' | 'error'
-    }
-
-interface TurnGroup {
-  turnId: string
-  timestamp: number
-  items: DisplayItem[]
-}
 
 const input = ref('')
 const persistedMessages = ref<Message[]>([])
@@ -206,7 +155,6 @@ function buildDisplayItems(messages: Message[]): DisplayItem[] {
 
 const displayItems = computed(() => buildDisplayItems(timelineMessages.value))
 
-/** Group display items into conversation turns (each turn starts with a user message) */
 const turnGroups = computed<TurnGroup[]>(() => {
   const groups: TurnGroup[] = []
   let currentGroup: TurnGroup | null = null
@@ -222,7 +170,6 @@ const turnGroups = computed<TurnGroup[]>(() => {
     } else if (currentGroup) {
       currentGroup.items.push(item)
     } else {
-      // Orphaned non-user items (e.g., status before first user msg)
       currentGroup = {
         turnId: item.id,
         timestamp: item.timestamp,
@@ -442,206 +389,33 @@ async function copyAssistantText(item: DisplayItem) {
   }
 }
 
-// ---- Welcome suggestions ----
-const welcomeSuggestions = [
-  { icon: '✨', label: '告诉我你想要什么样的故事...', prompt: '告诉我你想要什么样的故事，我来帮你创作。' },
-  { icon: '🎭', label: '帮我设计角色和世界观', prompt: '帮我设计一个故事的角色和世界观。' },
-  { icon: '📖', label: '写一个章节让我看看', prompt: '写一个章节让我看看你的写作能力。' },
-]
-function fillSuggestion(prompt: string) {
+// ---- Welcome fill handler ----
+function onWelcomeFill(prompt: string) {
   input.value = prompt
 }
 </script>
 
 <template>
   <div class="relative flex h-full flex-col bg-background">
-    <!-- ===== Messages area ===== -->
+    <!-- Messages area -->
     <div
       ref="messagesContainer"
       class="chat-messages flex-1 overflow-y-auto scroll-smooth"
     >
-      <!-- WELCOME STATE -->
-      <div
+      <AgentWelcome
         v-if="displayItems.length === 0"
-        class="flex min-h-full flex-col items-center justify-center px-6 py-12"
-      >
-        <div class="animate-welcome w-full max-w-lg text-center">
-          <!-- Logo -->
-          <div class="mb-6 inline-flex">
-            <div class="relative">
-              <div
-                class="flex size-16 items-center justify-center rounded-lg bg-primary/8 ring-1 ring-primary/10 dark:bg-primary/15 dark:ring-primary/20"
-              >
-                <BookOpen class="size-7 text-primary/70" />
-              </div>
-              <div
-                class="absolute -right-1 -top-1 flex size-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm"
-              >
-                AI
-              </div>
-            </div>
-          </div>
-
-          <!-- Headline -->
-          <h2 class="mb-2 text-xl font-semibold tracking-tight text-foreground">
-            开始创作你的故事
-          </h2>
-          <p class="mb-8 text-sm text-muted-foreground">
-            告诉我你的想法，我会帮你将灵感变为文字
-          </p>
-
-          <!-- Suggestion chips -->
-          <div class="flex flex-col gap-2.5">
-            <button
-              v-for="suggestion in welcomeSuggestions"
-              :key="suggestion.label"
-              class="group flex items-center gap-3 rounded-lg border border-border/60 bg-card px-4 py-3 text-left text-sm text-muted-foreground shadow-xs transition-all hover:border-primary/30 hover:bg-primary/3 hover:text-foreground hover:shadow-sm"
-              @click="fillSuggestion(suggestion.prompt)"
-            >
-              <span class="text-base">{{ suggestion.icon }}</span>
-              <span class="leading-snug">{{ suggestion.label }}</span>
-              <span class="ml-auto shrink-0 text-xs text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100">
-                ↵
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- MESSAGES -->
-      <div v-else class="mx-auto max-w-3xl px-4 py-4">
-        <TransitionGroup name="message-enter" tag="div">
-          <div
-            v-for="(group, gi) in turnGroups"
-            :key="group.turnId"
-            :style="{ '--stagger': gi }"
-          >
-            <!-- Turn divider with timestamp -->
-            <div class="my-3 flex items-center gap-3 first:mt-0">
-              <div class="h-px flex-1 bg-border/60" />
-              <span class="shrink-0 text-[11px] text-muted-foreground/50">
-                {{ relativeTime(group.timestamp) }}
-              </span>
-              <div class="h-px flex-1 bg-border/60" />
-            </div>
-
-            <!-- Messages in this turn -->
-            <div class="space-y-2">
-              <template v-for="item in group.items" :key="item.id">
-                <!-- USER MESSAGE -->
-                <div v-if="item.type === 'user'" class="flex justify-end">
-                  <div class="max-w-[75%]">
-                    <div
-                      class="rounded-lg rounded-br-sm bg-primary px-4 py-1.5 text-sm leading-relaxed text-primary-foreground shadow-sm"
-                    >
-                      {{ item.content }}
-                    </div>
-                  </div>
-                </div>
-
-                <!-- STATUS MESSAGE (inline centered badge) -->
-                <div v-else-if="item.type === 'status'" class="flex justify-center py-0.5">
-                  <div
-                    v-if="item.kind === 'error'"
-                    class="inline-flex items-center gap-1.5 rounded-full bg-destructive/8 px-3 py-1 text-xs text-destructive"
-                  >
-                    <span class="size-1.5 shrink-0 rounded-full bg-destructive" />
-                    {{ item.content }}
-                  </div>
-                  <div
-                    v-else-if="item.kind === 'warning'"
-                    class="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 px-3 py-1 text-xs text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
-                  >
-                    <span class="size-1.5 shrink-0 rounded-full bg-amber-500" />
-                    {{ item.content }}
-                  </div>
-                  <div
-                    v-else-if="item.kind === 'cancelled'"
-                    class="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60"
-                  >
-                    <span class="mr-0.5">┄</span>
-                    <span class="line-through decoration-muted-foreground/30">{{ item.content }}</span>
-                    <span class="ml-0.5">┄</span>
-                  </div>
-                  <span
-                    v-else
-                    class="text-xs text-muted-foreground/50"
-                  >
-                    {{ item.content }}
-                  </span>
-                </div>
-
-                <!-- ASSISTANT AVATAR + BUBBLE (wraps assistant, reasoning, tool_card) -->
-                <div
-                  v-else-if="item.type === 'assistant' || item.type === 'reasoning' || item.type === 'tool_card'"
-                  class="flex items-start gap-2.5"
-                >
-                  <!-- AI Avatar -->
-                  <div
-                    class="flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 to-indigo-500/20 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/20"
-                  >
-                    <Bot class="size-3.5" />
-                  </div>
-
-                  <!-- Content area -->
-                  <div class="min-w-0">
-                    <!-- Assistant text bubble -->
-                    <div
-                      v-if="item.type === 'assistant'"
-                      class="group relative max-w-[85%] rounded-lg rounded-bl-sm border bg-card px-4 py-2 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <!-- Copy button -->
-                      <button
-                        v-if="item.content"
-                        class="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded-md text-muted-foreground/40 opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
-                        :class="{ 'opacity-100 text-foreground': copiedId === item.id }"
-                        @click="copyAssistantText(item)"
-                      >
-                        <Copy class="size-3.5" />
-                      </button>
-
-                      <MarkdownRender
-                        custom-id="agent-chat"
-                        :content="item.content"
-                        :final="!item.isStreaming"
-                        :is-dark="isDark"
-                        :typewriter="false"
-                        render-code-blocks-as-pre
-                      />
-
-                      <!-- Streaming cursor: pulsing vertical bar -->
-                      <span
-                        v-if="item.isStreaming"
-                        class="ml-0.5 inline-block h-[1.15em] w-0.5 animate-pulse rounded-full bg-primary align-text-bottom"
-                      />
-                    </div>
-
-                    <!-- Thinking inline -->
-                    <div v-else-if="item.type === 'reasoning'" class="max-w-[85%]">
-                      <ThinkingCard :content="item.content" />
-                    </div>
-
-                    <!-- Tool card (renders its own wrapper) -->
-                    <ToolCard
-                      v-else-if="item.type === 'tool_card'"
-                      :tool-name="item.toolName"
-                      :raw-arguments="item.rawArguments"
-                      :parsed-arguments="item.parsedArguments"
-                      :result="item.result"
-                      :status="item.status"
-                    />
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </TransitionGroup>
-
-        <div id="chat-bottom" class="h-px" />
-      </div>
+        @fill="onWelcomeFill"
+      />
+      <AgentMessageList
+        v-else
+        :turn-groups="turnGroups"
+        :is-dark="isDark"
+        :copied-id="copiedId"
+        @copy="copyAssistantText"
+      />
     </div>
 
-    <!-- ===== Scroll-to-bottom button ===== -->
+    <!-- Scroll-to-bottom button -->
     <div
       v-if="!isNearBottom && displayItems.length > 0"
       class="pointer-events-none absolute bottom-28 right-6 z-10"
@@ -654,95 +428,20 @@ function fillSuggestion(prompt: string) {
       </button>
     </div>
 
-    <!-- ===== Input area ===== -->
-    <div class="shrink-0 bg-background">
-      <div class="mx-auto max-w-3xl px-4 pb-4 pt-2">
-        <div
-          class="rounded-lg border bg-card shadow-lg transition-all focus-within:border-ring/50 focus-within:shadow-xl dark:bg-card"
-        >
-          <textarea
-            v-model="input"
-            placeholder="输入你的想法或反馈... (Ctrl+Enter 发送)"
-            rows="1"
-            class="field-sizing-content block min-h-0 w-full resize-none bg-transparent px-4 py-3.5 text-base outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-            :disabled="isGenerating"
-            @keydown.enter.exact.prevent="send"
-          />
-
-          <div class="flex items-center gap-2 px-3 pb-3">
-            <!-- Model selector -->
-            <DropdownMenu v-if="models.length > 0">
-              <DropdownMenuTrigger
-                as="button"
-                class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <span class="flex size-4 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70">
-                  {{ selectedModelProvider }}
-                </span>
-                <span class="max-w-[120px] truncate">{{ selectedModelLabel }}</span>
-                <ChevronDown class="size-3 shrink-0" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" class="min-w-[200px]">
-                <DropdownMenuItem
-                  v-for="model in models"
-                  :key="model.id"
-                  class="flex items-center gap-2"
-                  @click="selectedModelId = model.id"
-                >
-                  <span class="flex size-5 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70">
-                    {{ model.provider[0]?.toUpperCase() }}
-                  </span>
-                  <span class="text-xs">{{ modelLabel(model) }}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <!-- "配置模型" link when no models -->
-            <router-link
-              v-else
-              :to="{ name: 'model-config' }"
-              class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <BrainCircuit class="size-3.5" />
-              <span>配置模型</span>
-            </router-link>
-
-            <!-- Compact context -->
-            <Button
-              variant="ghost"
-              size="xs"
-              class="text-xs text-muted-foreground hover:text-foreground"
-              :disabled="isGenerating || isCompacting || models.length === 0"
-              @click="compactContext"
-            >
-              <Loader2 v-if="isCompacting" class="mr-1 size-3 animate-spin" />
-              <span>整理上下文</span>
-            </Button>
-
-            <div class="ml-auto flex items-center gap-1">
-              <Button
-                v-if="!isGenerating"
-                size="icon-sm"
-                variant="default"
-                class="bg-primary/90 hover:bg-primary"
-                :disabled="!input.trim()"
-                @click="send"
-              >
-                <Send class="size-3.5" />
-              </Button>
-              <Button
-                v-else
-                variant="destructive"
-                size="icon-sm"
-                @click="cancel"
-              >
-                <Square class="size-3.5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <AgentInputBar
+      :model-value="input"
+      :models="models"
+      :selected-model-id="selectedModelId"
+      :is-generating="isGenerating"
+      :is-compacting="isCompacting"
+      :selected-model-label="selectedModelLabel"
+      :selected-model-provider="selectedModelProvider"
+      @update:model-value="input = $event"
+      @send="send"
+      @cancel="cancel"
+      @compact="compactContext"
+      @update:selected-model-id="selectedModelId = $event"
+    />
   </div>
 </template>
 
@@ -766,40 +465,6 @@ function fillSuggestion(prompt: string) {
 }
 .dark .chat-messages::-webkit-scrollbar-thumb:hover {
   background: oklch(0.371 0 0);
-}
-
-/* ---- Welcome animation ---- */
-@keyframes welcome-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-welcome {
-  animation: welcome-fade-up 400ms ease-out both;
-}
-
-/* ---- Message entrance animation ---- */
-.message-enter-enter-active {
-  transition:
-    opacity 200ms ease-out,
-    transform 200ms ease-out;
-  animation-delay: calc(var(--stagger, 0) * 30ms);
-}
-
-.message-enter-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-.message-enter-enter-to {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* Smooth scrolling */
