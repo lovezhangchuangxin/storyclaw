@@ -26,6 +26,7 @@ storyclaw (database)
 ├── chapters        keyPath: [novelId, index]
 ├── worldBuilding   keyPath: novelId
 ├── conversations   keyPath: novelId
+├── contextSnapshots keyPath: id
 ├── config          keyPath: id
 ├── readingProgress keyPath: novelId
 └── operationHistory keyPath: id     (undo/redo 操作记录)
@@ -153,34 +154,97 @@ interface Faction {
 interface Conversation {
   novelId: string;
   messages: Message[];       // 完整对话历史
-  compactedSummary?: CompactedSummary;
-  settings: ConversationSettings;
   updatedAt: number;
 }
 
-interface Message {
+interface BaseMessage {
   id: string;
-  role: 'system' | 'user' | 'assistant' | 'tool';
-  content: string;
-  toolCalls?: ToolCall[];
-  toolCallId?: string;
   timestamp: number;
-  tokenCount?: number;       // 从 API 响应获取的实际 token 数
+  promptTokens?: number;     // 本次 assistant 响应对应的 prompt tokens
+  completionTokens?: number; // 本次 assistant 响应对应的 completion tokens
 }
 
-interface ToolCall {
+interface UserMessage extends BaseMessage {
+  role: 'user';
+  content: string;
+}
+
+interface StatusMessage extends BaseMessage {
+  role: 'status';
+  kind: 'info' | 'warning' | 'error' | 'cancelled';
+  content: string;
+}
+
+interface AssistantReasoningPart {
+  type: 'reasoning';
+  text: string;
+}
+
+interface AssistantTextPart {
+  type: 'text';
+  text: string;
+}
+
+interface AssistantToolUsePart {
+  type: 'tool_use';
+  toolCallId: string;
+  toolName: string;
+  rawArguments: string;      // 原始 JSON 字符串，保证回放稳定
+  arguments: Record<string, unknown> | null; // 尝试解析后的参数，仅用于 UI 摘要
+  result: string | null;     // tool result JSON 字符串
+  status: 'pending' | 'completed' | 'cancelled' | 'error';
+}
+
+type AssistantPart =
+  | AssistantReasoningPart
+  | AssistantTextPart
+  | AssistantToolUsePart;
+
+interface AssistantMessage extends BaseMessage {
+  role: 'assistant';
+  parts: AssistantPart[];    // 按流式到达顺序保存，UI 与回放共用
+  state: 'completed' | 'cancelled' | 'error' | 'truncated';
+  finishReason?: string;
+}
+
+type Message = UserMessage | StatusMessage | AssistantMessage;
+```
+
+说明：
+- 不再存储 `system` / `tool` 平铺消息，tool 调用折叠进 `assistant.parts`
+- 不再使用 `compactedSummary` 或会话级 settings
+- `status` 消息只用于 UI 提示，不参与下轮模型上下文
+- `assistant.parts` 是唯一顺序来源，生成中、刷新后、再次回放都使用同一结构
+- 未来的上下文快照与记忆块使用独立的 `contextSnapshots` 存储，详见 [07 — 上下文压缩与记忆管理](./07-context-compaction-and-memory.md)
+
+#### contextSnapshots
+```typescript
+interface ContextSnapshot {
   id: string;
-  name: string;
-  arguments: Record<string, any>;
-}
-
-interface CompactedSummary {
-  generatedAt: number;
-  summary: string;           // 压缩后的摘要
-  originalMessageRange: [number, number]; // [startIndex, endIndex]
-  retainedMessageIds: string[]; // 保留未压缩的消息 ID
+  novelId: string;
+  scopeId: string;           // main / sub-agent id
+  revision: number;
+  kind: 'auto' | 'manual';
+  serializerVersion: number;
+  promptTemplateVersion: number;
+  compactedThroughMessageId: string | null;
+  retainedTailMessageIds: string[];
+  sourceMessageIds: string[];
+  memory: CompactedMemory;
+  estimatedInputTokensBefore: number;
+  estimatedInputTokensAfter: number;
+  summaryModelId?: string;
+  manualInstructions?: string;
+  createdAt: number;
 }
 ```
+
+说明：
+- `keyPath: id`
+- 索引建议：`novelId`、`scopeId`、`[novelId, scopeId, revision]`、`createdAt`
+- 最新有效快照 = 同一 `novelId + scopeId` 下 `revision` 最大的记录
+- `scopeId` 现在可以固定为 `main`，后续多 agent 再扩展为子 agent id
+- `CompactedMemory` 的结构见 [07 — 上下文压缩与记忆管理](./07-context-compaction-and-memory.md)
 
 #### config
 ```typescript
@@ -189,7 +253,7 @@ interface AppConfig {
   models: ModelConfig[];
   defaultModelId: string;
   skillModelMapping: Record<string, string>;  // skillName → modelId
-  readingTheme: ReadingTheme;
+  readingTheme: string;
   readingSettings: ReadingSettings;
   backendUrl?: string;
   useBackendProxy: boolean;
@@ -198,16 +262,23 @@ interface AppConfig {
 
 interface ModelConfig {
   id: string;
-  name: string;
   provider: string;
   apiBase: string;           // OpenAI 兼容 endpoint
   apiKey: string;            // 明文存储
   model: string;             // 模型名
-  maxTokens: number;
-  temperature: number;
-  topP: number;
+  maxOutputTokens: number;   // 单轮生成上限
+  contextWindowTokens: number; // 模型上下文窗口
+  outputReserveTokens: number; // 给本轮输出预留的 token
+  compactionTriggerRatio: number;
+  compactionTargetRatio: number;
+  summaryModelId?: string;
 }
 ```
+
+说明：
+- `maxOutputTokens` 仅控制生成上限，不参与上下文预算计算。
+- `contextWindowTokens`、`outputReserveTokens`、`compactionTriggerRatio`、`compactionTargetRatio` 用于 compaction 预算计算。
+- `summaryModelId` 可选，用于压缩阶段的专用模型。
 
 #### readingProgress
 ```typescript

@@ -47,7 +47,7 @@ StoryClaw 是一个 Agent 驱动的中短篇小说创作与阅读 Web 应用（W
 
 ### Phase 2 — Agent 增强
 - Agent Loop 迁移到 Web Worker
-- Prompt Caching + Context Compaction
+- Prompt Caching + Cache-aware Context Compaction
 - 更多 Tools（重写章节、角色调整、情节分支等）
 - 更多预设阅读主题
 - PWA 离线阅读完善

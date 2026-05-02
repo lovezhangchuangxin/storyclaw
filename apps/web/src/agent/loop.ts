@@ -1,52 +1,157 @@
 import type OpenAI from 'openai'
-import { createLLMClient } from './llm-client'
-import { buildContext } from './context'
-import { executeToolCall } from './tools'
-import type { ToolContext } from './tools/types'
-import type { Message } from '@/db/types'
 import { getConfig } from '@/db/config'
 import { getConversationByNovelId, saveConversation } from '@/db/conversations'
+import type { AssistantMessage, AssistantToolUsePart, Message } from '@/db/types'
+import { buildContext } from './context'
+import { createLLMClient } from './llm-client'
+import {
+  appendAssistantReasoning,
+  appendAssistantText,
+  assistantHasRenderableContent,
+  cancelPendingToolUses,
+  completeAssistantToolUse,
+  cloneMessages,
+  createAssistantMessage,
+  createStatusMessage,
+  createUserMessage,
+  getAssistantReasoningParts,
+  getAssistantTextParts,
+  getAssistantToolUses,
+  isToolResultError,
+  parseToolArguments,
+  startAssistantToolUse,
+} from './message-state'
+import { executeToolCall } from './tools'
+import type { ToolContext } from './tools/types'
 
 export interface AgentLoopOptions {
   novelId: string
   userMessage: string
   modelConfigId?: string
+  historyMessages?: Message[]
+  onMessagesUpdated?: (messages: Message[]) => void
+  onAssistantResponseStart?: () => void
   onToken?: (token: string) => void
-  onToolCall?: (toolCallId: string, name: string, args: Record<string, unknown>) => void
-  onToolResult?: (toolCallId: string, name: string, result: string) => void
+  onToolCall?: (
+    toolCallId: string,
+    name: string,
+    rawArguments: string,
+    args: Record<string, unknown> | null,
+  ) => void
+  onToolResult?: (
+    toolCallId: string,
+    name: string,
+    result: string,
+    status: AssistantToolUsePart['status'],
+  ) => void
   onToolStreamToken?: (toolCallId: string, toolName: string, token: string) => void
   onReasoningToken?: (token: string) => void
   onError?: (error: string) => void
   signal?: AbortSignal
 }
 
+export interface AgentTurnResult {
+  messages: Message[]
+  persisted: boolean
+  persistenceError?: string
+}
+
 const MAX_TOOL_ITERATIONS = 15
 
-function repairDanglingToolCalls(messages: Message[]): void {
-  for (let i = 0; i < messages.length; i++) {
-    const msg = messages[i]
-    if (msg.role !== 'tool_call') continue
+function buildAssistantApiMessage(
+  message: AssistantMessage,
+  includeReasoning: boolean,
+): OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam {
+  const textContent = getAssistantTextParts(message).join('')
+  const reasoningContent = getAssistantReasoningParts(message).join('')
+  const toolUses = getAssistantToolUses(message).filter(
+    (toolUse) => toolUse.status !== 'cancelled',
+  )
 
-    const tcId = msg.toolCallId!
-    const hasResult = messages.some(
-      (m, j) => j > i && m.role === 'tool' && m.toolCallId === tcId,
-    )
-    if (!hasResult) {
-      messages.splice(i + 1, 0, {
-        id: crypto.randomUUID(),
-        role: 'tool',
-        content: JSON.stringify({ error: '操作被用户中断' }),
-        toolCallId: tcId,
-        timestamp: Date.now(),
-      })
+  const assistantMessage: Record<string, unknown> = {
+    role: 'assistant',
+    content: textContent || null,
+  }
+
+  if (includeReasoning && reasoningContent) {
+    assistantMessage.reasoning_content = reasoningContent
+  }
+
+  if (toolUses.length > 0) {
+    assistantMessage.tool_calls = toolUses.map((toolUse) => ({
+      id: toolUse.toolCallId,
+      type: 'function' as const,
+      function: {
+        name: toolUse.toolName,
+        arguments: toolUse.rawArguments,
+      },
+    }))
+  }
+
+  return assistantMessage as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam
+}
+
+function buildTurnMessages(historyMessages: Message[], turnMessages: Message[]): Message[] {
+  return [...historyMessages, ...turnMessages]
+}
+
+function serializeToolExecutionError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  return JSON.stringify({ error: message })
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    error instanceof DOMException && error.name === 'AbortError'
+  ) || (
+    error instanceof Error && error.name === 'AbortError'
+  )
+}
+
+function finalizeInFlightAssistant(
+  turnMessages: Message[],
+  assistantMessage: AssistantMessage | null,
+  state: AssistantMessage['state'],
+): AssistantMessage | null {
+  if (!assistantMessage || turnMessages.includes(assistantMessage)) return assistantMessage
+  assistantMessage.state = state
+  if (state !== 'completed') {
+    cancelPendingToolUses(assistantMessage)
+  }
+  if (assistantHasRenderableContent(assistantMessage)) {
+    turnMessages.push(assistantMessage)
+  }
+  return assistantMessage
+}
+
+async function persistTurn(
+  novelId: string,
+  historyMessages: Message[],
+  turnMessages: Message[],
+): Promise<{ persisted: boolean; persistenceError?: string }> {
+  try {
+    await saveConversation({
+      novelId,
+      messages: buildTurnMessages(historyMessages, turnMessages),
+      updatedAt: Date.now(),
+    })
+    return { persisted: true }
+  } catch (error) {
+    return {
+      persisted: false,
+      persistenceError: error instanceof Error ? error.message : String(error),
     }
   }
 }
 
-export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]> {
+export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurnResult> {
   const {
     novelId,
     userMessage,
+    modelConfigId,
+    historyMessages: providedHistoryMessages,
+    onMessagesUpdated,
+    onAssistantResponseStart,
     onToken,
     onToolCall,
     onToolResult,
@@ -57,190 +162,213 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<Message[]
   } = options
 
   const config = await getConfig()
-  const modelId = options.modelConfigId ?? config.defaultModelId
-  if (!modelId || !config.models.length) {
-    onError?.('没有配置模型。请在设置中配置至少一个模型。')
-    return []
+  const modelId = modelConfigId ?? config.defaultModelId
+  const modelConfig = config.models.find((model) => model.id === modelId) ?? config.models[0]
+  const existingConversation = await getConversationByNovelId(novelId)
+  const historyMessages = providedHistoryMessages ?? existingConversation?.messages ?? []
+  const turnMessages: Message[] = [createUserMessage(userMessage)]
+
+  if (!modelConfig) {
+    const errorMessage = '没有配置模型。请在设置中配置至少一个模型。'
+    onError?.(errorMessage)
+    turnMessages.push(createStatusMessage('error', errorMessage))
+    const persistence = await persistTurn(novelId, historyMessages, turnMessages)
+    return { messages: turnMessages, ...persistence }
   }
 
-  const modelConfig = config.models.find((m) => m.id === modelId) ?? config.models[0]
+  const context = await buildContext(
+    novelId,
+    userMessage,
+    modelConfig,
+    {
+      novelId,
+      messages: historyMessages,
+      updatedAt: existingConversation?.updatedAt ?? Date.now(),
+    },
+  )
+  const localMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [...context.messages]
+  const toolContext: ToolContext = { novelId }
+  let currentAssistantMessage: AssistantMessage | null = null
+
+  const emitMessagesUpdated = () => {
+    const snapshot = [...turnMessages]
+    if (
+      currentAssistantMessage
+      && !turnMessages.includes(currentAssistantMessage)
+      && assistantHasRenderableContent(currentAssistantMessage)
+    ) {
+      snapshot.push(currentAssistantMessage)
+    }
+    onMessagesUpdated?.(cloneMessages(snapshot))
+  }
+
+  emitMessagesUpdated()
+
   const client = createLLMClient({
     config: modelConfig,
-    onToken,
-    onReasoningToken,
-    onToolStreamToken,
     signal,
-  })
-  const toolContext: ToolContext = { novelId }
-
-  const existingConv = await getConversationByNovelId(novelId)
-  const historyMessages = existingConv?.messages ?? []
-  const allMessages: Message[] = [
-    ...historyMessages,
-    {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: userMessage,
-      timestamp: Date.now(),
+    onToken(token) {
+      if (!currentAssistantMessage) return
+      appendAssistantText(currentAssistantMessage, token)
+      emitMessagesUpdated()
+      onToken?.(token)
     },
-  ]
-  const newStartIndex = historyMessages.length
-
-  const ctx = await buildContext(novelId, userMessage, existingConv)
-  const localMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [...ctx.messages]
+    onReasoningToken(token) {
+      if (!currentAssistantMessage) return
+      appendAssistantReasoning(currentAssistantMessage, token)
+      emitMessagesUpdated()
+      onReasoningToken?.(token)
+    },
+    onToolCallStart(toolCallId, toolName, rawArguments) {
+      if (!currentAssistantMessage) return
+      startAssistantToolUse(currentAssistantMessage, toolCallId, toolName, rawArguments)
+      emitMessagesUpdated()
+      onToolCall?.(toolCallId, toolName, rawArguments, parseToolArguments(rawArguments))
+    },
+    onToolStreamToken(toolCallId, toolName, token) {
+      if (!currentAssistantMessage) return
+      const part = startAssistantToolUse(currentAssistantMessage, toolCallId, toolName)
+      part.rawArguments += token
+      part.arguments = parseToolArguments(part.rawArguments)
+      emitMessagesUpdated()
+      onToolStreamToken?.(toolCallId, toolName, token)
+    },
+  })
 
   let iterationCount = 0
+  let turnCompleted = false
 
   try {
     while (iterationCount < MAX_TOOL_ITERATIONS) {
       if (signal?.aborted) {
-        allMessages.push({
-          id: crypto.randomUUID(),
-          role: 'system',
-          content: '[用户取消了生成]',
-          timestamp: Date.now(),
-        })
+        turnMessages.push(createStatusMessage('cancelled', '已取消生成'))
+        emitMessagesUpdated()
+        turnCompleted = true
         break
       }
 
       iterationCount++
+      onAssistantResponseStart?.()
 
-      const response = await client.chat(localMessages, ctx.tools)
+      const assistantMessage = createAssistantMessage()
+      currentAssistantMessage = assistantMessage
+      emitMessagesUpdated()
+      const response = await client.chat(localMessages, context.tools)
 
-      const tokensUsed = response.usage
+      assistantMessage.finishReason = response.finishReason
+      assistantMessage.promptTokens = response.usage?.promptTokens
+      assistantMessage.completionTokens = response.usage?.completionTokens
 
-      const openaiAssistantMsg: Record<string, unknown> = {
-        role: 'assistant',
-        content: response.content || null,
+      for (const toolCall of response.toolCalls) {
+        const part = startAssistantToolUse(
+          assistantMessage,
+          toolCall.id,
+          toolCall.function.name,
+          toolCall.function.arguments,
+        )
+        part.arguments = parseToolArguments(part.rawArguments)
       }
-      if (response.reasoningContent) {
-        openaiAssistantMsg.reasoning_content = response.reasoningContent
+
+      if (response.aborted) {
+        finalizeInFlightAssistant(turnMessages, assistantMessage, 'cancelled')
+        turnMessages.push(createStatusMessage('cancelled', '已取消生成'))
+        emitMessagesUpdated()
+        turnCompleted = true
+        currentAssistantMessage = null
+        break
       }
+
+      if (response.finishReason !== 'stop' && response.finishReason !== 'tool_calls') {
+        finalizeInFlightAssistant(turnMessages, assistantMessage, 'truncated')
+        turnMessages.push(
+          createStatusMessage('warning', `回复未完整结束（${response.finishReason || 'unknown'}）`),
+        )
+        emitMessagesUpdated()
+        turnCompleted = true
+        currentAssistantMessage = null
+        break
+      }
+
+      localMessages.push(buildAssistantApiMessage(assistantMessage, context.includeReasoningContent))
+
       if (response.toolCalls.length > 0) {
-        openaiAssistantMsg.tool_calls = response.toolCalls.map((tc) => ({
-          id: tc.id,
-          type: 'function' as const,
-          function: { name: tc.function.name, arguments: tc.function.arguments },
-        }))
-      }
-      localMessages.push(
-        openaiAssistantMsg as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam,
-      )
+        for (const toolCall of response.toolCalls) {
+          if (signal?.aborted) {
+            finalizeInFlightAssistant(turnMessages, assistantMessage, 'cancelled')
+            break
+          }
 
-      if (response.reasoningContent) {
-        allMessages.push({
-          id: crypto.randomUUID(),
-          role: 'reasoning',
-          content: response.reasoningContent,
-          reasoningContent: response.reasoningContent,
-          timestamp: Date.now(),
-        })
-      }
+          let result: string
+          try {
+            result = await executeToolCall(
+              toolCall.function.name,
+              toolCall.function.arguments,
+              toolContext,
+            )
+          } catch (error) {
+            result = serializeToolExecutionError(error)
+          }
 
-      const parsedToolCalls = response.toolCalls.map((tc) => {
-        let args: Record<string, unknown> = {}
-        try {
-          args = JSON.parse(tc.function.arguments)
-        } catch {
-          args = { _parse_error: tc.function.arguments }
-        }
-        return { id: tc.id, name: tc.function.name, arguments: args }
-      })
-
-      if (response.toolCalls.length > 0) {
-        for (const tc of response.toolCalls) {
-          if (signal?.aborted) break
-
-          const parsedArgs = parsedToolCalls.find((p) => p.id === tc.id)?.arguments ?? {}
-          onToolCall?.(tc.id, tc.function.name, parsedArgs)
-
-          allMessages.push({
-            id: crypto.randomUUID(),
-            role: 'tool_call',
-            content: '',
-            toolCallId: tc.id,
-            toolName: tc.function.name,
-            arguments: parsedArgs,
-            timestamp: Date.now(),
-          })
-
-          const result = await executeToolCall(tc.function.name, tc.function.arguments, toolContext)
-
-          onToolResult?.(tc.id, tc.function.name, result)
+          const toolStatus: AssistantToolUsePart['status'] = isToolResultError(result)
+            ? 'error'
+            : 'completed'
+          completeAssistantToolUse(assistantMessage, toolCall.id, result, toolStatus)
+          emitMessagesUpdated()
+          onToolResult?.(toolCall.id, toolCall.function.name, result, toolStatus)
 
           localMessages.push({
-            role: 'tool' as const,
-            content: result,
-            tool_call_id: tc.id,
-          })
-
-          allMessages.push({
-            id: crypto.randomUUID(),
             role: 'tool',
             content: result,
-            toolCallId: tc.id,
-            timestamp: Date.now(),
+            tool_call_id: toolCall.id,
           })
         }
 
-        if (response.content && !signal?.aborted) {
-          allMessages.push({
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: response.content,
-            timestamp: Date.now(),
-            promptTokens: tokensUsed?.promptTokens,
-            completionTokens: tokensUsed?.completionTokens,
-          })
+        if (assistantMessage.state === 'cancelled') {
+          turnMessages.push(createStatusMessage('cancelled', '已取消生成'))
+          emitMessagesUpdated()
+          turnCompleted = true
+          currentAssistantMessage = null
+          break
         }
 
+        finalizeInFlightAssistant(turnMessages, assistantMessage, 'completed')
+        emitMessagesUpdated()
+        currentAssistantMessage = null
         continue
       }
 
-      if (response.content) {
-        allMessages.push({
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: response.content,
-          timestamp: Date.now(),
-          promptTokens: tokensUsed?.promptTokens,
-          completionTokens: tokensUsed?.completionTokens,
-        })
-      }
-
+      finalizeInFlightAssistant(turnMessages, assistantMessage, 'completed')
+      emitMessagesUpdated()
+      turnCompleted = true
+      currentAssistantMessage = null
       break
     }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    const state: AssistantMessage['state'] = signal?.aborted || isAbortError(error)
+      ? 'cancelled'
+      : 'error'
+    finalizeInFlightAssistant(turnMessages, currentAssistantMessage, state)
+    currentAssistantMessage = null
 
-    if (iterationCount >= MAX_TOOL_ITERATIONS) {
-      allMessages.push({
-        id: crypto.randomUUID(),
-        role: 'system',
-        content: '[已达到最大工具调用次数，已自动停止]',
-        timestamp: Date.now(),
-      })
+    if (state === 'cancelled') {
+      turnMessages.push(createStatusMessage('cancelled', '已取消生成'))
+    } else {
+      onError?.(message)
+      turnMessages.push(createStatusMessage('error', message))
     }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    onError?.(msg)
-    allMessages.push({
-      id: crypto.randomUUID(),
-      role: 'system',
-      content: `[发生错误: ${msg}]`,
-      timestamp: Date.now(),
-    })
+    emitMessagesUpdated()
+    turnCompleted = true
   }
 
-  repairDanglingToolCalls(allMessages)
-
-  try {
-    await saveConversation({
-      novelId,
-      messages: [...allMessages],
-      updatedAt: Date.now(),
-    })
-  } catch {
-    // silently fail — conversation save is best-effort
+  if (!turnCompleted && iterationCount >= MAX_TOOL_ITERATIONS) {
+    turnMessages.push(createStatusMessage('warning', '已达到最大工具调用次数，已自动停止'))
+    emitMessagesUpdated()
   }
 
-  return allMessages.slice(newStartIndex)
+  const persistence = await persistTurn(novelId, historyMessages, turnMessages)
+  return {
+    messages: turnMessages,
+    ...persistence,
+  }
 }

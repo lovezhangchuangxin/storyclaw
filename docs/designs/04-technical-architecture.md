@@ -16,7 +16,7 @@
 │        ▼                ▼                                 │
 │  ┌──────────────────────────────┐                        │
 │  │        IndexedDB              │                        │
-│  │  (novels, chapters, config)  │                        │
+│  │  (novels, chapters, conversations, contextSnapshots, config)  │
 │  └──────────────────────────────┘                        │
 │        │                                                 │
 │        │  openai SDK (直连模型 API 或 后端代理)            │
@@ -231,8 +231,8 @@ PWA Manifest 配置：
 
 | 层级 | 工具 | 范围 |
 |------|------|------|
-| 单元测试 | Vitest | Tool 执行函数、Context 构建、Token 计算 |
-| 组件测试 | Vitest + @vue/test-utils | 阅读器渲染、主题切换、Agent 消息卡片 |
+| 单元测试 | Vitest | Tool 执行函数、Context 构建、消息回放与状态迁移 |
+| 组件测试 | Vitest + @vue/test-utils | 阅读器渲染、主题切换、Agent 消息卡片顺序与状态显示 |
 | E2E | Playwright | 完整用户旅程：创建故事 → Agent 创作 → 阅读 |
 | API 测试 | Rust test + reqwest | 后端路由、认证、同步逻辑 |
 

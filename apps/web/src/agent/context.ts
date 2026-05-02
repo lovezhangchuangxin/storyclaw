@@ -1,15 +1,22 @@
 import type OpenAI from 'openai'
+import type { ChatCompletionTool } from 'openai/resources/chat/completions'
 import { getConversationByNovelId } from '@/db/conversations'
+import type { Conversation, Message, ModelConfig } from '@/db/types'
+import { supportsReasoningContent } from '@/lib/model-capabilities'
+import {
+  getAssistantReasoningParts,
+  getAssistantTextParts,
+  getAssistantToolUses,
+  isMessageIncludedInContext,
+} from './message-state'
 import { getToolDefinitions } from './tools'
 import type { ToolContext } from './tools/types'
-import type { Conversation, Message } from '@/db/types'
-
-import type { ChatCompletionTool } from 'openai/resources/chat/completions'
 
 export interface ContextBuildResult {
   messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
   totalTokensUsed: number
   tools: ChatCompletionTool[]
+  includeReasoningContent: boolean
 }
 
 function buildPersonaPrompt(): string {
@@ -33,94 +40,70 @@ function buildPersonaPrompt(): string {
 - 主动使用工具，不要让用户催促`
 }
 
-function findSafeSliceStart(messages: Message[], targetStart: number): number {
-  if (messages.length === 0) return 0
-  const MAX_WALKBACK = 10
-  let i = Math.min(targetStart, messages.length - 1)
-  let walked = 0
-  while (i > 0 && walked < MAX_WALKBACK) {
-    const msg = messages[i]
-    if (msg.role === 'tool' || msg.role === 'tool_call' || msg.role === 'reasoning') {
-      i--
-      walked++
-      continue
-    }
-    break
-  }
-  return i
-}
-
-function convertToApiMessages(messages: Message[]): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
+function convertToApiMessages(
+  messages: Message[],
+  includeReasoningContent: boolean,
+): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
   const result: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = []
 
-  let pendingReasoning: string | undefined
-  let pendingToolCalls: Array<{ id: string; name: string; args: string }> = []
+  for (const message of messages) {
+    if (!isMessageIncludedInContext(message)) continue
 
-  function flushToolGroup(): void {
-    if (pendingToolCalls.length === 0) return
-
-    const assistantMsg: Record<string, unknown> = {
-      role: 'assistant',
-      content: null,
-    }
-    if (pendingReasoning) {
-      assistantMsg.reasoning_content = pendingReasoning
-      pendingReasoning = undefined
-    }
-    assistantMsg.tool_calls = pendingToolCalls.map((tc) => ({
-      id: tc.id,
-      type: 'function' as const,
-      function: { name: tc.name, arguments: tc.args },
-    }))
-    result.push(
-      assistantMsg as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam,
-    )
-
-    for (const tc of pendingToolCalls) {
-      const toolMsg = messages.find(
-        (m) => m.role === 'tool' && m.toolCallId === tc.id,
-      )
-      result.push({
-        role: 'tool',
-        content: toolMsg?.content ?? JSON.stringify({ error: '工具结果缺失' }),
-        tool_call_id: tc.id,
-      })
-    }
-
-    pendingToolCalls = []
-  }
-
-  for (const msg of messages) {
-    switch (msg.role) {
-      case 'system':
-        result.push({ role: 'system', content: msg.content })
-        break
+    switch (message.role) {
       case 'user':
-        flushToolGroup()
-        pendingReasoning = undefined
-        result.push({ role: 'user', content: msg.content })
+        result.push({ role: 'user', content: message.content })
         break
-      case 'reasoning':
-        pendingReasoning = msg.content
+      case 'assistant': {
+        const includeAssistantContent = message.state === 'completed'
+        const textContent = includeAssistantContent ? getAssistantTextParts(message).join('') : ''
+        const reasoningContent = includeAssistantContent
+          ? getAssistantReasoningParts(message).join('')
+          : ''
+        const toolUses = getAssistantToolUses(message).filter(
+          (toolUse) => toolUse.status !== 'cancelled' && toolUse.result !== null,
+        )
+
+        if (!includeAssistantContent && toolUses.length === 0) {
+          break
+        }
+
+        const assistantMessage: Record<string, unknown> = {
+          role: 'assistant',
+          content: textContent || null,
+        }
+
+        if (includeAssistantContent && includeReasoningContent && reasoningContent) {
+          assistantMessage.reasoning_content = reasoningContent
+        }
+
+        if (toolUses.length > 0) {
+          assistantMessage.tool_calls = toolUses.map((toolUse) => ({
+            id: toolUse.toolCallId,
+            type: 'function' as const,
+            function: {
+              name: toolUse.toolName,
+              arguments: toolUse.rawArguments,
+            },
+          }))
+        }
+
+        result.push(
+          assistantMessage as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam,
+        )
+
+        for (const toolUse of toolUses) {
+          result.push({
+            role: 'tool',
+            content: toolUse.result!,
+            tool_call_id: toolUse.toolCallId,
+          })
+        }
         break
-      case 'tool_call':
-        pendingToolCalls.push({
-          id: msg.toolCallId!,
-          name: msg.toolName!,
-          args: JSON.stringify(msg.arguments),
-        })
-        break
-      case 'tool':
-        break
-      case 'assistant':
-        flushToolGroup()
-        pendingReasoning = undefined
-        result.push({ role: 'assistant', content: msg.content || null })
+      }
+      case 'status':
         break
     }
   }
-
-  flushToolGroup()
 
   return result
 }
@@ -128,45 +111,29 @@ function convertToApiMessages(messages: Message[]): OpenAI.Chat.Completions.Chat
 export async function buildContext(
   novelId: string,
   userMessage: string,
+  modelConfig: ModelConfig,
   existingConversation?: Conversation,
 ): Promise<ContextBuildResult> {
   const conversation = existingConversation ?? (await getConversationByNovelId(novelId))
-
   const toolContext: ToolContext = { novelId }
+  const includeReasoningContent = supportsReasoningContent(modelConfig)
+
   const tools = getToolDefinitions(toolContext)
-
-  const systemMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    { role: 'system', content: buildPersonaPrompt() },
-  ]
-
-  const rawMessages = conversation?.messages ?? []
-
-  let historyMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
-
-  if (conversation?.compactedSummary) {
-    const targetStart = Math.max(0, rawMessages.length - 6)
-    const safeStart = findSafeSliceStart(rawMessages, targetStart)
-    const recentMessages = rawMessages.slice(safeStart)
-    historyMessages = [
-      {
-        role: 'system' as const,
-        content: `[对话历史摘要]\n${conversation.compactedSummary.summary}`,
-      },
-      ...convertToApiMessages(recentMessages),
-    ]
-  } else {
-    historyMessages = convertToApiMessages(rawMessages)
-  }
-
+  const historyMessages = convertToApiMessages(conversation?.messages ?? [], includeReasoningContent)
   const totalTokensUsed =
-    conversation?.messages?.reduce(
-      (sum, m) => sum + (m.promptTokens ?? 0) + (m.completionTokens ?? 0),
+    conversation?.messages.reduce(
+      (sum, message) => sum + (message.promptTokens ?? 0) + (message.completionTokens ?? 0),
       0,
     ) ?? 0
 
   return {
-    messages: [...systemMessages, ...historyMessages, { role: 'user', content: userMessage }],
+    messages: [
+      { role: 'system', content: buildPersonaPrompt() },
+      ...historyMessages,
+      { role: 'user', content: userMessage },
+    ],
     totalTokensUsed,
     tools,
+    includeReasoningContent,
   }
 }

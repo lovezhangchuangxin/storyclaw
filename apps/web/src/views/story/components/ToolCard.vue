@@ -5,9 +5,10 @@ import { getToolDisplayInfo } from '@/agent/tools'
 
 const props = defineProps<{
   toolName: string
-  arguments?: Record<string, unknown>
+  rawArguments?: string
+  parsedArguments?: Record<string, unknown> | null
   result?: string | null
-  isStreaming?: boolean
+  status?: 'pending' | 'completed' | 'cancelled' | 'error'
 }>()
 
 const expanded = ref(false)
@@ -18,9 +19,69 @@ function toggle() {
 
 const info = computed(() => getToolDisplayInfo(props.toolName))
 
+function safeStringify(value: unknown): string {
+  const seen = new WeakSet<object>()
+
+  return JSON.stringify(
+    value,
+    (_key, nestedValue) => {
+      if (typeof nestedValue === 'bigint') {
+        return nestedValue.toString()
+      }
+
+      if (!nestedValue || typeof nestedValue !== 'object') {
+        return nestedValue
+      }
+
+      if (seen.has(nestedValue)) {
+        return '[Circular]'
+      }
+
+      seen.add(nestedValue)
+      return nestedValue
+    },
+    2,
+  )
+}
+
+function extractStreamingToolPreview(raw: string): {
+  chapter?: string
+  preview?: string
+  wordCount: number
+} {
+  const idxMatch = raw.match(/"index"\s*:\s*(\d+)/)
+  const contentMatch = raw.match(/"content"\s*:\s*"((?:[^"\\]|\\.)*)/)
+  const index = idxMatch ? Number.parseInt(idxMatch[1], 10) : undefined
+
+  let preview = ''
+  let wordCount = 0
+  if (contentMatch) {
+    const rawContent = contentMatch[1]
+    preview = rawContent.replace(/\\"/g, '"').replace(/\\n/g, '\n').slice(0, 30)
+    wordCount = (rawContent.match(/[\u4e00-\u9fa5]|[a-zA-Z]+/g) || []).length
+  }
+
+  return {
+    chapter: index !== undefined ? `第${index + 1}章` : undefined,
+    preview: preview || undefined,
+    wordCount,
+  }
+}
+
 const argSummary = computed(() => {
-  if (!props.arguments) return ''
-  const args = props.arguments
+  const args = props.parsedArguments
+  if (!args) {
+    if (
+      props.rawArguments
+      && (props.toolName === 'write_chapter' || props.toolName === 'rewrite_chapter')
+    ) {
+      const preview = extractStreamingToolPreview(props.rawArguments)
+      return [preview.chapter, preview.preview, preview.wordCount > 0 ? `${preview.wordCount} 字` : '']
+        .filter(Boolean)
+        .join(' · ')
+    }
+    return ''
+  }
   switch (props.toolName) {
     case 'write_chapter':
     case 'rewrite_chapter': {
@@ -47,6 +108,7 @@ const argSummary = computed(() => {
 })
 
 const resultSummary = computed(() => {
+  if (props.status === 'cancelled') return { success: false, text: '已取消' }
   if (!props.result) return null
   try {
     const parsed = JSON.parse(props.result)
@@ -66,30 +128,66 @@ const resultSummary = computed(() => {
 })
 
 const hasDetail = computed(() =>
-  (props.arguments && Object.keys(props.arguments).length > 0) || !!props.result,
+  !!props.rawArguments
+  || (props.parsedArguments && Object.keys(props.parsedArguments).length > 0)
+  || !!props.result,
 )
+
+const parsedArgumentsText = computed(() => {
+  if (!props.parsedArguments || Object.keys(props.parsedArguments).length === 0) {
+    return ''
+  }
+  try {
+    return safeStringify(props.parsedArguments)
+  } catch {
+    return '[Unserializable arguments]'
+  }
+})
+
+const cardClass = computed(() => {
+  if (props.status === 'error' || resultSummary.value?.success === false) {
+    return 'bg-red-50/30 dark:bg-red-950/10'
+  }
+  if (props.status === 'cancelled') {
+    return 'bg-amber-50/30 dark:bg-amber-950/10'
+  }
+  return 'bg-muted/50'
+})
+
+const textClass = computed(() => {
+  if (props.status === 'error' || resultSummary.value?.success === false) {
+    return 'text-destructive'
+  }
+  if (props.status === 'cancelled') {
+    return 'text-amber-700 dark:text-amber-300'
+  }
+  return 'text-muted-foreground hover:text-foreground'
+})
 </script>
 
 <template>
   <div class="flex justify-start">
     <div
       class="max-w-[85%] rounded-lg px-3 py-2 text-xs"
-      :class="resultSummary?.success === false ? 'bg-red-50/30 dark:bg-red-950/10' : 'bg-muted/50'"
+      :class="cardClass"
     >
       <button
         v-if="hasDetail"
         class="w-full text-left flex items-center gap-1.5 group"
-        :class="resultSummary?.success === false ? 'text-destructive' : 'text-muted-foreground hover:text-foreground'"
+        :class="textClass"
         @click="toggle"
       >
         <span class="shrink-0">{{ info.icon }}</span>
         <span class="font-medium">{{ info.displayName }}</span>
         <span
-          v-if="isStreaming"
+          v-if="status === 'pending'"
           class="text-muted-foreground/50 italic flex items-center gap-1"
         >
           <Loader2 class="size-3 animate-spin" />
           执行中...
+        </span>
+        <span v-else-if="status === 'cancelled'" class="italic">
+          · 已取消
         </span>
         <span v-else-if="argSummary && !resultSummary" class="text-muted-foreground/60 truncate">
           — {{ argSummary }}
@@ -105,9 +203,12 @@ const hasDetail = computed(() =>
       <div v-else class="flex items-center gap-1.5 text-muted-foreground">
         <span class="shrink-0">{{ info.icon }}</span>
         <span class="font-medium">{{ info.displayName }}</span>
-        <span v-if="isStreaming" class="italic flex items-center gap-1">
+        <span v-if="status === 'pending'" class="italic flex items-center gap-1">
           <Loader2 class="size-3 animate-spin" />
           执行中...
+        </span>
+        <span v-else-if="status === 'cancelled'" class="italic">
+          · 已取消
         </span>
         <span v-else-if="resultSummary" :class="resultSummary.success ? '' : 'text-destructive'">
           · {{ resultSummary.text }}
@@ -117,9 +218,13 @@ const hasDetail = computed(() =>
         v-if="expanded && hasDetail"
         class="mt-1.5 text-xs font-mono bg-muted/30 rounded p-2 overflow-x-auto max-h-40 overflow-y-auto space-y-1.5"
       >
-        <div v-if="arguments && Object.keys(arguments).length > 0">
+        <div v-if="parsedArgumentsText">
           <div class="text-muted-foreground/50 mb-0.5">参数</div>
-          <pre class="whitespace-pre-wrap break-all text-muted-foreground">{{ JSON.stringify(arguments, null, 2) }}</pre>
+          <pre class="whitespace-pre-wrap break-all text-muted-foreground">{{ parsedArgumentsText }}</pre>
+        </div>
+        <div v-else-if="rawArguments">
+          <div class="text-muted-foreground/50 mb-0.5">参数</div>
+          <pre class="whitespace-pre-wrap break-all text-muted-foreground">{{ rawArguments }}</pre>
         </div>
         <div v-if="result">
           <div class="text-muted-foreground/50 mb-0.5">结果</div>

@@ -44,20 +44,19 @@ Agent 系统是整个应用的大脑，运行在前端（Web Worker 中）。它
 
 ```
 loop (max 15 tool-call iterations per turn):
-  1. 检查取消标志，如果已取消 → 终止 loop，发送 turn_cancelled
-  2. ContextManager.build()     → 构建请求上下文
-  3. ContextManager.compact()   → 从 API 响应获取实际 token 使用量，必要时压缩
-  4. LLMClient.chat()           → 发送请求，流式获取响应
-  5. parse response:
-     - 如果是文本 → 推送到主线程渲染
-     - 如果是 tool_call → ToolExecutor.execute()
-       → 将 tool 结果追加到 messages
-       → 检查取消标志
-       → 如果迭代次数 < maxIterations → goto step 4
-       → 否则 → 强制终止，触发 on:max_iterations hook
-     - 如果是 finish → 完成本轮
-  6. StateManager.update()      → 更新大纲/角色/章节状态
-  7. HookSystem.trigger()       → 触发 after:tur
+  1. 检查取消标志，如果已取消 → 追加 status:cancelled 并结束
+  2. ContextManager.build()     → 基于已持久化消息构建请求上下文
+  3. LLMClient.chat()           → 发送请求，流式获取文本 / reasoning / tool call
+  4. 将流式输出写入当前 assistant.parts，并实时推送给主线程渲染
+  5. 如果模型返回 tool_call：
+     - 执行 ToolExecutor.execute()
+     - 将 tool result 写回当前 assistant message
+     - 追加 tool result 到下一轮请求上下文
+     - 如果迭代次数 < maxIterations → goto step 1
+     - 否则 → 追加 warning 状态并终止
+  6. 如果模型正常结束 → 将当前 assistant message 标记为 completed
+  7. 如果取消 / 异常 / 截断 → 将当前 assistant message 标记为 cancelled / error / truncated
+  8. 保存本轮 turn messages 到 conversation store
 ```
 
 **安全机制：**
@@ -239,8 +238,8 @@ after:tool          — 工具调用后
 on:chapter-start    — 开始创作章节时
 on:chapter-done     — 章节创作完成时
 on:story-done       — 故事完成时
-before:compact      — 上下文压缩前
-after:compact       — 上下文压缩后
+before:compact      — 上下文压缩前（仅在安全边界触发）
+after:compact       — 上下文压缩后（快照落盘后触发）
 on:max_iterations   — 达到最大迭代次数时
 on:error            — 发生错误时
 ```
@@ -268,6 +267,7 @@ Worker 通过 `postMessage` 与主线程通信：
 // Main → Worker
 { type: "start_turn", payload: { message, novelId, correlationId } }
 { type: "cancel_turn", payload: { correlationId } }
+{ type: "compact_context", payload: { novelId, correlationId, reason, instructions? } }
 
 // Worker → Main
 { type: "token", payload: { text, correlationId } }            // 流式文本
@@ -278,10 +278,12 @@ Worker 通过 `postMessage` 与主线程通信：
 { type: "turn_done", payload: { correlationId } }              // 本轮完成
 { type: "turn_cancelled", payload: { correlationId } }         // 本轮被取消
 { type: "error", payload: { message, correlationId } }         // 错误
-{ type: "compact", payload: {} }                               // 压缩通知
+{ type: "compact", payload: { stage: "queued"|"started"|"done"|"failed", reason, beforeRatio?, afterRatio?, snapshotId?, message? } } // 压缩通知
 ```
 
 **流式 tool 内容：** `write_chapter` 和 `rewrite_chapter` 这类流式 tool 在生成内容时，通过 `tool_stream_token` 将内容逐 token 推送到主线程，让用户实时看到章节内容生成过程。tool 执行完毕后发送 `tool_result` 表示完成。
+
+**上下文压缩：** `compact_context` 是显式请求，Worker 在收到后会先返回 `stage: "queued"` 或 `stage: "started"`。如果当前有 in-flight turn，则压缩请求排队到安全边界执行；如果队列里已有未执行的 compact 请求，新请求会覆盖旧请求。`compact` 只在一轮结束后的安全边界触发，配合 `before:compact` / `after:compact` hooks 更新快照和 UI 提示，不会改写当前 in-flight 回合。
 
 **取消机制：** 主线程发送 `cancel_turn` 后，Worker 在下一个检查点（每次 LLM 响应后、每次 tool 执行前）终止 loop，发送 `turn_cancelled`。已执行的 tool 结果保留，未执行的丢弃。
 

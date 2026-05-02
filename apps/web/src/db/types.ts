@@ -120,38 +120,60 @@ export interface Faction {
 export interface Conversation {
   novelId: string
   messages: Message[]
-  compactedSummary?: CompactedSummary
   updatedAt: number
 }
 
-export interface Message {
+interface BaseMessage {
   id: string
-  role: 'system' | 'user' | 'assistant' | 'tool_call' | 'tool' | 'reasoning'
-  content: string
-  // tool-call identity (tool_call & tool roles)
-  toolCallId?: string
-  toolName?: string
-  // parsed tool arguments (tool_call role only)
-  arguments?: Record<string, unknown>
-  // persisted reasoning for API round-trips (reasoning role)
-  reasoningContent?: string
   timestamp: number
   promptTokens?: number
   completionTokens?: number
 }
 
-export interface ToolCall {
-  id: string
-  name: string
-  arguments: Record<string, unknown>
+export interface UserMessage extends BaseMessage {
+  role: 'user'
+  content: string
 }
 
-export interface CompactedSummary {
-  generatedAt: number
-  summary: string
-  originalMessageRange: [number, number]
-  retainedMessageIds: string[]
+export interface StatusMessage extends BaseMessage {
+  role: 'status'
+  kind: 'info' | 'warning' | 'error' | 'cancelled'
+  content: string
 }
+
+export interface AssistantReasoningPart {
+  type: 'reasoning'
+  text: string
+}
+
+export interface AssistantTextPart {
+  type: 'text'
+  text: string
+}
+
+export interface AssistantToolUsePart {
+  type: 'tool_use'
+  toolCallId: string
+  toolName: string
+  rawArguments: string
+  arguments: Record<string, unknown> | null
+  result: string | null
+  status: 'pending' | 'completed' | 'cancelled' | 'error'
+}
+
+export type AssistantPart =
+  | AssistantReasoningPart
+  | AssistantTextPart
+  | AssistantToolUsePart
+
+export interface AssistantMessage extends BaseMessage {
+  role: 'assistant'
+  parts: AssistantPart[]
+  state: 'completed' | 'cancelled' | 'error' | 'truncated'
+  finishReason?: string
+}
+
+export type Message = UserMessage | StatusMessage | AssistantMessage
 
 // ---- Config ----
 

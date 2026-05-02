@@ -96,7 +96,7 @@ function updateSettings(s: ReaderSettings) {
       />
       <AgentChat
         v-else
-        key="agent"
+        :key="`agent:${storyId}`"
         :novel-id="storyId"
       />
     </KeepAlive>

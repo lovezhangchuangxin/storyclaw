@@ -4,6 +4,7 @@ import type { ModelConfig } from '@/db/types'
 export interface LLMClientOptions {
   config: ModelConfig
   onToken?: (token: string) => void
+  onToolCallStart?: (toolCallId: string, toolName: string, rawArguments: string) => void
   onToolStreamToken?: (toolCallId: string, toolName: string, token: string) => void
   onReasoningToken?: (token: string) => void
   signal?: AbortSignal
@@ -15,8 +16,16 @@ export interface LLMUsage {
   totalTokens: number
 }
 
+function isAbortError(error: unknown): boolean {
+  return (
+    error instanceof DOMException && error.name === 'AbortError'
+  ) || (
+    error instanceof Error && error.name === 'AbortError'
+  )
+}
+
 export function createLLMClient(options: LLMClientOptions) {
-  const { config, onToken, onToolStreamToken, onReasoningToken, signal } = options
+  const { config, onToken, onToolCallStart, onToolStreamToken, onReasoningToken, signal } = options
 
   const client = new OpenAI({
     baseURL: config.apiBase,
@@ -43,73 +52,97 @@ export function createLLMClient(options: LLMClientOptions) {
       )
 
       let content = ''
-      // thinking models (DeepSeek R1, etc.) emit reasoning_content in stream deltas.
-      // The API requires it back verbatim on the assistant message in subsequent requests.
       let reasoningContent = ''
-      const toolCalls: Map<number, { id: string; name: string; arguments: string }> = new Map()
+      const toolCalls: Map<number, {
+        id: string
+        name: string
+        arguments: string
+        started: boolean
+      }> = new Map()
       let usage: LLMUsage | undefined
-      let finishReason: string = 'stop'
+      let finishReason = 'stop'
+      let aborted = false
 
-      for await (const chunk of stream) {
-        if (signal?.aborted) break
-
-        if (chunk.usage) {
-          usage = {
-            promptTokens: chunk.usage.prompt_tokens,
-            completionTokens: chunk.usage.completion_tokens,
-            totalTokens: chunk.usage.total_tokens,
+      try {
+        for await (const chunk of stream) {
+          if (signal?.aborted) {
+            aborted = true
+            break
           }
-        }
 
-        const choice = chunk.choices?.[0]
-        if (choice?.finish_reason) {
-          finishReason = choice.finish_reason
-        }
-
-        const delta = choice?.delta
-
-        if (delta?.content) {
-          content += delta.content
-          onToken?.(delta.content)
-        }
-
-        // reasoning_content is not in OpenAI SDK's Delta type — it's a
-        // provider-specific extension used by DeepSeek R1 and o1 models.
-        if ((delta as any)?.reasoning_content) {
-          reasoningContent += (delta as any).reasoning_content
-          onReasoningToken?.((delta as any).reasoning_content)
-        }
-
-        if (delta?.tool_calls) {
-          for (const tc of delta.tool_calls) {
-            const idx = tc.index
-            if (!toolCalls.has(idx)) {
-              if (!tc.id) continue
-              toolCalls.set(idx, { id: tc.id, name: tc.function?.name ?? '', arguments: '' })
+          if (chunk.usage) {
+            usage = {
+              promptTokens: chunk.usage.prompt_tokens,
+              completionTokens: chunk.usage.completion_tokens,
+              totalTokens: chunk.usage.total_tokens,
             }
-            const entry = toolCalls.get(idx)!
-            if (tc.function?.name) entry.name = tc.function.name
-            if (tc.function?.arguments) {
-              entry.arguments += tc.function.arguments
-              if (entry.name && onToolStreamToken) {
-                onToolStreamToken(entry.id, entry.name, tc.function.arguments)
+          }
+
+          const choice = chunk.choices?.[0]
+          if (choice?.finish_reason) {
+            finishReason = choice.finish_reason
+          }
+
+          const delta = choice?.delta
+
+          if (delta?.content) {
+            content += delta.content
+            onToken?.(delta.content)
+          }
+
+          if ((delta as any)?.reasoning_content) {
+            reasoningContent += (delta as any).reasoning_content
+            onReasoningToken?.((delta as any).reasoning_content)
+          }
+
+          if (delta?.tool_calls) {
+            for (const tc of delta.tool_calls) {
+              const idx = tc.index
+              if (!toolCalls.has(idx)) {
+                if (!tc.id) continue
+                toolCalls.set(idx, {
+                  id: tc.id,
+                  name: tc.function?.name ?? '',
+                  arguments: '',
+                  started: false,
+                })
+              }
+              const entry = toolCalls.get(idx)!
+              if (tc.function?.name) entry.name = tc.function.name
+              if (tc.function?.arguments) {
+                entry.arguments += tc.function.arguments
+                if (entry.started && entry.name && onToolStreamToken) {
+                  onToolStreamToken(entry.id, entry.name, tc.function.arguments)
+                }
+              }
+              if (!entry.started && entry.id && entry.name) {
+                entry.started = true
+                onToolCallStart?.(entry.id, entry.name, entry.arguments)
               }
             }
           }
         }
+      } catch (error) {
+        if (signal?.aborted || isAbortError(error)) {
+          aborted = true
+        } else {
+          throw error
+        }
       }
 
-      const mappedToolCalls = [...toolCalls.values()].map((tc) => ({
-        id: tc.id,
-        function: { name: tc.name, arguments: tc.arguments },
-      }))
+      const mappedToolCalls = [...toolCalls.entries()]
+        .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+        .map(([, tc]) => ({
+          id: tc.id,
+          function: { name: tc.name, arguments: tc.arguments },
+        }))
 
       return {
         content,
         toolCalls: mappedToolCalls,
         usage,
         finishReason,
-        // pass reasoning content through so callers can relay it back to the API
+        aborted,
         reasoningContent: reasoningContent || undefined,
       }
     },

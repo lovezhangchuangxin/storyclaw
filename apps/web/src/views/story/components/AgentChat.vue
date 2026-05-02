@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useDark } from '@vueuse/core'
-import { Send, Square, ChevronDown } from 'lucide-vue-next'
-import MarkdownRender, { getMarkdown, parseMarkdownToStructure } from 'markstream-vue'
+import { ChevronDown, Send, Square } from 'lucide-vue-next'
+import MarkdownRender from 'markstream-vue'
+import { toast } from 'vue-sonner'
+import { runAgentLoop } from '@/agent/loop'
+import { cloneMessages } from '@/agent/message-state'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,117 +13,183 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { runAgentLoop } from '@/agent/loop'
 import { getConfig } from '@/db/config'
 import { getConversationByNovelId } from '@/db/conversations'
+import type {
+  AssistantMessage,
+  AssistantPart,
+  Message,
+  ModelConfig,
+  StatusMessage,
+} from '@/db/types'
 import { modelLabel } from '@/lib/model-utils'
-import type { Message, ModelConfig } from '@/db/types'
-import ToolCard from './ToolCard.vue'
 import ThinkingCard from './ThinkingCard.vue'
+import ToolCard from './ToolCard.vue'
 
 const props = defineProps<{
   novelId: string
 }>()
 
 type DisplayItem =
-  | { type: 'user'; id: string; content: string; timestamp: number }
-  | { type: 'assistant'; id: string; content: string; timestamp: number }
-  | { type: 'reasoning'; id: string; content: string; timestamp: number }
-  | { type: 'tool_card'; id: string; toolName: string; arguments?: Record<string, unknown>; result?: string | null; timestamp: number }
-  | { type: 'system'; id: string; content: string; timestamp: number }
+  | {
+      type: 'user'
+      id: string
+      content: string
+      timestamp: number
+    }
+  | {
+      type: 'status'
+      id: string
+      content: string
+      timestamp: number
+      kind: StatusMessage['kind']
+    }
+  | {
+      type: 'reasoning'
+      id: string
+      content: string
+      timestamp: number
+    }
+  | {
+      type: 'assistant'
+      id: string
+      content: string
+      timestamp: number
+      isStreaming: boolean
+    }
+  | {
+      type: 'tool_card'
+      id: string
+      toolName: string
+      rawArguments: string
+      parsedArguments: Record<string, unknown> | null
+      result: string | null
+      timestamp: number
+      status: 'pending' | 'completed' | 'cancelled' | 'error'
+    }
 
 const input = ref('')
-const messages = ref<Message[]>([])
+const persistedMessages = ref<Message[]>([])
+const unsavedMessages = ref<Message[]>([])
+const localStatusMessages = ref<StatusMessage[]>([])
+const transientMessages = ref<Message[]>([])
 const isGenerating = ref(false)
-const streamingContent = ref('')
 const abortController = ref<AbortController | null>(null)
-
-const streamingToolContent = ref('')
-const streamingToolName = ref('')
-const streamingToolCallId = ref('')
-const streamingReasoning = ref('')
+const isDark = useDark()
+let activeRequestId = 0
+let activeConversationLoadId = 0
 
 const models = ref<ModelConfig[]>([])
 const selectedModelId = ref('')
 
 const selectedModelLabel = computed(() => {
-  const m = models.value.find((m) => m.id === selectedModelId.value)
-  return m ? modelLabel(m) : '选择模型'
+  const model = models.value.find((item) => item.id === selectedModelId.value)
+  return model ? modelLabel(model) : '选择模型'
 })
 
-const isDark = useDark()
+const historyMessages = computed(() => [...persistedMessages.value, ...unsavedMessages.value])
+const timelineMessages = computed(() => [
+  ...historyMessages.value,
+  ...localStatusMessages.value,
+  ...transientMessages.value,
+])
 
-const md = getMarkdown('agent-chat')
+function isSameAssistantMessage(left: AssistantMessage, right: AssistantMessage): boolean {
+  return left.id === right.id
+}
 
-const streamingNodes = computed(() => {
-  if (!streamingContent.value) return []
-  return parseMarkdownToStructure(streamingContent.value, md, { final: false })
-})
+function getStreamingAssistantMessage(messages: Message[]): AssistantMessage | null {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index]
+    if (message?.role === 'assistant') return message
+  }
+  return null
+}
 
-function messagesToDisplayItems(msgs: Message[]): DisplayItem[] {
+function getLastTextPartIndex(message: AssistantMessage): number {
+  for (let index = message.parts.length - 1; index >= 0; index--) {
+    if (message.parts[index]?.type === 'text') return index
+  }
+  return -1
+}
+
+function buildDisplayItemFromAssistantPart(
+  message: AssistantMessage,
+  part: AssistantPart,
+  index: number,
+  streamingAssistant: AssistantMessage | null,
+): DisplayItem {
+  const id = `${message.id}:${index}`
+
+  if (part.type === 'reasoning') {
+    return {
+      type: 'reasoning',
+      id,
+      content: part.text,
+      timestamp: message.timestamp,
+    }
+  }
+
+  if (part.type === 'text') {
+    return {
+      type: 'assistant',
+      id,
+      content: part.text,
+      timestamp: message.timestamp,
+      isStreaming:
+        !!streamingAssistant
+        && isSameAssistantMessage(message, streamingAssistant)
+        && index === getLastTextPartIndex(streamingAssistant),
+    }
+  }
+
+  return {
+    type: 'tool_card',
+    id,
+    toolName: part.toolName,
+    rawArguments: part.rawArguments,
+    parsedArguments: part.arguments,
+    result: part.result,
+    timestamp: message.timestamp,
+    status: part.status,
+  }
+}
+
+function buildDisplayItems(messages: Message[]): DisplayItem[] {
   const items: DisplayItem[] = []
-  let i = 0
-  while (i < msgs.length) {
-    const msg = msgs[i]
-    switch (msg.role) {
+  const streamingAssistant = getStreamingAssistantMessage(transientMessages.value)
+
+  for (const message of messages) {
+    switch (message.role) {
       case 'user':
-        items.push({ type: 'user', id: msg.id, content: msg.content, timestamp: msg.timestamp })
+        items.push({
+          type: 'user',
+          id: message.id,
+          content: message.content,
+          timestamp: message.timestamp,
+        })
+        break
+      case 'status':
+        items.push({
+          type: 'status',
+          id: message.id,
+          content: message.content,
+          timestamp: message.timestamp,
+          kind: message.kind,
+        })
         break
       case 'assistant':
-        if (msg.content) {
-          items.push({ type: 'assistant', id: msg.id, content: msg.content, timestamp: msg.timestamp })
+        for (const [index, part] of message.parts.entries()) {
+          items.push(buildDisplayItemFromAssistantPart(message, part, index, streamingAssistant))
         }
-        break
-      case 'reasoning':
-        items.push({ type: 'reasoning', id: msg.id, content: msg.content, timestamp: msg.timestamp })
-        break
-      case 'tool_call': {
-        const next = msgs[i + 1]
-        if (next?.role === 'tool' && next.toolCallId === msg.toolCallId) {
-          items.push({
-            type: 'tool_card',
-            id: msg.id,
-            toolName: msg.toolName!,
-            arguments: msg.arguments,
-            result: next.content,
-            timestamp: msg.timestamp,
-          })
-          i++
-        } else {
-          items.push({
-            type: 'tool_card',
-            id: msg.id,
-            toolName: msg.toolName!,
-            arguments: msg.arguments,
-            result: null,
-            timestamp: msg.timestamp,
-          })
-        }
-        break
-      }
-      case 'tool':
-        break
-      case 'system':
-        items.push({ type: 'system', id: msg.id, content: msg.content, timestamp: msg.timestamp })
         break
     }
-    i++
   }
+
   return items
 }
 
-const displayItems = computed<DisplayItem[]>(() => {
-  const base = messagesToDisplayItems(messages.value)
-  if (streamingReasoning.value && !streamingContent.value) {
-    base.push({
-      type: 'reasoning',
-      id: 'stream-reasoning',
-      content: streamingReasoning.value,
-      timestamp: Date.now(),
-    })
-  }
-  return base
-})
+const displayItems = computed(() => buildDisplayItems(timelineMessages.value))
 
 async function loadModels() {
   const config = await getConfig()
@@ -128,16 +197,30 @@ async function loadModels() {
   selectedModelId.value = config.defaultModelId || config.models[0]?.id || ''
 }
 
-onMounted(async () => {
-  await loadModels()
-  const conv = await getConversationByNovelId(props.novelId)
-  if (conv?.messages) {
-    messages.value = conv.messages
-  }
-})
+async function loadConversation() {
+  const loadId = ++activeConversationLoadId
+  const novelId = props.novelId
+  const conversation = await getConversationByNovelId(novelId)
+  if (loadId !== activeConversationLoadId || novelId !== props.novelId) return
+  persistedMessages.value = conversation?.messages ?? []
+  unsavedMessages.value = []
+  localStatusMessages.value = []
+}
 
-function pushMessage(msg: Message) {
-  messages.value.push(msg)
+function resetTransientState() {
+  transientMessages.value = []
+  isGenerating.value = false
+  abortController.value = null
+}
+
+function pushLocalStatus(kind: StatusMessage['kind'], content: string) {
+  localStatusMessages.value.push({
+    id: crypto.randomUUID(),
+    role: 'status',
+    kind,
+    content,
+    timestamp: Date.now(),
+  })
 }
 
 let scrollRAF = 0
@@ -145,134 +228,87 @@ function scrollToBottom() {
   cancelAnimationFrame(scrollRAF)
   scrollRAF = requestAnimationFrame(() => {
     nextTick(() => {
-      const el = document.getElementById('chat-bottom')
-      el?.scrollIntoView({ behavior: 'smooth' })
+      document.getElementById('chat-bottom')?.scrollIntoView({ behavior: 'smooth' })
     })
   })
 }
 
-function extractStreamingToolPreview(name: string, raw: string): { label: string; preview?: string; wordCount: number } {
-  if (name !== 'write_chapter' && name !== 'rewrite_chapter') {
-    return { label: '', wordCount: 0 }
-  }
-  const idxMatch = raw.match(/"index"\s*:\s*(\d+)/)
-  const index = idxMatch ? parseInt(idxMatch[1]) : undefined
-  const contentMatch = raw.match(/"content"\s*:\s*"((?:[^"\\]|\\.)*)/)
-  let preview = ''
-  let wordCount = 0
-  if (contentMatch) {
-    preview = contentMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').slice(0, 80)
-    wordCount = (contentMatch[1].match(/[\u4e00-\u9fa5]|[a-zA-Z]+/g) || []).length
-  }
-  return {
-    label: index !== undefined ? `第${index + 1}章` : '',
-    preview: preview || undefined,
-    wordCount,
-  }
+async function reloadForNovel() {
+  activeRequestId++
+  abortController.value?.abort()
+  resetTransientState()
+  await loadConversation()
+  scrollToBottom()
 }
+
+onMounted(async () => {
+  await loadModels()
+  await loadConversation()
+  scrollToBottom()
+})
+
+watch(() => props.novelId, async () => {
+  await reloadForNovel()
+})
 
 async function send() {
   const text = input.value.trim()
   if (!text || isGenerating.value) return
+
   input.value = ''
-
-  pushMessage({
-    id: crypto.randomUUID(),
-    role: 'user',
-    content: text,
-    timestamp: Date.now(),
-  })
-  scrollToBottom()
-
+  transientMessages.value = []
   isGenerating.value = true
-  streamingContent.value = ''
-  streamingToolContent.value = ''
-  streamingToolName.value = ''
-  streamingToolCallId.value = ''
-  streamingReasoning.value = ''
   abortController.value = new AbortController()
+  const requestId = ++activeRequestId
+  const baseUnsavedMessages = cloneMessages(unsavedMessages.value)
+  const baseHistoryMessages = cloneMessages(historyMessages.value)
+  scrollToBottom()
 
   try {
     const result = await runAgentLoop({
       novelId: props.novelId,
       userMessage: text,
       modelConfigId: selectedModelId.value,
+      historyMessages: baseHistoryMessages,
       signal: abortController.value.signal,
-      onToken(token) {
-        streamingContent.value += token
+      onMessagesUpdated(messages) {
+        if (requestId !== activeRequestId) return
+        transientMessages.value = messages
         scrollToBottom()
       },
-      onReasoningToken(token) {
-        streamingReasoning.value += token
-        scrollToBottom()
-      },
-      onToolCall(toolCallId, name) {
-        pushMessage({
-          id: crypto.randomUUID(),
-          role: 'tool_call',
-          content: '',
-          toolCallId,
-          toolName: name,
-          timestamp: Date.now(),
-        })
-        streamingToolCallId.value = toolCallId
-        streamingToolName.value = name
-        streamingToolContent.value = ''
-        scrollToBottom()
-      },
-      onToolResult(toolCallId, name, result) {
-        const msg = messages.value.find(
-          (m) => m.role === 'tool_call' && m.toolCallId === toolCallId,
-        )
-        if (msg) {
-          pushMessage({
-            id: crypto.randomUUID(),
-            role: 'tool',
-            content: result,
-            toolCallId,
-            toolName: name,
-            timestamp: Date.now(),
-          })
-        }
-        streamingToolName.value = ''
-        streamingToolCallId.value = ''
-        streamingToolContent.value = ''
-        scrollToBottom()
-      },
-      onToolStreamToken(_toolCallId, _toolName, token) {
-        if (streamingToolContent.value.length < 5000) {
-          streamingToolContent.value += token
-        }
-        scrollToBottom()
-      },
-      onError(err) {
-        pushMessage({
-          id: crypto.randomUUID(),
-          role: 'system',
-          content: `错误: ${err}`,
-          timestamp: Date.now(),
-        })
+      onError(error) {
+        if (requestId !== activeRequestId) return
+        toast.error('生成失败', { description: error })
       },
     })
 
-    for (const msg of result) {
-      if (msg.role === 'user') continue
-      if (msg.role === 'tool_call' || msg.role === 'tool' || msg.role === 'reasoning') continue
-      pushMessage(msg)
+    if (requestId !== activeRequestId) return
+
+    transientMessages.value = result.messages
+
+    if (result.persisted) {
+      persistedMessages.value = [...baseHistoryMessages, ...result.messages]
+      unsavedMessages.value = []
+      localStatusMessages.value = []
+      transientMessages.value = []
+    } else {
+      unsavedMessages.value = [...baseUnsavedMessages, ...result.messages]
+      transientMessages.value = []
+      if (result.persistenceError) {
+        pushLocalStatus('error', `保存失败：${result.persistenceError}`)
+        toast.error('对话未保存', {
+          description: result.persistenceError,
+        })
+      }
     }
-  } catch {
-    pushMessage({
-      id: crypto.randomUUID(),
-      role: 'system',
-      content: '发生未知错误，请重试',
-      timestamp: Date.now(),
+  } catch (error) {
+    if (requestId !== activeRequestId) return
+    pushLocalStatus('error', error instanceof Error ? error.message : String(error))
+    toast.error('生成失败', {
+      description: error instanceof Error ? error.message : String(error),
     })
   } finally {
-    streamingContent.value = ''
-    streamingToolContent.value = ''
-    streamingToolName.value = ''
-    streamingToolCallId.value = ''
-    streamingReasoning.value = ''
+    if (requestId !== activeRequestId) return
     isGenerating.value = false
     abortController.value = null
     scrollToBottom()
@@ -282,106 +318,80 @@ async function send() {
 function cancel() {
   abortController.value?.abort()
 }
+
+function statusClass(kind: StatusMessage['kind']) {
+  switch (kind) {
+    case 'error':
+      return 'bg-red-50/40 text-red-700 dark:bg-red-950/20 dark:text-red-300'
+    case 'warning':
+      return 'bg-amber-50/40 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300'
+    case 'cancelled':
+      return 'bg-amber-50/40 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300'
+    default:
+      return 'bg-muted/50 text-muted-foreground'
+  }
+}
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
+  <div class="flex h-full flex-col">
     <div class="flex-1 overflow-y-auto">
-      <div class="max-w-3xl mx-auto px-4 py-3 space-y-2">
+      <div class="mx-auto max-w-3xl space-y-2 px-4 py-3">
         <template v-for="item in displayItems" :key="item.id">
-          <!-- User message -->
           <div v-if="item.type === 'user'" class="flex justify-end">
-            <div class="max-w-[85%] rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm">
+            <div class="max-w-[85%] rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground">
               {{ item.content }}
             </div>
           </div>
 
-          <!-- System message -->
-          <div v-else-if="item.type === 'system'" class="flex justify-start">
-            <div class="max-w-[85%] rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+          <div v-else-if="item.type === 'status'" class="flex justify-start">
+            <div
+              class="max-w-[85%] rounded-lg px-3 py-2 text-xs"
+              :class="statusClass(item.kind)"
+            >
               {{ item.content }}
             </div>
           </div>
 
-          <!-- Reasoning / thinking -->
           <div v-else-if="item.type === 'reasoning'" class="flex justify-start">
             <div class="max-w-[85%]">
               <ThinkingCard :content="item.content" />
             </div>
           </div>
 
-          <!-- Tool card -->
           <ToolCard
             v-else-if="item.type === 'tool_card'"
             :tool-name="item.toolName"
-            :arguments="item.arguments"
+            :raw-arguments="item.rawArguments"
+            :parsed-arguments="item.parsedArguments"
             :result="item.result"
+            :status="item.status"
           />
 
-          <!-- Assistant text -->
           <div v-else-if="item.type === 'assistant'" class="flex justify-start">
             <div class="max-w-[85%] rounded-lg bg-muted px-3 py-2 text-sm text-foreground">
               <MarkdownRender
                 custom-id="agent-chat"
                 :content="item.content"
-                :final="true"
+                :final="!item.isStreaming"
                 :is-dark="isDark"
+                :typewriter="false"
                 render-code-blocks-as-pre
+              />
+              <span
+                v-if="item.isStreaming"
+                class="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-foreground align-text-bottom"
               />
             </div>
           </div>
         </template>
-
-        <!-- Streaming tool content (write_chapter streaming) -->
-        <div v-if="streamingToolContent && !streamingContent" class="flex justify-start">
-          <div class="max-w-[85%] rounded-lg bg-muted/50 px-3 py-2 text-xs">
-            <div class="flex items-center gap-1.5 text-muted-foreground mb-1">
-              <span>✍️</span>
-              <span class="font-medium">
-                {{ streamingToolName === 'rewrite_chapter' ? '重写章节' : '创作章节' }}
-              </span>
-              <template v-if="extractStreamingToolPreview(streamingToolName, streamingToolContent).label">
-                · {{ extractStreamingToolPreview(streamingToolName, streamingToolContent).label }}
-              </template>
-              <template v-if="extractStreamingToolPreview(streamingToolName, streamingToolContent).wordCount > 0">
-                · <span class="tabular-nums">{{ extractStreamingToolPreview(streamingToolName, streamingToolContent).wordCount }} 字</span>
-              </template>
-            </div>
-            <div
-              v-if="extractStreamingToolPreview(streamingToolName, streamingToolContent).preview"
-              class="text-muted-foreground/70 whitespace-pre-wrap leading-relaxed"
-            >
-              {{ extractStreamingToolPreview(streamingToolName, streamingToolContent).preview }}...
-            </div>
-            <div v-else class="text-muted-foreground/50 italic">
-              正在接收内容...
-            </div>
-          </div>
-        </div>
-
-        <!-- Streaming text content -->
-        <div v-if="streamingContent" class="flex justify-start">
-          <div class="max-w-[85%] rounded-lg bg-muted px-3 py-2 text-sm">
-            <MarkdownRender
-              custom-id="agent-chat"
-              :nodes="streamingNodes"
-              :final="false"
-              :is-dark="isDark"
-              :typewriter="false"
-              render-code-blocks-as-pre
-            />
-            <span
-              class="inline-block w-1.5 h-4 bg-foreground animate-pulse ml-0.5 align-text-bottom"
-            />
-          </div>
-        </div>
 
         <div id="chat-bottom" />
       </div>
     </div>
 
     <div class="shrink-0 bg-background">
-      <div class="max-w-3xl mx-auto px-4 pt-3 pb-4">
+      <div class="mx-auto max-w-3xl px-4 pb-4 pt-3">
         <div
           class="rounded-xl border border-input bg-transparent transition-colors focus-within:border-ring dark:bg-input/30"
         >
@@ -389,7 +399,7 @@ function cancel() {
             v-model="input"
             placeholder="输入你的想法或反馈..."
             rows="1"
-            class="block w-full resize-none bg-transparent px-3 pt-3 pb-0.5 text-base outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm field-sizing-content min-h-0"
+            class="field-sizing-content block min-h-0 w-full resize-none bg-transparent px-3 pb-0.5 pt-3 text-base outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
             :disabled="isGenerating"
             @keydown.enter.exact.prevent="send"
           />
@@ -398,18 +408,18 @@ function cancel() {
             <DropdownMenu v-if="models.length > 0">
               <DropdownMenuTrigger
                 as="button"
-                class="flex items-center gap-1.5 rounded-md border border-input bg-transparent px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                class="flex items-center gap-1.5 rounded-md border border-input bg-transparent px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <span class="truncate">{{ selectedModelLabel }}</span>
                 <ChevronDown class="size-3 shrink-0" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
                 <DropdownMenuItem
-                  v-for="m in models"
-                  :key="m.id"
-                  @click="selectedModelId = m.id"
+                  v-for="model in models"
+                  :key="model.id"
+                  @click="selectedModelId = model.id"
                 >
-                  <span class="text-xs">{{ modelLabel(m) }}</span>
+                  <span class="text-xs">{{ modelLabel(model) }}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

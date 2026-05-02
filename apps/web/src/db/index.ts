@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 
 const DB_NAME = 'storyclaw'
-const DB_VERSION = 1
+const DB_VERSION = 3
 
 export interface StoryClawDBSchema extends DBSchema {
   novels: {
@@ -51,7 +51,7 @@ export async function getDB(): Promise<IDBPDatabase<StoryClawDBSchema>> {
   if (dbInstance) return dbInstance
 
   dbInstance = await openDB<StoryClawDBSchema>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains('novels')) {
         db.createObjectStore('novels', { keyPath: 'id' })
       }
@@ -83,6 +83,11 @@ export async function getDB(): Promise<IDBPDatabase<StoryClawDBSchema>> {
           'novelId',
           'novelId',
         )
+      }
+
+      if (oldVersion < 3 && db.objectStoreNames.contains('conversations')) {
+        db.deleteObjectStore('conversations')
+        db.createObjectStore('conversations', { keyPath: 'novelId' })
       }
     },
   })
