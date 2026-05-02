@@ -3,9 +3,11 @@ import { computed, ref, toRaw } from 'vue'
 import {
   ChevronDown, Loader2, CheckCircle2, XCircle, MinusCircle,
   PenLine, ListOrdered, UserPlus, UserPen,
+
 } from 'lucide-vue-next'
-import { getToolDisplayInfo } from '@/agent/tools'
+import { getToolDisplayInfo, getToolDisplayConfig } from '@/agent/tools'
 import JsonTreeViewer from '@/components/json-tree/JsonTreeViewer.vue'
+import ToolFieldRenderer from './ToolFieldRenderer.vue'
 
 const props = defineProps<{
   toolName: string
@@ -21,59 +23,47 @@ function toggle() {
   expanded.value = !expanded.value
 }
 
+// Tool display info (name + icon from registry)
 const info = computed(() => getToolDisplayInfo(props.toolName))
 
-// ── Preserved: normalizeJsonValue ──────────────────────────────
+// Tool display config (human-readable field configs)
+const config = computed(() => getToolDisplayConfig(props.toolName))
+
+const hasArgConfig = computed(() => {
+  const cfg = config.value?.argFields
+  return cfg && cfg.length > 0 && !!props.parsedArguments && Object.keys(props.parsedArguments).length > 0
+})
+
+const hasResultConfig = computed(() => {
+  const cfg = config.value?.resultFields
+  return cfg && cfg.length > 0 && parsedResult.value !== null
+})
+
+
+
+// ── normalizeJsonValue ─────────────────────────────────
 
 function normalizeJsonValue(value: unknown, seen = new WeakMap<object, unknown>()): unknown {
-  if (value === null || value === undefined) {
-    return value
-  }
-
-  if (typeof value === 'bigint') {
-    return value.toString()
-  }
-
-  if (typeof value !== 'object') {
-    return value
-  }
-
-  // Unwrap boxed primitives (new String, new Number, new Boolean) before
-  // they are treated as plain objects — Object.keys(new String("true"))
-  // returns ["0","1","2","3"] which splits the string into characters.
+  if (value === null || value === undefined) return value
+  if (typeof value === 'bigint') return value.toString()
+  if (typeof value !== 'object') return value
   if (value instanceof String) return value.valueOf()
   if (value instanceof Number) return value.valueOf()
   if (value instanceof Boolean) return value.valueOf()
 
   const raw = toRaw(value as object) as unknown
-
-  if (raw === null || raw === undefined) {
-    return raw
-  }
-
-  if (typeof raw === 'bigint') {
-    return raw.toString()
-  }
-
-  if (typeof raw !== 'object') {
-    return raw
-  }
-
-  // Double-check after toRaw — reactive proxies may hide boxed primitives
+  if (raw === null || raw === undefined) return raw
+  if (typeof raw === 'bigint') return raw.toString()
+  if (typeof raw !== 'object') return raw
   if (raw instanceof String) return raw.valueOf()
   if (raw instanceof Number) return raw.valueOf()
   if (raw instanceof Boolean) return raw.valueOf()
-
-  if (seen.has(raw)) {
-    return '[Circular]'
-  }
+  if (seen.has(raw)) return '[Circular]'
 
   if (Array.isArray(raw)) {
     const result: unknown[] = []
     seen.set(raw, result)
-    for (const item of raw) {
-      result.push(normalizeJsonValue(item, seen))
-    }
+    for (const item of raw) result.push(normalizeJsonValue(item, seen))
     return result
   }
 
@@ -81,20 +71,12 @@ function normalizeJsonValue(value: unknown, seen = new WeakMap<object, unknown>(
   seen.set(raw, result)
   for (const [key, nestedValue] of Object.entries(raw)) {
     const normalized = normalizeJsonValue(nestedValue, seen)
-    if (normalized !== undefined) {
-      result[key] = normalized
-    }
+    if (normalized !== undefined) result[key] = normalized
   }
   return result
 }
 
-// ── Preserved: safeStringify ───────────────────────────────────
-
-function safeStringify(value: unknown): string {
-  return JSON.stringify(normalizeJsonValue(value), null, 2)
-}
-
-// ── Preserved: extractStreamingToolPreview ─────────────────────
+// ── Streaming preview (for write_chapter during pending) ──
 
 function extractStreamingToolPreview(raw: string): {
   chapter?: string
@@ -120,22 +102,29 @@ function extractStreamingToolPreview(raw: string): {
   }
 }
 
-// ── Preserved: argSummary ──────────────────────────────────────
+// ── Header summary ───────────────────────────────────
 
 const argSummary = computed(() => {
   const args = props.parsedArguments
-  if (!args) {
-    if (
-      props.rawArguments
-      && (props.toolName === 'write_chapter' || props.toolName === 'rewrite_chapter')
-    ) {
-      const preview = extractStreamingToolPreview(props.rawArguments)
-      return [preview.chapter, preview.preview, preview.wordCount > 0 ? `${preview.wordCount} 字` : '']
-        .filter(Boolean)
-        .join(' · ')
+
+  // If config has argPreview and parsed args are available, use it
+  if (args && config.value?.argPreview) {
+    if (typeof config.value.argPreview === 'function') {
+      return config.value.argPreview(args)
     }
-    return ''
+    return config.value.argPreview
   }
+
+  // Streaming fallback for write_chapter / rewrite_chapter
+  if (!args && props.rawArguments && (props.toolName === 'write_chapter' || props.toolName === 'rewrite_chapter')) {
+    const preview = extractStreamingToolPreview(props.rawArguments)
+    return [preview.chapter, preview.preview, preview.wordCount > 0 ? `${preview.wordCount} 字` : '']
+      .filter(Boolean)
+      .join(' · ')
+  }
+
+  // Legacy fallback for tools without config
+  if (!args) return ''
   switch (props.toolName) {
     case 'write_chapter':
     case 'rewrite_chapter': {
@@ -161,11 +150,25 @@ const argSummary = computed(() => {
   }
 })
 
-// ── Preserved: resultSummary ───────────────────────────────────
-
 const resultSummary = computed(() => {
   if (props.status === 'cancelled') return { success: false, text: '已取消' }
   if (!props.result) return null
+
+  // Try config resultPreview first
+  if (config.value?.resultPreview) {
+    try {
+      const parsed = JSON.parse(props.result)
+      if (parsed.error) return { success: false, text: parsed.error }
+      if (typeof config.value.resultPreview === 'function') {
+        const text = config.value.resultPreview(parsed)
+        if (text) return { success: true, text }
+      } else if (typeof config.value.resultPreview === 'string') {
+        return { success: true, text: config.value.resultPreview }
+      }
+    } catch { /* fall through to legacy */ }
+  }
+
+  // Legacy fallback
   try {
     const parsed = JSON.parse(props.result)
     if (parsed.error) return { success: false, text: parsed.error }
@@ -183,7 +186,7 @@ const resultSummary = computed(() => {
   }
 })
 
-// ── hasDetail / parsedResult ───────────────────────────────────
+// ── Expand section data ──────────────────────────────
 
 const hasDetail = computed(() =>
   !!props.rawArguments
@@ -191,18 +194,17 @@ const hasDetail = computed(() =>
   || !!props.result,
 )
 
-const parsedResult = computed<unknown | null>(() => {
+const parsedResult = computed<Record<string, unknown> | null>(() => {
   if (!props.result) return null
   try {
-    return normalizeJsonValue(JSON.parse(props.result))
+    const v = normalizeJsonValue(JSON.parse(props.result))
+    return v && typeof v === 'object' ? (v as Record<string, unknown>) : null
   } catch {
     return null
   }
 })
 
-defineExpose({ safeStringify })
-
-// ── Preserved (updated): cardClass ─────────────────────────────
+// ── Visual helpers ───────────────────────────────────
 
 const cardClass = computed(() => {
   if (props.status === 'error' || resultSummary.value?.success === false) {
@@ -214,8 +216,6 @@ const cardClass = computed(() => {
   return ''
 })
 
-// ── Preserved (updated): textClass ─────────────────────────────
-
 const textClass = computed(() => {
   if (props.status === 'error' || resultSummary.value?.success === false) {
     return 'text-destructive'
@@ -225,8 +225,6 @@ const textClass = computed(() => {
   }
   return 'text-muted-foreground hover:text-foreground'
 })
-
-// ── NEW: tool icon component ───────────────────────────────────
 
 const toolIconComp = computed(() => {
   switch (props.toolName) {
@@ -243,8 +241,6 @@ const toolIconComp = computed(() => {
       return null
   }
 })
-
-// ── NEW: status display helpers ────────────────────────────────
 
 const statusIconComp = computed(() => {
   switch (props.status) {
@@ -275,7 +271,6 @@ const statusText = computed(() => {
   }
 })
 
-// Summary text for the middle/right area
 const headerSummary = computed(() => {
   if (props.status === 'completed') {
     return resultSummary.value?.text || argSummary.value || ''
@@ -285,6 +280,8 @@ const headerSummary = computed(() => {
   }
   return ''
 })
+
+defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(v), null, 2) })
 </script>
 
 <template>
@@ -303,7 +300,6 @@ const headerSummary = computed(() => {
         :class="textClass"
         @click="toggle"
       >
-        <!-- Tool icon -->
         <component
           :is="toolIconComp"
           v-if="toolIconComp"
@@ -311,10 +307,8 @@ const headerSummary = computed(() => {
         />
         <span v-else class="shrink-0 text-xs leading-none">{{ info.icon }}</span>
 
-        <!-- Tool name -->
         <span class="font-medium shrink-0">{{ info.displayName }}</span>
 
-        <!-- Summary / status text -->
         <span
           v-if="headerSummary"
           class="truncate opacity-60 min-w-0"
@@ -324,10 +318,8 @@ const headerSummary = computed(() => {
           class="truncate opacity-60 min-w-0"
         >{{ statusText }}</span>
 
-        <!-- Spacer -->
         <span class="flex-1" />
 
-        <!-- Status indicator -->
         <span class="flex items-center gap-1 shrink-0" :class="statusColor">
           <component
             :is="statusIconComp"
@@ -344,7 +336,6 @@ const headerSummary = computed(() => {
           >{{ statusText }}</span>
         </span>
 
-        <!-- Expand chevron -->
         <ChevronDown
           class="size-3 shrink-0 opacity-40 transition-transform duration-200"
           :class="expanded ? 'rotate-180' : ''"
@@ -395,8 +386,20 @@ const headerSummary = computed(() => {
           : 'max-h-0 opacity-0 overflow-hidden border-transparent'"
       >
         <div class="px-3.5 py-2.5 space-y-3">
-          <!-- Arguments -->
-          <div v-if="parsedArguments && Object.keys(parsedArguments).length > 0">
+          <!-- ── Arguments ── -->
+
+          <!-- Human-readable arguments (from config) -->
+          <div v-if="hasArgConfig">
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">参数</div>
+            <div class="bg-muted/40 rounded-lg p-2.5">
+              <ToolFieldRenderer
+                :fields="config!.argFields!"
+                :data="parsedArguments!"
+              />
+            </div>
+          </div>
+          <!-- Legacy JSON arguments (no config or no parsed data) -->
+          <div v-else-if="parsedArguments && Object.keys(parsedArguments).length > 0">
             <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">参数</div>
             <div class="bg-muted/40 rounded-lg p-2.5">
               <JsonTreeViewer
@@ -412,8 +415,20 @@ const headerSummary = computed(() => {
             <pre class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto">{{ rawArguments }}</pre>
           </div>
 
-          <!-- Result -->
-          <div v-if="parsedResult !== null">
+          <!-- ── Result ── -->
+
+          <!-- Human-readable result (from config) -->
+          <div v-if="hasResultConfig">
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
+            <div class="bg-muted/40 rounded-lg p-2.5">
+              <ToolFieldRenderer
+                :fields="config!.resultFields!"
+                :data="parsedResult!"
+              />
+            </div>
+          </div>
+          <!-- Legacy JSON result (no config) -->
+          <div v-else-if="parsedResult !== null">
             <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
             <div class="bg-muted/40 rounded-lg p-2.5">
               <JsonTreeViewer
@@ -428,6 +443,7 @@ const headerSummary = computed(() => {
             <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
             <pre class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto">{{ result }}</pre>
           </div>
+
         </div>
       </div>
     </div>

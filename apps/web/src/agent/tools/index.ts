@@ -5,6 +5,7 @@ import type { ToolContext } from './types'
 
 export { getToolRegistry, clearToolRegistryCache as clearRegistryCache } from './registry'
 export type { ToolContext } from './types'
+export { getToolDisplayConfig, getField } from './display-config'
 
 /** Reset all caches. Call when tool definitions may have changed (e.g. hot-reload). */
 export function clearToolRegistryCache(): void {
