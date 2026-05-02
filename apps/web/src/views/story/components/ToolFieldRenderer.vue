@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { FieldDisplay, FieldType } from '@/agent/tools/display-config'
+import type { FieldDisplay } from '@/agent/tools/display-config'
 import { getField } from '@/agent/tools/display-config'
 import { ChevronDown, ChevronUp } from 'lucide-vue-next'
 
@@ -26,16 +26,6 @@ function resolveValue(field: FieldDisplay): { raw: unknown; display: string; exi
   const exists = raw !== undefined && raw !== null && raw !== ''
   const display = field.transform ? field.transform(raw) : String(raw ?? '')
   return { raw, display, exists }
-}
-
-function fieldTypeClass(type: FieldType): string {
-  switch (type) {
-    case 'badge': return 'field-badge'
-    case 'tags': return 'field-tags'
-    case 'multiline': return 'field-multiline'
-    case 'list': return 'field-list'
-    default: return 'field-text'
-  }
 }
 
 function badgeColor(value: string): string {
@@ -71,7 +61,7 @@ function isLongText(text: string): boolean {
       <template v-if="field.type !== 'hidden'">
         <div
           v-if="resolveValue(field).exists"
-          :class="['field-row', fieldTypeClass(field.type)]"
+          class="field-row"
         >
           <span class="field-label">{{ field.label }}</span>
 
@@ -145,18 +135,17 @@ function isLongText(text: string): boolean {
 .field-row {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .field-label {
   font-size: 11px;
   font-weight: 500;
-  color: oklch(0.55 0 0);
-  letter-spacing: 0.02em;
+  color: oklch(0.52 0 0);
 }
 
 .dark .field-label {
-  color: oklch(0.65 0 0);
+  color: oklch(0.6 0 0);
 }
 
 /* text type */
@@ -172,8 +161,8 @@ function isLongText(text: string): boolean {
 .badge-capsule {
   display: inline-flex;
   align-items: center;
-  padding: 1px 8px;
-  border-radius: 9999px;
+  padding: 2px 8px;
+  border-radius: 5px;
   font-size: 11px;
   font-weight: 500;
   width: fit-content;
@@ -201,7 +190,7 @@ function isLongText(text: string): boolean {
 /* multiline type */
 .field-multiline-block {
   background: oklch(0.97 0 0);
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 8px 10px;
 }
 
@@ -290,24 +279,24 @@ function isLongText(text: string): boolean {
 .field-tags-block {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 3px;
 }
 
 .tag-chip {
   display: inline-flex;
   align-items: center;
-  padding: 1px 8px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 3px;
   font-size: 11px;
-  background: oklch(0.93 0.03 250);
-  color: oklch(0.4 0.08 250);
-  border: 1px solid oklch(0.88 0.04 250);
+  background: oklch(0.94 0.02 250);
+  color: oklch(0.45 0.06 250);
+  border: 1px solid oklch(0.88 0.02 250);
 }
 
 .dark .tag-chip {
-  background: oklch(0.25 0.05 250);
-  color: oklch(0.8 0.04 250);
-  border-color: oklch(0.3 0.05 250);
+  background: oklch(0.23 0.04 250);
+  color: oklch(0.78 0.04 250);
+  border-color: oklch(0.28 0.04 250);
 }
 
 /* empty state */
