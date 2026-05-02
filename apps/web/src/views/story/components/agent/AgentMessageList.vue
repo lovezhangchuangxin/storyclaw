@@ -83,9 +83,9 @@ const emit = defineEmits<{
               v-else-if="item.type === 'assistant' || item.type === 'reasoning' || item.type === 'tool_card'"
               class="flex items-start gap-2.5"
             >
-              <!-- AI Avatar -->
+              <!-- AI Avatar (hidden on mobile to save horizontal space) -->
               <div
-                class="flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 to-indigo-500/20 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/20"
+                class="hidden sm:flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 to-indigo-500/20 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/20"
               >
                 <Bot class="size-3.5" />
               </div>

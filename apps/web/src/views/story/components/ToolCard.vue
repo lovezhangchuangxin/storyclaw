@@ -285,9 +285,9 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
 </script>
 
 <template>
-  <div class="flex justify-start">
+  <div class="w-full">
     <div
-      class="max-w-[85%] rounded-lg border bg-card shadow-sm
+      class="w-full rounded-lg border bg-card shadow-sm
         text-xs transition-colors duration-200 overflow-x-auto tool-card-scroll"
       :class="cardClass"
     >
