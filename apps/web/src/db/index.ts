@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 
 const DB_NAME = 'storyclaw'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 export interface StoryClawDBSchema extends DBSchema {
   novels: {
@@ -29,6 +29,16 @@ export interface StoryClawDBSchema extends DBSchema {
   conversations: {
     key: string
     value: import('./types').Conversation
+  }
+  contextSnapshots: {
+    key: string
+    value: import('./types').ContextSnapshot
+    indexes: {
+      novelId: string
+      scopeId: string
+      novelScopeRevision: [string, string, number]
+      createdAt: number
+    }
   }
   config: {
     key: string
@@ -71,6 +81,13 @@ export async function getDB(): Promise<IDBPDatabase<StoryClawDBSchema>> {
       }
       if (!db.objectStoreNames.contains('conversations')) {
         db.createObjectStore('conversations', { keyPath: 'novelId' })
+      }
+      if (!db.objectStoreNames.contains('contextSnapshots')) {
+        const ss = db.createObjectStore('contextSnapshots', { keyPath: 'id' })
+        ss.createIndex('novelId', 'novelId')
+        ss.createIndex('scopeId', 'scopeId')
+        ss.createIndex('novelScopeRevision', ['novelId', 'scopeId', 'revision'])
+        ss.createIndex('createdAt', 'createdAt')
       }
       if (!db.objectStoreNames.contains('config')) {
         db.createObjectStore('config', { keyPath: 'id' })

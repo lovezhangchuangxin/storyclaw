@@ -32,6 +32,7 @@ export async function deleteNovel(id: string): Promise<void> {
       'chapters',
       'worldBuilding',
       'conversations',
+      'contextSnapshots',
       'readingProgress',
       'operationHistory',
     ],
@@ -40,6 +41,7 @@ export async function deleteNovel(id: string): Promise<void> {
 
   const charKeys = await tx.objectStore('characters').index('novelId').getAllKeys(id)
   const chapterKeys = await tx.objectStore('chapters').index('novelId').getAllKeys(id)
+  const snapshotKeys = await tx.objectStore('contextSnapshots').index('novelId').getAllKeys(id)
   const opRecords = await tx.objectStore('operationHistory').getAll()
 
   await Promise.all([
@@ -47,6 +49,7 @@ export async function deleteNovel(id: string): Promise<void> {
     tx.objectStore('outlines').delete(id),
     tx.objectStore('worldBuilding').delete(id),
     tx.objectStore('conversations').delete(id),
+    ...snapshotKeys.map((key) => tx.objectStore('contextSnapshots').delete(key as string)),
     tx.objectStore('readingProgress').delete(id),
     ...charKeys.map((k) => tx.objectStore('characters').delete(k as [string, string])),
     ...chapterKeys.map((k) => tx.objectStore('chapters').delete(k as [string, number])),

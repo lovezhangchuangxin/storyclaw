@@ -39,14 +39,14 @@ export function createLLMClient(options: LLMClientOptions) {
       tools: OpenAI.Chat.Completions.ChatCompletionTool[],
     ) {
       const stream = await client.chat.completions.create(
-        {
-          model: config.model,
-          messages,
-          tools,
-          max_tokens: config.maxTokens,
-          temperature: 0.8,
-          stream: true,
-          stream_options: { include_usage: true },
+          {
+            model: config.model,
+            messages,
+            tools,
+            max_tokens: config.maxOutputTokens,
+            temperature: 0.8,
+            stream: true,
+            stream_options: { include_usage: true },
         },
         { signal },
       )
@@ -131,7 +131,7 @@ export function createLLMClient(options: LLMClientOptions) {
       }
 
       const mappedToolCalls = [...toolCalls.entries()]
-        .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+        .toSorted(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
         .map(([, tc]) => ({
           id: tc.id,
           function: { name: tc.name, arguments: tc.arguments },

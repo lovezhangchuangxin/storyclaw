@@ -8,6 +8,31 @@ export interface WorkerRequest {
   }
 }
 
+export interface CompactContextRequest {
+  type: 'compact_context'
+  payload: {
+    novelId: string
+    correlationId: string
+    reason: 'auto' | 'manual'
+    instructions?: string
+  }
+}
+
+export type WorkerMessage = WorkerRequest | CompactContextRequest
+
+export interface CompactContextResponse {
+  type: 'compact'
+  payload: {
+    stage: 'queued' | 'started' | 'done' | 'failed'
+    snapshotId?: string
+    compactedThroughMessageId?: string | null
+    estimatedInputTokensBefore?: number
+    estimatedInputTokensAfter?: number
+    error?: string
+  }
+  correlationId: string
+}
+
 export interface WorkerResponse {
   type:
     | 'token'

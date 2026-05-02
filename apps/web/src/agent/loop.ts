@@ -2,7 +2,7 @@ import type OpenAI from 'openai'
 import { getConfig } from '@/db/config'
 import { getConversationByNovelId, saveConversation } from '@/db/conversations'
 import type { AssistantMessage, AssistantToolUsePart, Message } from '@/db/types'
-import { buildContext } from './context'
+import { buildContext, maybeCompactBeforeBuild } from './context'
 import { createLLMClient } from './llm-client'
 import {
   appendAssistantReasoning,
@@ -175,6 +175,12 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
     const persistence = await persistTurn(novelId, historyMessages, turnMessages)
     return { messages: turnMessages, ...persistence }
   }
+
+  await maybeCompactBeforeBuild(novelId, modelConfig, {
+    novelId,
+    messages: historyMessages,
+    updatedAt: existingConversation?.updatedAt ?? Date.now(),
+  })
 
   const context = await buildContext(
     novelId,

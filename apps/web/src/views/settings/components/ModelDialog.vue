@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Eye, EyeOff, Loader2, Zap } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import Combobox from './Combobox.vue'
-import type { ModelConfig } from '@/db/types'
+import { createDefaultModelConfig, type ModelConfig } from '@/db/types'
 import {
   PROVIDER_NAMES,
   getApiBaseForProvider,
@@ -29,6 +29,12 @@ const provider = ref('')
 const apiBase = ref('')
 const apiKey = ref('')
 const model = ref('')
+const maxOutputTokens = ref('16384')
+const contextWindowTokens = ref('128000')
+const outputReserveTokens = ref('4096')
+const compactionTriggerRatio = ref('0.7')
+const compactionTargetRatio = ref('0.2')
+const summaryModelId = ref('')
 const showKey = ref(false)
 const modelsLoading = ref(false)
 const testing = ref(false)
@@ -45,16 +51,35 @@ watch(() => props.open, (val) => {
   if (!val) return
   populating = true
   fetchedModels.value = []
+  const fallback = createDefaultModelConfig({
+    id: props.model?.id ?? crypto.randomUUID(),
+    provider: props.model?.provider ?? '',
+    apiBase: props.model?.apiBase ?? '',
+    apiKey: props.model?.apiKey ?? '',
+    model: props.model?.model ?? '',
+  })
   if (props.model) {
     provider.value = props.model.provider
     apiBase.value = props.model.apiBase
     apiKey.value = props.model.apiKey
     model.value = props.model.model
+    maxOutputTokens.value = String(props.model.maxOutputTokens ?? fallback.maxOutputTokens)
+    contextWindowTokens.value = String(props.model.contextWindowTokens ?? fallback.contextWindowTokens)
+    outputReserveTokens.value = String(props.model.outputReserveTokens ?? fallback.outputReserveTokens)
+    compactionTriggerRatio.value = String(props.model.compactionTriggerRatio ?? fallback.compactionTriggerRatio)
+    compactionTargetRatio.value = String(props.model.compactionTargetRatio ?? fallback.compactionTargetRatio)
+    summaryModelId.value = props.model.summaryModelId ?? ''
   } else {
     provider.value = ''
     apiBase.value = ''
     apiKey.value = ''
     model.value = ''
+    maxOutputTokens.value = String(fallback.maxOutputTokens)
+    contextWindowTokens.value = String(fallback.contextWindowTokens)
+    outputReserveTokens.value = String(fallback.outputReserveTokens)
+    compactionTriggerRatio.value = String(fallback.compactionTriggerRatio)
+    compactionTargetRatio.value = String(fallback.compactionTargetRatio)
+    summaryModelId.value = ''
   }
   populating = false
 })
@@ -72,6 +97,12 @@ watch(provider, (p) => {
 watch([apiBase, apiKey], () => {
   fetchedModels.value = []
 })
+
+function toNumber(value: string, fallback: number): number {
+  if (!value.trim()) return fallback
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
 
 async function handleModelComboOpen() {
   if (fetchedModels.value.length || modelsLoading.value) return
@@ -111,7 +142,12 @@ function handleSave() {
     apiBase: apiBase.value,
     apiKey: apiKey.value,
     model: model.value,
-    maxTokens: 16384,
+    maxOutputTokens: toNumber(maxOutputTokens.value, 16384),
+    contextWindowTokens: toNumber(contextWindowTokens.value, 128000),
+    outputReserveTokens: toNumber(outputReserveTokens.value, 4096),
+    compactionTriggerRatio: toNumber(compactionTriggerRatio.value, 0.7),
+    compactionTargetRatio: toNumber(compactionTargetRatio.value, 0.2),
+    summaryModelId: summaryModelId.value.trim(),
   })
   emit('update:open', false)
 }
@@ -172,6 +208,40 @@ function handleSave() {
             placeholder="选择或输入模型名"
             @open="handleModelComboOpen"
           />
+        </div>
+
+        <div class="space-y-3 rounded-lg border border-dashed p-3">
+          <div>
+            <p class="text-xs font-medium">上下文管理</p>
+            <p class="text-[11px] text-muted-foreground">控制窗口预算、自动压缩阈值和摘要模型。</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div class="space-y-1.5">
+              <Label class="text-xs">最大输出</Label>
+              <Input v-model="maxOutputTokens" type="number" min="1" class="focus-visible:ring-0" />
+            </div>
+            <div class="space-y-1.5">
+              <Label class="text-xs">上下文窗口</Label>
+              <Input v-model="contextWindowTokens" type="number" min="1" class="focus-visible:ring-0" />
+            </div>
+            <div class="space-y-1.5">
+              <Label class="text-xs">输出预留</Label>
+              <Input v-model="outputReserveTokens" type="number" min="0" class="focus-visible:ring-0" />
+            </div>
+            <div class="space-y-1.5">
+              <Label class="text-xs">触发比例</Label>
+              <Input v-model="compactionTriggerRatio" type="number" min="0" max="1" step="0.05" class="focus-visible:ring-0" />
+            </div>
+            <div class="space-y-1.5">
+              <Label class="text-xs">目标比例</Label>
+              <Input v-model="compactionTargetRatio" type="number" min="0" max="1" step="0.05" class="focus-visible:ring-0" />
+            </div>
+            <div class="space-y-1.5">
+              <Label class="text-xs">摘要模型 ID</Label>
+              <Input v-model="summaryModelId" placeholder="留空则复用当前模型" class="focus-visible:ring-0" />
+            </div>
+          </div>
         </div>
       </div>
 

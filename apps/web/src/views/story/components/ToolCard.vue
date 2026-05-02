@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref, toRaw } from 'vue'
 import { ChevronDown, Loader2 } from 'lucide-vue-next'
 import { getToolDisplayInfo } from '@/agent/tools'
 
@@ -19,29 +19,59 @@ function toggle() {
 
 const info = computed(() => getToolDisplayInfo(props.toolName))
 
+function normalizeJsonValue(value: unknown, seen = new WeakMap<object, unknown>()): unknown {
+  if (value === null || value === undefined) {
+    return value
+  }
+
+  if (typeof value === 'bigint') {
+    return value.toString()
+  }
+
+  if (typeof value !== 'object') {
+    return value
+  }
+
+  const raw = toRaw(value as object) as unknown
+
+  if (raw === null || raw === undefined) {
+    return raw
+  }
+
+  if (typeof raw === 'bigint') {
+    return raw.toString()
+  }
+
+  if (typeof raw !== 'object') {
+    return raw
+  }
+
+  if (seen.has(raw)) {
+    return '[Circular]'
+  }
+
+  if (Array.isArray(raw)) {
+    const result: unknown[] = []
+    seen.set(raw, result)
+    for (const item of raw) {
+      result.push(normalizeJsonValue(item, seen))
+    }
+    return result
+  }
+
+  const result: Record<string, unknown> = {}
+  seen.set(raw, result)
+  for (const [key, nestedValue] of Object.entries(raw)) {
+    const normalized = normalizeJsonValue(nestedValue, seen)
+    if (normalized !== undefined) {
+      result[key] = normalized
+    }
+  }
+  return result
+}
+
 function safeStringify(value: unknown): string {
-  const seen = new WeakSet<object>()
-
-  return JSON.stringify(
-    value,
-    (_key, nestedValue) => {
-      if (typeof nestedValue === 'bigint') {
-        return nestedValue.toString()
-      }
-
-      if (!nestedValue || typeof nestedValue !== 'object') {
-        return nestedValue
-      }
-
-      if (seen.has(nestedValue)) {
-        return '[Circular]'
-      }
-
-      seen.add(nestedValue)
-      return nestedValue
-    },
-    2,
-  )
+  return JSON.stringify(normalizeJsonValue(value), null, 2)
 }
 
 function extractStreamingToolPreview(raw: string): {

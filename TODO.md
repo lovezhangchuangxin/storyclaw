@@ -62,8 +62,8 @@
 目标：Agent 迁移到 Web Worker，上下文优化，更多 tools，自定义主题完善。
 
 - [ ] Agent Loop 迁移到 Web Worker（当前 Phase 1 先做主线程实现）
-- [ ] context compaction（缓存友好、低频触发、70%/20% 双阈值、tool-call 边界安全）
-- [ ] 上下文记忆快照与手动整理入口（`contextSnapshots` / `compact_context`）
+- [x] context compaction（缓存友好、低频触发、70%/20% 双阈值、tool-call 边界安全）
+- [x] 上下文记忆快照与手动整理入口（`contextSnapshots` / `compact_context`）
 - [ ] Skills 系统（brainstorm, outline-design, character-create, chapter-write, ending-craft）
 - [ ] 更多预设阅读主题 + 用户自定义主题
 - [ ] PWA 离线阅读完善（已生成章节离线可读）
@@ -100,4 +100,4 @@
 - [ ] Hooks 系统（before:turn, after:turn, before:tool, after:tool, on:chapter-done, on:error 等）
 
 ### 3.5 上下文管理设计同步
-- [ ] 将 [07 — 上下文压缩与记忆管理](docs/designs/07-context-compaction-and-memory.md) 的 schema 和协议落到实现
+- [x] 将 [07 — 上下文压缩与记忆管理](docs/designs/07-context-compaction-and-memory.md) 的 schema 和协议落到实现

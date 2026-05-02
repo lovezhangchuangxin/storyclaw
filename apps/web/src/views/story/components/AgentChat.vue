@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useDark } from '@vueuse/core'
-import { ChevronDown, Send, Square } from 'lucide-vue-next'
+import { ChevronDown, Loader2, Send, Square } from 'lucide-vue-next'
 import MarkdownRender from 'markstream-vue'
 import { toast } from 'vue-sonner'
 import { runAgentLoop } from '@/agent/loop'
 import { cloneMessages } from '@/agent/message-state'
+import { compactConversationContext } from '@/agent/context-compaction'
+import { loadStoryState } from '@/agent/story-state'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -74,6 +76,7 @@ const unsavedMessages = ref<Message[]>([])
 const localStatusMessages = ref<StatusMessage[]>([])
 const transientMessages = ref<Message[]>([])
 const isGenerating = ref(false)
+const isCompacting = ref(false)
 const abortController = ref<AbortController | null>(null)
 const isDark = useDark()
 let activeRequestId = 0
@@ -308,15 +311,54 @@ async function send() {
       description: error instanceof Error ? error.message : String(error),
     })
   } finally {
-    if (requestId !== activeRequestId) return
-    isGenerating.value = false
-    abortController.value = null
-    scrollToBottom()
+    if (requestId === activeRequestId) {
+      isGenerating.value = false
+      abortController.value = null
+      scrollToBottom()
+    }
   }
 }
 
 function cancel() {
   abortController.value?.abort()
+}
+
+async function compactContext() {
+  if (isGenerating.value || isCompacting.value) return
+  const model = models.value.find((item) => item.id === selectedModelId.value) ?? models.value[0]
+  if (!model) {
+    toast.error('请先配置模型')
+    return
+  }
+
+  isCompacting.value = true
+  try {
+    const conversation = await getConversationByNovelId(props.novelId)
+    const instructions = window.prompt('可选整理指令（留空表示自动整理）', '') ?? ''
+    const result = await compactConversationContext({
+      novelId: props.novelId,
+      modelConfig: model,
+      conversation: conversation ?? { novelId: props.novelId, messages: [], updatedAt: Date.now() },
+      storyState: await loadStoryState(props.novelId),
+      reason: 'manual',
+      manualInstructions: instructions.trim() || undefined,
+      force: true,
+    })
+
+    if (result.snapshot) {
+      toast.success('上下文已整理', {
+        description: `压缩前约 ${result.estimatedInputTokensBefore} token，压缩后约 ${result.estimatedInputTokensAfter} token`,
+      })
+    } else {
+      toast.success('没有需要整理的上下文')
+    }
+  } catch (error) {
+    toast.error('整理失败', {
+      description: error instanceof Error ? error.message : String(error),
+    })
+  } finally {
+    isCompacting.value = false
+  }
 }
 
 function statusClass(kind: StatusMessage['kind']) {
@@ -423,6 +465,16 @@ function statusClass(kind: StatusMessage['kind']) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <Button
+              variant="outline"
+              class="h-7 rounded-md px-2.5 text-xs"
+              :disabled="isGenerating || isCompacting || models.length === 0"
+              @click="compactContext"
+            >
+              <Loader2 v-if="isCompacting" class="mr-1.5 size-3.5 animate-spin" />
+              <span v-else>整理上下文</span>
+            </Button>
 
             <div class="ml-auto flex items-center gap-1">
               <Button

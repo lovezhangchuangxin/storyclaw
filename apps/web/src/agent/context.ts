@@ -1,14 +1,13 @@
 import type OpenAI from 'openai'
 import type { ChatCompletionTool } from 'openai/resources/chat/completions'
+import { getLatestContextSnapshot } from '@/db/context-snapshots'
 import { getConversationByNovelId } from '@/db/conversations'
 import type { Conversation, Message, ModelConfig } from '@/db/types'
 import { supportsReasoningContent } from '@/lib/model-capabilities'
-import {
-  getAssistantReasoningParts,
-  getAssistantTextParts,
-  getAssistantToolUses,
-  isMessageIncludedInContext,
-} from './message-state'
+import { compactConversationContext, CONTEXT_SCOPE_MAIN, serializeContextSnapshot } from './context-compaction'
+import { getAssistantReasoningParts, getAssistantTextParts, getAssistantToolUses, isMessageIncludedInContext } from './message-state'
+import { loadStoryState, serializeStoryState } from './story-state'
+import { calculateTriggerThreshold, estimatePromptTokens } from './token-estimator'
 import { getToolDefinitions } from './tools'
 import type { ToolContext } from './tools/types'
 
@@ -38,6 +37,23 @@ function buildPersonaPrompt(): string {
 - 所有故事内容通过工具调用来完成，不要直接输出长篇故事文本到对话中
 - 创作章节时，先通过 write_chapter 工具提交内容
 - 主动使用工具，不要让用户催促`
+}
+
+function getEffectiveConversationMessages(
+  messages: Message[],
+  compactedThroughMessageId: string | null,
+): Message[] {
+  const includedMessages = messages.filter(isMessageIncludedInContext)
+  if (!compactedThroughMessageId) {
+    return includedMessages
+  }
+
+  const boundaryIndex = includedMessages.findIndex((message) => message.id === compactedThroughMessageId)
+  if (boundaryIndex === -1) {
+    return includedMessages
+  }
+
+  return includedMessages.slice(boundaryIndex + 1)
 }
 
 function convertToApiMessages(
@@ -108,6 +124,47 @@ function convertToApiMessages(
   return result
 }
 
+export async function maybeCompactBeforeBuild(
+  novelId: string,
+  modelConfig: ModelConfig,
+  conversation?: Conversation,
+): Promise<void> {
+  const conv = conversation ?? (await getConversationByNovelId(novelId))
+  const snapshot = await getLatestContextSnapshot(novelId, CONTEXT_SCOPE_MAIN)
+  const messages = getEffectiveConversationMessages(
+    conv?.messages ?? [],
+    snapshot?.compactedThroughMessageId ?? null,
+  )
+  const storyState = await loadStoryState(novelId)
+  const tools = getToolDefinitions({ novelId })
+  const tokens = estimatePromptTokens(
+    [
+      buildPersonaPrompt(),
+      snapshot ? serializeContextSnapshot(snapshot) : '',
+      serializeStoryState(storyState),
+      ...messages,
+    ],
+    tools,
+  )
+
+  const triggerAt = calculateTriggerThreshold(
+    modelConfig.contextWindowTokens,
+    modelConfig.outputReserveTokens,
+    modelConfig.compactionTriggerRatio,
+  )
+
+  if (tokens < triggerAt) return
+
+  await compactConversationContext({
+    novelId,
+    modelConfig,
+    conversation: conv ?? { novelId, messages: [], updatedAt: Date.now() },
+    storyState,
+    reason: 'auto',
+    force: true,
+  })
+}
+
 export async function buildContext(
   novelId: string,
   userMessage: string,
@@ -117,21 +174,47 @@ export async function buildContext(
   const conversation = existingConversation ?? (await getConversationByNovelId(novelId))
   const toolContext: ToolContext = { novelId }
   const includeReasoningContent = supportsReasoningContent(modelConfig)
+  const personaPrompt = buildPersonaPrompt()
 
   const tools = getToolDefinitions(toolContext)
-  const historyMessages = convertToApiMessages(conversation?.messages ?? [], includeReasoningContent)
-  const totalTokensUsed =
-    conversation?.messages.reduce(
-      (sum, message) => sum + (message.promptTokens ?? 0) + (message.completionTokens ?? 0),
-      0,
-    ) ?? 0
+  const storyState = await loadStoryState(novelId)
+  const snapshot = await getLatestContextSnapshot(novelId, CONTEXT_SCOPE_MAIN)
+  const historyMessagesSource = getEffectiveConversationMessages(
+    conversation?.messages ?? [],
+    snapshot?.compactedThroughMessageId ?? null,
+  )
+  const historyMessages = convertToApiMessages(historyMessagesSource, includeReasoningContent)
+  const contextMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    { role: 'system', content: personaPrompt },
+  ]
+
+  if (snapshot) {
+    contextMessages.push({
+      role: 'system',
+      content: `Context Snapshot\n${serializeContextSnapshot(snapshot)}`,
+    })
+  }
+
+  contextMessages.push({
+    role: 'system',
+    content: `Story State\n${serializeStoryState(storyState)}`,
+  })
+  contextMessages.push(...historyMessages)
+  contextMessages.push({ role: 'user', content: userMessage })
+
+  const totalTokensUsed = estimatePromptTokens(
+    [
+      personaPrompt,
+      snapshot ? serializeContextSnapshot(snapshot) : '',
+      serializeStoryState(storyState),
+      ...historyMessagesSource,
+      userMessage,
+    ],
+    tools,
+  )
 
   return {
-    messages: [
-      { role: 'system', content: buildPersonaPrompt() },
-      ...historyMessages,
-      { role: 'user', content: userMessage },
-    ],
+    messages: contextMessages,
     totalTokensUsed,
     tools,
     includeReasoningContent,

@@ -123,6 +123,40 @@ export interface Conversation {
   updatedAt: number
 }
 
+export interface MemoryEntry {
+  text: string
+  sourceMessageIds: string[]
+}
+
+export interface CompactedMemory {
+  userPreferences: MemoryEntry[]
+  acceptedDecisions: MemoryEntry[]
+  rejectedDirections: MemoryEntry[]
+  unresolvedQuestions: MemoryEntry[]
+  importantRationales: MemoryEntry[]
+  storyConstraints: MemoryEntry[]
+  narrativeSummary: string
+}
+
+export interface ContextSnapshot {
+  id: string
+  novelId: string
+  scopeId: string
+  revision: number
+  kind: 'auto' | 'manual'
+  serializerVersion: number
+  promptTemplateVersion: number
+  compactedThroughMessageId: string | null
+  retainedTailMessageIds: string[]
+  sourceMessageIds: string[]
+  memory: CompactedMemory
+  estimatedInputTokensBefore: number
+  estimatedInputTokensAfter: number
+  summaryModelId?: string
+  manualInstructions?: string
+  createdAt: number
+}
+
 interface BaseMessage {
   id: string
   timestamp: number
@@ -195,7 +229,12 @@ export interface ModelConfig {
   apiBase: string
   apiKey: string
   model: string
-  maxTokens: number
+  maxOutputTokens: number
+  contextWindowTokens: number
+  outputReserveTokens: number
+  compactionTriggerRatio: number
+  compactionTargetRatio: number
+  summaryModelId?: string
 }
 
 export interface ReadingSettings {
@@ -255,4 +294,26 @@ export const DEFAULT_CONFIG: AppConfig = {
 
 export function createDefaultConfig(): AppConfig {
   return { ...DEFAULT_CONFIG, updatedAt: Date.now() }
+}
+
+export const DEFAULT_MODEL_CONFIG: Omit<
+  ModelConfig,
+  'id' | 'provider' | 'apiBase' | 'apiKey' | 'model'
+> = {
+  maxOutputTokens: 16384,
+  contextWindowTokens: 128000,
+  outputReserveTokens: 4096,
+  compactionTriggerRatio: 0.7,
+  compactionTargetRatio: 0.2,
+  summaryModelId: '',
+}
+
+export function createDefaultModelConfig(
+  model: Partial<ModelConfig> & Pick<ModelConfig, 'id' | 'provider' | 'apiBase' | 'apiKey' | 'model'>,
+): ModelConfig {
+  return {
+    ...DEFAULT_MODEL_CONFIG,
+    ...model,
+    summaryModelId: model.summaryModelId ?? '',
+  }
 }
