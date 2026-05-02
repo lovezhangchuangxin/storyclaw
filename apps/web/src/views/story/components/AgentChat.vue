@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useDark } from '@vueuse/core'
-import { ChevronDown, Loader2, Send, Square } from 'lucide-vue-next'
+import { BookOpen, Bot, BrainCircuit, ChevronDown, Copy, Loader2, Send, Square } from 'lucide-vue-next'
 import MarkdownRender from 'markstream-vue'
 import { toast } from 'vue-sonner'
 import { runAgentLoop } from '@/agent/loop'
@@ -25,6 +25,7 @@ import type {
   StatusMessage,
 } from '@/db/types'
 import { modelLabel } from '@/lib/model-utils'
+import { relativeTime } from '@/lib/time'
 import ThinkingCard from './ThinkingCard.vue'
 import ToolCard from './ToolCard.vue'
 
@@ -70,6 +71,12 @@ type DisplayItem =
       status: 'pending' | 'completed' | 'cancelled' | 'error'
     }
 
+interface TurnGroup {
+  turnId: string
+  timestamp: number
+  items: DisplayItem[]
+}
+
 const input = ref('')
 const persistedMessages = ref<Message[]>([])
 const unsavedMessages = ref<Message[]>([])
@@ -88,6 +95,11 @@ const selectedModelId = ref('')
 const selectedModelLabel = computed(() => {
   const model = models.value.find((item) => item.id === selectedModelId.value)
   return model ? modelLabel(model) : '选择模型'
+})
+
+const selectedModelProvider = computed(() => {
+  const model = models.value.find((item) => item.id === selectedModelId.value)
+  return model?.provider?.[0]?.toUpperCase() || '?'
 })
 
 const historyMessages = computed(() => [...persistedMessages.value, ...unsavedMessages.value])
@@ -194,6 +206,45 @@ function buildDisplayItems(messages: Message[]): DisplayItem[] {
 
 const displayItems = computed(() => buildDisplayItems(timelineMessages.value))
 
+/** Group display items into conversation turns (each turn starts with a user message) */
+const turnGroups = computed<TurnGroup[]>(() => {
+  const groups: TurnGroup[] = []
+  let currentGroup: TurnGroup | null = null
+
+  for (const item of displayItems.value) {
+    if (item.type === 'user') {
+      if (currentGroup) groups.push(currentGroup)
+      currentGroup = {
+        turnId: item.id,
+        timestamp: item.timestamp,
+        items: [item],
+      }
+    } else if (currentGroup) {
+      currentGroup.items.push(item)
+    } else {
+      // Orphaned non-user items (e.g., status before first user msg)
+      currentGroup = {
+        turnId: item.id,
+        timestamp: item.timestamp,
+        items: [item],
+      }
+    }
+  }
+
+  if (currentGroup) groups.push(currentGroup)
+  return groups
+})
+
+// ---- Scroll-to-bottom ----
+const messagesContainer = ref<HTMLElement | null>(null)
+const isNearBottom = ref(true)
+
+function checkScrollPosition() {
+  const el = messagesContainer.value
+  if (!el) return
+  isNearBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+}
+
 async function loadModels() {
   const config = await getConfig()
   models.value = config.models
@@ -236,18 +287,35 @@ function scrollToBottom() {
   })
 }
 
+function forceScrollToBottom() {
+  const el = document.getElementById('chat-bottom')
+  if (el) {
+    el.scrollIntoView({ behavior: 'instant' })
+  }
+  isNearBottom.value = true
+}
+
 async function reloadForNovel() {
   activeRequestId++
   abortController.value?.abort()
   resetTransientState()
   await loadConversation()
-  scrollToBottom()
+  forceScrollToBottom()
 }
 
 onMounted(async () => {
   await loadModels()
   await loadConversation()
-  scrollToBottom()
+  forceScrollToBottom()
+})
+
+onUnmounted(() => {
+  const el = messagesContainer.value
+  if (el) el.removeEventListener('scroll', checkScrollPosition)
+})
+
+watch(messagesContainer, (el) => {
+  if (el) el.addEventListener('scroll', checkScrollPosition, { passive: true })
 })
 
 watch(() => props.novelId, async () => {
@@ -265,7 +333,7 @@ async function send() {
   const requestId = ++activeRequestId
   const baseUnsavedMessages = cloneMessages(unsavedMessages.value)
   const baseHistoryMessages = cloneMessages(historyMessages.value)
-  scrollToBottom()
+  forceScrollToBottom()
 
   try {
     const result = await runAgentLoop({
@@ -277,7 +345,7 @@ async function send() {
       onMessagesUpdated(messages) {
         if (requestId !== activeRequestId) return
         transientMessages.value = messages
-        scrollToBottom()
+        if (isNearBottom.value) scrollToBottom()
       },
       onError(error) {
         if (requestId !== activeRequestId) return
@@ -314,7 +382,7 @@ async function send() {
     if (requestId === activeRequestId) {
       isGenerating.value = false
       abortController.value = null
-      scrollToBottom()
+      if (isNearBottom.value) scrollToBottom()
     }
   }
 }
@@ -361,126 +429,302 @@ async function compactContext() {
   }
 }
 
-function statusClass(kind: StatusMessage['kind']) {
-  switch (kind) {
-    case 'error':
-      return 'bg-red-50/40 text-red-700 dark:bg-red-950/20 dark:text-red-300'
-    case 'warning':
-      return 'bg-amber-50/40 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300'
-    case 'cancelled':
-      return 'bg-amber-50/40 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300'
-    default:
-      return 'bg-muted/50 text-muted-foreground'
+// ---- Copy to clipboard ----
+const copiedId = ref<string | null>(null)
+async function copyAssistantText(item: DisplayItem) {
+  if (item.type !== 'assistant') return
+  try {
+    await navigator.clipboard.writeText(item.content)
+    copiedId.value = item.id
+    setTimeout(() => { if (copiedId.value === item.id) copiedId.value = null }, 2000)
+  } catch {
+    toast.error('复制失败')
   }
+}
+
+// ---- Welcome suggestions ----
+const welcomeSuggestions = [
+  { icon: '✨', label: '告诉我你想要什么样的故事...', prompt: '告诉我你想要什么样的故事，我来帮你创作。' },
+  { icon: '🎭', label: '帮我设计角色和世界观', prompt: '帮我设计一个故事的角色和世界观。' },
+  { icon: '📖', label: '写一个章节让我看看', prompt: '写一个章节让我看看你的写作能力。' },
+]
+function fillSuggestion(prompt: string) {
+  input.value = prompt
 }
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
-    <div class="flex-1 overflow-y-auto">
-      <div class="mx-auto max-w-3xl space-y-2 px-4 py-3">
-        <template v-for="item in displayItems" :key="item.id">
-          <div v-if="item.type === 'user'" class="flex justify-end">
-            <div class="max-w-[85%] rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground">
-              {{ item.content }}
+  <div class="relative flex h-full flex-col bg-background">
+    <!-- ===== Messages area ===== -->
+    <div
+      ref="messagesContainer"
+      class="chat-messages flex-1 overflow-y-auto scroll-smooth"
+    >
+      <!-- WELCOME STATE -->
+      <div
+        v-if="displayItems.length === 0"
+        class="flex min-h-full flex-col items-center justify-center px-6 py-12"
+      >
+        <div class="animate-welcome w-full max-w-lg text-center">
+          <!-- Logo -->
+          <div class="mb-6 inline-flex">
+            <div class="relative">
+              <div
+                class="flex size-16 items-center justify-center rounded-lg bg-primary/8 ring-1 ring-primary/10 dark:bg-primary/15 dark:ring-primary/20"
+              >
+                <BookOpen class="size-7 text-primary/70" />
+              </div>
+              <div
+                class="absolute -right-1 -top-1 flex size-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm"
+              >
+                AI
+              </div>
             </div>
           </div>
 
-          <div v-else-if="item.type === 'status'" class="flex justify-start">
-            <div
-              class="max-w-[85%] rounded-lg px-3 py-2 text-xs"
-              :class="statusClass(item.kind)"
+          <!-- Headline -->
+          <h2 class="mb-2 text-xl font-semibold tracking-tight text-foreground">
+            开始创作你的故事
+          </h2>
+          <p class="mb-8 text-sm text-muted-foreground">
+            告诉我你的想法，我会帮你将灵感变为文字
+          </p>
+
+          <!-- Suggestion chips -->
+          <div class="flex flex-col gap-2.5">
+            <button
+              v-for="suggestion in welcomeSuggestions"
+              :key="suggestion.label"
+              class="group flex items-center gap-3 rounded-lg border border-border/60 bg-card px-4 py-3 text-left text-sm text-muted-foreground shadow-xs transition-all hover:border-primary/30 hover:bg-primary/3 hover:text-foreground hover:shadow-sm"
+              @click="fillSuggestion(suggestion.prompt)"
             >
-              {{ item.content }}
+              <span class="text-base">{{ suggestion.icon }}</span>
+              <span class="leading-snug">{{ suggestion.label }}</span>
+              <span class="ml-auto shrink-0 text-xs text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100">
+                ↵
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MESSAGES -->
+      <div v-else class="mx-auto max-w-3xl px-4 py-4">
+        <TransitionGroup name="message-enter" tag="div">
+          <div
+            v-for="(group, gi) in turnGroups"
+            :key="group.turnId"
+            :style="{ '--stagger': gi }"
+          >
+            <!-- Turn divider with timestamp -->
+            <div class="my-3 flex items-center gap-3 first:mt-0">
+              <div class="h-px flex-1 bg-border/60" />
+              <span class="shrink-0 text-[11px] text-muted-foreground/50">
+                {{ relativeTime(group.timestamp) }}
+              </span>
+              <div class="h-px flex-1 bg-border/60" />
+            </div>
+
+            <!-- Messages in this turn -->
+            <div class="space-y-2">
+              <template v-for="item in group.items" :key="item.id">
+                <!-- USER MESSAGE -->
+                <div v-if="item.type === 'user'" class="flex justify-end">
+                  <div class="max-w-[75%]">
+                    <div
+                      class="rounded-lg rounded-br-sm bg-primary px-4 py-1.5 text-sm leading-relaxed text-primary-foreground shadow-sm"
+                    >
+                      {{ item.content }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- STATUS MESSAGE (inline centered badge) -->
+                <div v-else-if="item.type === 'status'" class="flex justify-center py-0.5">
+                  <div
+                    v-if="item.kind === 'error'"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-destructive/8 px-3 py-1 text-xs text-destructive"
+                  >
+                    <span class="size-1.5 shrink-0 rounded-full bg-destructive" />
+                    {{ item.content }}
+                  </div>
+                  <div
+                    v-else-if="item.kind === 'warning'"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 px-3 py-1 text-xs text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                  >
+                    <span class="size-1.5 shrink-0 rounded-full bg-amber-500" />
+                    {{ item.content }}
+                  </div>
+                  <div
+                    v-else-if="item.kind === 'cancelled'"
+                    class="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60"
+                  >
+                    <span class="mr-0.5">┄</span>
+                    <span class="line-through decoration-muted-foreground/30">{{ item.content }}</span>
+                    <span class="ml-0.5">┄</span>
+                  </div>
+                  <span
+                    v-else
+                    class="text-xs text-muted-foreground/50"
+                  >
+                    {{ item.content }}
+                  </span>
+                </div>
+
+                <!-- ASSISTANT AVATAR + BUBBLE (wraps assistant, reasoning, tool_card) -->
+                <div
+                  v-else-if="item.type === 'assistant' || item.type === 'reasoning' || item.type === 'tool_card'"
+                  class="flex items-start gap-2.5"
+                >
+                  <!-- AI Avatar -->
+                  <div
+                    class="flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 to-indigo-500/20 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/20"
+                  >
+                    <Bot class="size-3.5" />
+                  </div>
+
+                  <!-- Content area -->
+                  <div class="min-w-0">
+                    <!-- Assistant text bubble -->
+                    <div
+                      v-if="item.type === 'assistant'"
+                      class="group relative max-w-[85%] rounded-lg rounded-bl-sm border bg-card px-4 py-2 shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <!-- Copy button -->
+                      <button
+                        v-if="item.content"
+                        class="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded-md text-muted-foreground/40 opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                        :class="{ 'opacity-100 text-foreground': copiedId === item.id }"
+                        @click="copyAssistantText(item)"
+                      >
+                        <Copy class="size-3.5" />
+                      </button>
+
+                      <MarkdownRender
+                        custom-id="agent-chat"
+                        :content="item.content"
+                        :final="!item.isStreaming"
+                        :is-dark="isDark"
+                        :typewriter="false"
+                        render-code-blocks-as-pre
+                      />
+
+                      <!-- Streaming cursor: pulsing vertical bar -->
+                      <span
+                        v-if="item.isStreaming"
+                        class="ml-0.5 inline-block h-[1.15em] w-0.5 animate-pulse rounded-full bg-primary align-text-bottom"
+                      />
+                    </div>
+
+                    <!-- Thinking inline -->
+                    <div v-else-if="item.type === 'reasoning'" class="max-w-[85%]">
+                      <ThinkingCard :content="item.content" />
+                    </div>
+
+                    <!-- Tool card (renders its own wrapper) -->
+                    <ToolCard
+                      v-else-if="item.type === 'tool_card'"
+                      :tool-name="item.toolName"
+                      :raw-arguments="item.rawArguments"
+                      :parsed-arguments="item.parsedArguments"
+                      :result="item.result"
+                      :status="item.status"
+                    />
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
+        </TransitionGroup>
 
-          <div v-else-if="item.type === 'reasoning'" class="flex justify-start">
-            <div class="max-w-[85%]">
-              <ThinkingCard :content="item.content" />
-            </div>
-          </div>
-
-          <ToolCard
-            v-else-if="item.type === 'tool_card'"
-            :tool-name="item.toolName"
-            :raw-arguments="item.rawArguments"
-            :parsed-arguments="item.parsedArguments"
-            :result="item.result"
-            :status="item.status"
-          />
-
-          <div v-else-if="item.type === 'assistant'" class="flex justify-start">
-            <div class="max-w-[85%] rounded-lg bg-muted px-3 py-2 text-sm text-foreground">
-              <MarkdownRender
-                custom-id="agent-chat"
-                :content="item.content"
-                :final="!item.isStreaming"
-                :is-dark="isDark"
-                :typewriter="false"
-                render-code-blocks-as-pre
-              />
-              <span
-                v-if="item.isStreaming"
-                class="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-foreground align-text-bottom"
-              />
-            </div>
-          </div>
-        </template>
-
-        <div id="chat-bottom" />
+        <div id="chat-bottom" class="h-px" />
       </div>
     </div>
 
+    <!-- ===== Scroll-to-bottom button ===== -->
+    <div
+      v-if="!isNearBottom && displayItems.length > 0"
+      class="pointer-events-none absolute bottom-28 right-6 z-10"
+    >
+      <button
+        class="pointer-events-auto flex size-8 items-center justify-center rounded-full border bg-card shadow-md transition-all hover:bg-muted hover:shadow-lg"
+        @click="forceScrollToBottom"
+      >
+        <ChevronDown class="size-4 text-muted-foreground" />
+      </button>
+    </div>
+
+    <!-- ===== Input area ===== -->
     <div class="shrink-0 bg-background">
-      <div class="mx-auto max-w-3xl px-4 pb-4 pt-3">
+      <div class="mx-auto max-w-3xl px-4 pb-4 pt-2">
         <div
-          class="rounded-xl border border-input bg-transparent transition-colors focus-within:border-ring dark:bg-input/30"
+          class="rounded-lg border bg-card shadow-lg transition-all focus-within:border-ring/50 focus-within:shadow-xl dark:bg-card"
         >
           <textarea
             v-model="input"
-            placeholder="输入你的想法或反馈..."
+            placeholder="输入你的想法或反馈... (Ctrl+Enter 发送)"
             rows="1"
-            class="field-sizing-content block min-h-0 w-full resize-none bg-transparent px-3 pb-0.5 pt-3 text-base outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+            class="field-sizing-content block min-h-0 w-full resize-none bg-transparent px-4 py-3.5 text-base outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
             :disabled="isGenerating"
             @keydown.enter.exact.prevent="send"
           />
 
-          <div class="flex items-center gap-1.5 px-3 pb-2.5">
+          <div class="flex items-center gap-2 px-3 pb-3">
+            <!-- Model selector -->
             <DropdownMenu v-if="models.length > 0">
               <DropdownMenuTrigger
                 as="button"
-                class="flex items-center gap-1.5 rounded-md border border-input bg-transparent px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <span class="truncate">{{ selectedModelLabel }}</span>
+                <span class="flex size-4 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70">
+                  {{ selectedModelProvider }}
+                </span>
+                <span class="max-w-[120px] truncate">{{ selectedModelLabel }}</span>
                 <ChevronDown class="size-3 shrink-0" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
+              <DropdownMenuContent align="start" class="min-w-[200px]">
                 <DropdownMenuItem
                   v-for="model in models"
                   :key="model.id"
+                  class="flex items-center gap-2"
                   @click="selectedModelId = model.id"
                 >
+                  <span class="flex size-5 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70">
+                    {{ model.provider[0]?.toUpperCase() }}
+                  </span>
                   <span class="text-xs">{{ modelLabel(model) }}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
+            <!-- "配置模型" link when no models -->
+            <router-link
+              v-else
+              :to="{ name: 'model-config' }"
+              class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <BrainCircuit class="size-3.5" />
+              <span>配置模型</span>
+            </router-link>
+
+            <!-- Compact context -->
             <Button
-              variant="outline"
-              class="h-7 rounded-md px-2.5 text-xs"
+              variant="ghost"
+              size="xs"
+              class="text-xs text-muted-foreground hover:text-foreground"
               :disabled="isGenerating || isCompacting || models.length === 0"
               @click="compactContext"
             >
-              <Loader2 v-if="isCompacting" class="mr-1.5 size-3.5 animate-spin" />
-              <span v-else>整理上下文</span>
+              <Loader2 v-if="isCompacting" class="mr-1 size-3 animate-spin" />
+              <span>整理上下文</span>
             </Button>
 
             <div class="ml-auto flex items-center gap-1">
               <Button
                 v-if="!isGenerating"
-                size="icon"
-                class="size-7"
+                size="icon-sm"
+                variant="default"
+                class="bg-primary/90 hover:bg-primary"
                 :disabled="!input.trim()"
                 @click="send"
               >
@@ -489,8 +733,7 @@ function statusClass(kind: StatusMessage['kind']) {
               <Button
                 v-else
                 variant="destructive"
-                size="icon"
-                class="size-7"
+                size="icon-sm"
                 @click="cancel"
               >
                 <Square class="size-3.5" />
@@ -502,3 +745,65 @@ function statusClass(kind: StatusMessage['kind']) {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* ---- Scrollbar ---- */
+.chat-messages::-webkit-scrollbar {
+  width: 5px;
+}
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-messages::-webkit-scrollbar-thumb {
+  background: oklch(0.922 0 0);
+  border-radius: 3px;
+}
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.87 0 0);
+}
+.dark .chat-messages::-webkit-scrollbar-thumb {
+  background: oklch(0.269 0 0);
+}
+.dark .chat-messages::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.371 0 0);
+}
+
+/* ---- Welcome animation ---- */
+@keyframes welcome-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-welcome {
+  animation: welcome-fade-up 400ms ease-out both;
+}
+
+/* ---- Message entrance animation ---- */
+.message-enter-enter-active {
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms ease-out;
+  animation-delay: calc(var(--stagger, 0) * 30ms);
+}
+
+.message-enter-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.message-enter-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Smooth scrolling */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+</style>

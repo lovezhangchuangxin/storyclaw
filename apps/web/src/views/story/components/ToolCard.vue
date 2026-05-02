@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, toRaw } from 'vue'
-import { ChevronDown, Loader2 } from 'lucide-vue-next'
+import {
+  ChevronDown, Loader2, CheckCircle2, XCircle, MinusCircle,
+  PenLine, ListOrdered, UserPlus, UserPen,
+} from 'lucide-vue-next'
 import { getToolDisplayInfo } from '@/agent/tools'
 
 const props = defineProps<{
@@ -18,6 +21,8 @@ function toggle() {
 }
 
 const info = computed(() => getToolDisplayInfo(props.toolName))
+
+// ── Preserved: normalizeJsonValue ──────────────────────────────
 
 function normalizeJsonValue(value: unknown, seen = new WeakMap<object, unknown>()): unknown {
   if (value === null || value === undefined) {
@@ -70,9 +75,13 @@ function normalizeJsonValue(value: unknown, seen = new WeakMap<object, unknown>(
   return result
 }
 
+// ── Preserved: safeStringify ───────────────────────────────────
+
 function safeStringify(value: unknown): string {
   return JSON.stringify(normalizeJsonValue(value), null, 2)
 }
+
+// ── Preserved: extractStreamingToolPreview ─────────────────────
 
 function extractStreamingToolPreview(raw: string): {
   chapter?: string
@@ -97,6 +106,8 @@ function extractStreamingToolPreview(raw: string): {
     wordCount,
   }
 }
+
+// ── Preserved: argSummary ──────────────────────────────────────
 
 const argSummary = computed(() => {
   const args = props.parsedArguments
@@ -137,6 +148,8 @@ const argSummary = computed(() => {
   }
 })
 
+// ── Preserved: resultSummary ───────────────────────────────────
+
 const resultSummary = computed(() => {
   if (props.status === 'cancelled') return { success: false, text: '已取消' }
   if (!props.result) return null
@@ -157,6 +170,8 @@ const resultSummary = computed(() => {
   }
 })
 
+// ── Preserved: hasDetail, parsedArgumentsText ──────────────────
+
 const hasDetail = computed(() =>
   !!props.rawArguments
   || (props.parsedArguments && Object.keys(props.parsedArguments).length > 0)
@@ -174,93 +189,248 @@ const parsedArgumentsText = computed(() => {
   }
 })
 
+// ── Preserved (updated): cardClass ─────────────────────────────
+
 const cardClass = computed(() => {
   if (props.status === 'error' || resultSummary.value?.success === false) {
-    return 'bg-red-50/30 dark:bg-red-950/10'
+    return 'border-red-200/30 dark:border-red-800/30'
   }
   if (props.status === 'cancelled') {
-    return 'bg-amber-50/30 dark:bg-amber-950/10'
+    return 'opacity-70'
   }
-  return 'bg-muted/50'
+  return ''
 })
+
+// ── Preserved (updated): textClass ─────────────────────────────
 
 const textClass = computed(() => {
   if (props.status === 'error' || resultSummary.value?.success === false) {
     return 'text-destructive'
   }
   if (props.status === 'cancelled') {
-    return 'text-amber-700 dark:text-amber-300'
+    return 'text-amber-600 dark:text-amber-400'
   }
   return 'text-muted-foreground hover:text-foreground'
+})
+
+// ── NEW: tool icon component ───────────────────────────────────
+
+const toolIconComp = computed(() => {
+  switch (props.toolName) {
+    case 'write_chapter':
+    case 'rewrite_chapter':
+      return PenLine
+    case 'plan_chapters':
+      return ListOrdered
+    case 'create_character':
+      return UserPlus
+    case 'update_character':
+      return UserPen
+    default:
+      return null
+  }
+})
+
+// ── NEW: status display helpers ────────────────────────────────
+
+const statusIconComp = computed(() => {
+  switch (props.status) {
+    case 'pending': return Loader2
+    case 'completed': return CheckCircle2
+    case 'cancelled': return MinusCircle
+    case 'error': return XCircle
+    default: return XCircle
+  }
+})
+
+const statusColor = computed(() => {
+  switch (props.status) {
+    case 'pending': return 'text-blue-500'
+    case 'completed': return 'text-emerald-500'
+    case 'cancelled': return 'text-amber-500 dark:text-amber-400'
+    case 'error': return 'text-destructive'
+    default: return ''
+  }
+})
+
+const statusText = computed(() => {
+  switch (props.status) {
+    case 'pending': return '执行中...'
+    case 'cancelled': return '已取消'
+    case 'error': return resultSummary.value?.text || '错误'
+    default: return ''
+  }
+})
+
+// Summary text for the middle/right area
+const headerSummary = computed(() => {
+  if (props.status === 'completed') {
+    return resultSummary.value?.text || argSummary.value || ''
+  }
+  if (props.status === 'pending' && argSummary.value) {
+    return argSummary.value
+  }
+  return ''
 })
 </script>
 
 <template>
   <div class="flex justify-start">
     <div
-      class="max-w-[85%] rounded-lg px-3 py-2 text-xs"
+      class="max-w-[85%] rounded-lg border bg-card shadow-sm
+        text-xs transition-colors duration-200"
       :class="cardClass"
     >
+      <!-- ── Interactive header (has detail to expand) ── -->
       <button
         v-if="hasDetail"
-        class="w-full text-left flex items-center gap-1.5 group"
+        class="w-full flex items-center gap-2 px-3.5 py-2.5
+          hover:bg-muted/20 transition-colors duration-150
+          rounded-lg cursor-pointer select-none"
         :class="textClass"
         @click="toggle"
       >
-        <span class="shrink-0">{{ info.icon }}</span>
-        <span class="font-medium">{{ info.displayName }}</span>
+        <!-- Tool icon -->
+        <component
+          :is="toolIconComp"
+          v-if="toolIconComp"
+          class="size-3.5 shrink-0"
+        />
+        <span v-else class="shrink-0 text-xs leading-none">{{ info.icon }}</span>
+
+        <!-- Tool name -->
+        <span class="font-medium shrink-0">{{ info.displayName }}</span>
+
+        <!-- Summary / status text -->
         <span
-          v-if="status === 'pending'"
-          class="text-muted-foreground/50 italic flex items-center gap-1"
-        >
-          <Loader2 class="size-3 animate-spin" />
-          执行中...
+          v-if="headerSummary"
+          class="truncate opacity-60 min-w-0"
+        >{{ headerSummary }}</span>
+        <span
+          v-else-if="statusText"
+          class="truncate opacity-60 min-w-0"
+        >{{ statusText }}</span>
+
+        <!-- Spacer -->
+        <span class="flex-1" />
+
+        <!-- Status indicator -->
+        <span class="flex items-center gap-1 shrink-0" :class="statusColor">
+          <component
+            :is="statusIconComp"
+            class="size-3 shrink-0"
+            :class="{ 'animate-spin': props.status === 'pending' }"
+          />
+          <span
+            v-if="statusText && headerSummary"
+            class="sr-only"
+          >{{ statusText }}</span>
+          <span
+            v-else-if="statusText && !headerSummary"
+            class="hidden sm:inline"
+          >{{ statusText }}</span>
         </span>
-        <span v-else-if="status === 'cancelled'" class="italic">
-          · 已取消
-        </span>
-        <span v-else-if="argSummary && !resultSummary" class="text-muted-foreground/60 truncate">
-          — {{ argSummary }}
-        </span>
-        <span v-else-if="resultSummary" class="truncate" :class="resultSummary.success ? '' : 'text-destructive'">
-          · {{ resultSummary.text }}
-        </span>
+
+        <!-- Expand chevron -->
         <ChevronDown
-          class="size-3 shrink-0 ml-auto transition-transform duration-150"
+          class="size-3 shrink-0 opacity-40 transition-transform duration-200"
           :class="expanded ? 'rotate-180' : ''"
         />
       </button>
-      <div v-else class="flex items-center gap-1.5 text-muted-foreground">
-        <span class="shrink-0">{{ info.icon }}</span>
-        <span class="font-medium">{{ info.displayName }}</span>
-        <span v-if="status === 'pending'" class="italic flex items-center gap-1">
-          <Loader2 class="size-3 animate-spin" />
-          执行中...
-        </span>
-        <span v-else-if="status === 'cancelled'" class="italic">
-          · 已取消
-        </span>
-        <span v-else-if="resultSummary" :class="resultSummary.success ? '' : 'text-destructive'">
-          · {{ resultSummary.text }}
+
+      <!-- ── Non-interactive header (no detail) ── -->
+      <div
+        v-else
+        class="flex items-center gap-2 px-3.5 py-2.5"
+        :class="textClass"
+      >
+        <component
+          :is="toolIconComp"
+          v-if="toolIconComp"
+          class="size-3.5 shrink-0"
+        />
+        <span v-else class="shrink-0 text-xs leading-none">{{ info.icon }}</span>
+
+        <span class="font-medium shrink-0">{{ info.displayName }}</span>
+
+        <span
+          v-if="headerSummary"
+          class="truncate opacity-60 min-w-0"
+        >{{ headerSummary }}</span>
+
+        <span class="flex-1" />
+
+        <span class="flex items-center gap-1 shrink-0" :class="statusColor">
+          <component
+            :is="statusIconComp"
+            class="size-3 shrink-0"
+            :class="{ 'animate-spin': props.status === 'pending' }"
+          />
+          <span
+            v-if="statusText && !headerSummary"
+            class="hidden sm:inline"
+          >{{ statusText }}</span>
         </span>
       </div>
+
+      <!-- ── Expandable detail section ── -->
       <div
-        v-if="expanded && hasDetail"
-        class="mt-1.5 text-xs font-mono bg-muted/30 rounded p-2 overflow-x-auto max-h-40 overflow-y-auto space-y-1.5"
+        v-show="expanded && hasDetail"
+        class="border-t transition-all duration-200 ease-out
+          motion-reduce:transition-none"
+        :class="expanded && hasDetail
+          ? 'max-h-72 opacity-100 overflow-y-auto tool-detail-scroll'
+          : 'max-h-0 opacity-0 overflow-hidden border-transparent'"
       >
-        <div v-if="parsedArgumentsText">
-          <div class="text-muted-foreground/50 mb-0.5">参数</div>
-          <pre class="whitespace-pre-wrap break-all text-muted-foreground">{{ parsedArgumentsText }}</pre>
-        </div>
-        <div v-else-if="rawArguments">
-          <div class="text-muted-foreground/50 mb-0.5">参数</div>
-          <pre class="whitespace-pre-wrap break-all text-muted-foreground">{{ rawArguments }}</pre>
-        </div>
-        <div v-if="result">
-          <div class="text-muted-foreground/50 mb-0.5">结果</div>
-          <pre class="whitespace-pre-wrap break-all text-muted-foreground">{{ result }}</pre>
+        <div class="px-3.5 py-2.5 space-y-2.5">
+          <!-- Arguments -->
+          <div v-if="parsedArgumentsText">
+            <div class="text-muted-foreground/40 mb-1.5 font-medium">参数</div>
+            <pre
+              class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70
+                whitespace-pre-wrap break-all overflow-x-auto"
+            >{{ parsedArgumentsText }}</pre>
+          </div>
+          <div v-else-if="rawArguments">
+            <div class="text-muted-foreground/40 mb-1.5 font-medium">参数</div>
+            <pre
+              class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70
+                whitespace-pre-wrap break-all overflow-x-auto"
+            >{{ rawArguments }}</pre>
+          </div>
+
+          <!-- Result -->
+          <div v-if="result">
+            <div class="text-muted-foreground/40 mb-1.5 font-medium">结果</div>
+            <pre
+              class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70
+                whitespace-pre-wrap break-all overflow-x-auto"
+            >{{ result }}</pre>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.tool-detail-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.tool-detail-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tool-detail-scroll::-webkit-scrollbar-thumb {
+  background: oklch(0.922 0 0);
+  border-radius: 3px;
+}
+.tool-detail-scroll::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.87 0 0);
+}
+.dark .tool-detail-scroll::-webkit-scrollbar-thumb {
+  background: oklch(0.269 0 0);
+}
+.dark .tool-detail-scroll::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.371 0 0);
+}
+</style>
