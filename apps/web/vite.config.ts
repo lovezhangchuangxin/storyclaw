@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'url'
 
 export default defineConfig({
+  base: '/storyclaw/',
   build: {
     chunkSizeWarningLimit: 700,
     rollupOptions: {
