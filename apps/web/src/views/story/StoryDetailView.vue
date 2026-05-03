@@ -27,11 +27,15 @@ const setTitle = inject<(t: string | null) => void>('setTitle')
 
 const tabTitles: Record<'reader' | 'agent', string> = { reader: '阅读', agent: '对话' }
 
-watch(mode, (val) => {
+watch(mode, async (val) => {
   router.replace({
     query: val === 'agent' ? { tab: 'agent' } : {},
   })
   setTitle?.(tabTitles[val])
+  if (val === 'reader' && storyId.value) {
+    chapters.value = await getChaptersByNovelId(storyId.value)
+    chapters.value.sort((a, b) => a.index - b.index)
+  }
 })
 
 onMounted(() => {
