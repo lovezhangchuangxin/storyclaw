@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, inject, h, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { MessageCircle, BookOpen } from 'lucide-vue-next'
 import ReaderView from '@/components/reader/ReaderView.vue'
 import ReaderControls from '@/components/reader/ReaderControls.vue'
@@ -11,12 +11,19 @@ import type { Chapter } from '@/db/types'
 import type { Component } from 'vue'
 
 const route = useRoute()
+const router = useRouter()
 const storyId = computed(() => route.params.id as string)
 
 const mode = ref<'reader' | 'agent'>(
   route.query.tab === 'agent' ? 'agent' : 'reader'
 )
 const showControls = ref(false)
+
+watch(mode, (val) => {
+  router.replace({
+    query: val === 'agent' ? { tab: 'agent' } : {},
+  })
+})
 
 const setTopbarExtra = inject<(c: Component | null) => void>('setTopbarExtra')
 
