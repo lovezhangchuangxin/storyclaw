@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
-import { Sun, Moon, Coffee, Type, BookOpen, ScrollText, Play, Eye } from 'lucide-vue-next'
+import { Sun, Moon, Coffee, Snowflake, Flower2, TreePine, Type, BookOpen, ScrollText, Play, Eye } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { saveConfig, getConfig } from '@/db/config'
 import type { AppConfig, AppTheme } from '@/db/types'
@@ -16,6 +16,9 @@ const themeCards = [
   { id: 'light' as AppTheme, name: '浅色', icon: Sun, bg: '#FCFAF7', text: '#1A1A1A', accent: '#6B6B6B' },
   { id: 'dark' as AppTheme, name: '深色', icon: Moon, bg: '#1A1A1E', text: '#E0E0E0', accent: '#8B8B8B' },
   { id: 'parchment' as AppTheme, name: '护眼', icon: Coffee, bg: '#F4E4C1', text: '#3E2723', accent: '#8D6E63' },
+  { id: 'frost' as AppTheme, name: '霜华', icon: Snowflake, bg: '#F0F4FA', text: '#3D4A5C', accent: '#5B8DB8' },
+  { id: 'peach' as AppTheme, name: '桃夭', icon: Flower2, bg: '#FBEDE8', text: '#4D332E', accent: '#C47A6B' },
+  { id: 'pine' as AppTheme, name: '松烟', icon: TreePine, bg: '#EAF0E7', text: '#2E3D33', accent: '#5C8A6B' },
 ]
 
 const appTheme = computed({

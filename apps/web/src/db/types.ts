@@ -223,7 +223,7 @@ export type Message = UserMessage | StatusMessage | AssistantMessage
 
 // ---- Config ----
 
-export type AppTheme = 'light' | 'dark' | 'parchment'
+export type AppTheme = 'light' | 'dark' | 'parchment' | 'frost' | 'peach' | 'pine'
 
 export interface AppConfig {
   id: 'app-config'

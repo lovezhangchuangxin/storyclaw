@@ -8,9 +8,12 @@ const appTheme = ref<AppTheme>('light')
 
 function applyTheme(theme: AppTheme) {
   const el = document.documentElement
-  el.classList.remove('dark', 'parchment')
+  el.classList.remove('dark', 'parchment', 'frost', 'peach', 'pine')
   if (theme === 'dark') el.classList.add('dark')
   if (theme === 'parchment') el.classList.add('parchment')
+  if (theme === 'frost') el.classList.add('frost')
+  if (theme === 'peach') el.classList.add('peach')
+  if (theme === 'pine') el.classList.add('pine')
   try { localStorage.setItem('app-theme', theme) } catch { /* quota exceeded */ }
 }
 
