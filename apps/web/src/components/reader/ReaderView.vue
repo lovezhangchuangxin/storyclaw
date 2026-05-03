@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import DOMPurify from 'dompurify'
-import { PRESET_THEMES } from './types'
 import type { ReaderSettings } from './types'
 
 const props = defineProps<{
@@ -31,21 +30,11 @@ const emit = defineEmits<{
 const container = ref<HTMLElement>()
 const scrollPercent = ref(0)
 
-const accentColor = computed(() => {
-  const theme = PRESET_THEMES.find(
-    (t) => t.backgroundColor === props.settings.backgroundColor,
-  )
-  return theme?.accentColor ?? props.settings.textColor
-})
-
 const readerStyle = computed(() => ({
   '--reader-font': props.settings.fontFamily,
   '--reader-font-size': `${props.settings.fontSize}px`,
   '--reader-line-height': props.settings.lineHeight,
   '--reader-paragraph-spacing': `${props.settings.paragraphSpacing}em`,
-  '--reader-text': props.settings.textColor,
-  '--reader-bg': props.settings.backgroundColor,
-  '--reader-accent': accentColor.value,
 }))
 
 const progressPercent = computed(() =>
@@ -96,7 +85,7 @@ defineExpose({ scrollToPos })
 <template>
   <div
     ref="container"
-    class="reader h-full overflow-y-auto overscroll-none"
+    class="reader h-full overflow-y-auto overscroll-none bg-background text-foreground"
     :style="readerStyle"
     @scroll="onScroll"
     @pointerdown="onPointerDown"
@@ -105,7 +94,7 @@ defineExpose({ scrollToPos })
     <div class="sticky top-0 z-20 h-0.5 bg-muted/30">
       <div
         class="h-full transition-[width] duration-200 ease-out"
-        :style="{ width: `${progressPercent}%`, backgroundColor: accentColor }"
+        :style="{ width: `${progressPercent}%`, backgroundColor: 'var(--primary)' }"
       />
     </div>
 
@@ -132,7 +121,6 @@ defineExpose({ scrollToPos })
           fontFamily: 'var(--reader-font)',
           fontSize: 'var(--reader-font-size)',
           lineHeight: 'var(--reader-line-height)',
-          color: 'var(--reader-text)',
         }"
         v-html="renderedContent"
       />
@@ -167,11 +155,11 @@ defineExpose({ scrollToPos })
   background: transparent;
 }
 .reader::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--reader-text) 18%, transparent);
+  background: color-mix(in srgb, var(--foreground) 18%, transparent);
   border-radius: 3px;
 }
 .reader::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--reader-text) 30%, transparent);
+  background: color-mix(in srgb, var(--foreground) 30%, transparent);
 }
 
 .article-content :deep(p) {

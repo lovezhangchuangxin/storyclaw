@@ -20,7 +20,7 @@ const items = [
   { path: '/prompts', label: '提示词', icon: MessageSquareText },
   { path: '/settings/model', label: '模型配置', icon: Settings },
   { path: '/settings/server', label: '后端连接', icon: Server },
-  { path: '/settings/reading', label: '阅读偏好', icon: Palette },
+  { path: '/settings/appearance', label: '外观', icon: Palette },
   { path: '/my', label: '我的', icon: User },
 ]
 

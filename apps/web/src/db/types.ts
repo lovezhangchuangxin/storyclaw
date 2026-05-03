@@ -223,12 +223,14 @@ export type Message = UserMessage | StatusMessage | AssistantMessage
 
 // ---- Config ----
 
+export type AppTheme = 'light' | 'dark' | 'parchment'
+
 export interface AppConfig {
   id: 'app-config'
   models: ModelConfig[]
   defaultModelId: string
   skillModelMapping: Record<string, string>
-  readingTheme: string
+  appTheme: AppTheme
   readingSettings: ReadingSettings
   backendUrl?: string
   useBackendProxy: boolean
@@ -254,8 +256,6 @@ export interface ReadingSettings {
   fontSize: number
   lineHeight: number
   paragraphSpacing: number
-  textColor: string
-  backgroundColor: string
   scrollMode: 'scroll' | 'paged' | 'auto'
   autoScrollSpeed: number
 }
@@ -288,14 +288,12 @@ export const DEFAULT_CONFIG: AppConfig = {
   models: [],
   defaultModelId: '',
   skillModelMapping: {},
-  readingTheme: 'serene',
+  appTheme: 'light',
   readingSettings: {
     fontFamily: 'Noto Sans SC',
     fontSize: 18,
     lineHeight: 1.6,
     paragraphSpacing: 1,
-    textColor: '#333333',
-    backgroundColor: '#F5F0E8',
     scrollMode: 'scroll',
     autoScrollSpeed: 50,
   },

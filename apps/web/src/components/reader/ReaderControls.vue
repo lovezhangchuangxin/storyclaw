@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { List, Check } from 'lucide-vue-next'
+import { List } from 'lucide-vue-next'
 import { Slider } from '@/components/ui/slider'
 import {
   Select,
@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { PRESET_THEMES, FONT_OPTIONS } from './types'
+import { FONT_OPTIONS } from './types'
 import type { ReaderSettings } from './types'
 
 const scrollOptions = [
@@ -36,16 +36,7 @@ function updateSetting<K extends keyof ReaderSettings>(
   emit('update:settings', { ...props.settings, [key]: value })
 }
 
-function applyTheme(themeId: string) {
-  const theme = PRESET_THEMES.find((t) => t.id === themeId)
-  if (theme) {
-    emit('update:settings', {
-      ...props.settings,
-      backgroundColor: theme.backgroundColor,
-      textColor: theme.textColor,
-    })
-  }
-}
+
 </script>
 
 <template>
@@ -71,32 +62,6 @@ function applyTheme(themeId: string) {
     </button>
 
     <div class="px-5 pb-5 space-y-5">
-      <!-- Theme -->
-      <div>
-        <p class="text-xs font-medium text-muted-foreground mb-2.5">主题</p>
-        <div class="flex gap-2.5">
-          <button
-            v-for="t in PRESET_THEMES"
-            :key="t.id"
-            class="relative size-8 rounded-full border-2 shrink-0 transition-all hover:scale-110"
-            :class="
-              settings.backgroundColor === t.backgroundColor
-                ? 'border-primary'
-                : 'border-border hover:border-muted-foreground/40'
-            "
-            :style="{ backgroundColor: t.backgroundColor }"
-            :title="t.name"
-            @click="applyTheme(t.id)"
-          >
-            <Check
-              v-if="settings.backgroundColor === t.backgroundColor"
-              class="absolute inset-0 m-auto size-3"
-              :style="{ color: t.accentColor }"
-            />
-          </button>
-        </div>
-      </div>
-
       <!-- Font family -->
       <div>
         <p class="text-xs font-medium text-muted-foreground mb-2.5">字体</p>

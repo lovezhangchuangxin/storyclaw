@@ -9,10 +9,28 @@ function normalizeModelConfig(model: ModelConfig): ModelConfig {
   })
 }
 
+function migrateTheme(config: Record<string, unknown>): void {
+  if (!config.appTheme && config.readingTheme) {
+    const old = config.readingTheme as string
+    config.appTheme = old === 'ink-night' ? 'dark' : 'light'
+    delete config.readingTheme
+  }
+  if (config.appTheme === 'sepia') {
+    config.appTheme = 'parchment'
+  }
+  if (config.readingSettings && typeof config.readingSettings === 'object') {
+    const rs = config.readingSettings as Record<string, unknown>
+    delete rs.textColor
+    delete rs.backgroundColor
+  }
+}
+
 function normalizeConfig(config: AppConfig): AppConfig {
+  const raw = config as unknown as Record<string, unknown>
+  migrateTheme(raw)
   return {
     ...createDefaultConfig(),
-    ...config,
+    ...raw,
     models: (config.models ?? []).map((model) => normalizeModelConfig(model)),
   }
 }

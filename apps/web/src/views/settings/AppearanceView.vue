@@ -1,24 +1,28 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Palette, Type, BookOpen, ScrollText, Play, Eye } from 'lucide-vue-next'
+import { ref, computed, inject } from 'vue'
+import { Sun, Moon, Coffee, Type, BookOpen, ScrollText, Play, Eye } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { saveConfig, getConfig } from '@/db/config'
-import type { AppConfig } from '@/db/types'
+import type { AppConfig, AppTheme } from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
 import { Slider } from '@/components/ui/slider'
-import { PRESET_THEMES, FONT_OPTIONS } from '@/components/reader/types'
+import { FONT_OPTIONS } from '@/components/reader/types'
 
 const config = ref<AppConfig>({ ...DEFAULT_CONFIG })
 
-const theme = computed({
-  get: () => config.value.readingTheme,
-  set: (v: string) => {
-    config.value.readingTheme = v
-    const preset = PRESET_THEMES.find((t) => t.id === v)
-    if (preset) {
-      config.value.readingSettings.backgroundColor = preset.backgroundColor
-      config.value.readingSettings.textColor = preset.textColor
-    }
+const applyTheme = inject<(theme: AppTheme) => void>('applyTheme', () => {})
+
+const themeCards = [
+  { id: 'light' as AppTheme, name: '浅色', icon: Sun, bg: '#FCFAF7', text: '#1A1A1A', accent: '#6B6B6B' },
+  { id: 'dark' as AppTheme, name: '深色', icon: Moon, bg: '#1A1A1E', text: '#E0E0E0', accent: '#8B8B8B' },
+  { id: 'parchment' as AppTheme, name: '护眼', icon: Coffee, bg: '#F4E4C1', text: '#3E2723', accent: '#8D6E63' },
+]
+
+const appTheme = computed({
+  get: () => config.value.appTheme,
+  set: (v: AppTheme) => {
+    config.value.appTheme = v
+    applyTheme(v)
     save()
   },
 })
@@ -75,12 +79,10 @@ const previewStyle = computed(() => ({
   fontFamily: config.value.readingSettings.fontFamily,
   fontSize: `${config.value.readingSettings.fontSize}px`,
   lineHeight: config.value.readingSettings.lineHeight,
-  color: config.value.readingSettings.textColor,
-  backgroundColor: config.value.readingSettings.backgroundColor,
 }))
 
-const currentThemePreset = computed(() =>
-  PRESET_THEMES.find((t) => t.id === config.value.readingTheme),
+const currentThemeCard = computed(() =>
+  themeCards.find((t) => t.id === config.value.appTheme),
 )
 
 async function loadConfig() {
@@ -122,35 +124,37 @@ loadConfig()
     <section class="rounded-xl border bg-card shadow-sm p-5 space-y-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
-          <Palette class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">阅读主题</h3>
+          <Sun class="size-4 text-muted-foreground" />
+          <h3 class="text-sm font-medium">应用主题</h3>
         </div>
-        <p class="text-xs text-muted-foreground">选择舒适的阅读配色方案</p>
+        <p class="text-xs text-muted-foreground">选择应用的整体外观配色</p>
       </div>
 
       <div class="grid grid-cols-3 gap-3">
         <button
-          v-for="t in PRESET_THEMES"
+          v-for="t in themeCards"
           :key="t.id"
           class="rounded-xl border-2 p-3 transition-all duration-200 text-left cursor-pointer"
-          :class="theme === t.id
+          :class="appTheme === t.id
             ? 'border-primary ring-1 ring-primary/20 shadow-md'
             : 'border-transparent hover:border-border/80 shadow-sm'"
-          @click="theme = t.id"
+          @click="appTheme = t.id"
         >
-          <!-- Micro preview block -->
           <div
             class="rounded-lg px-2.5 py-2 mb-2.5 text-[10px] leading-relaxed border border-black/5"
-            :style="{ backgroundColor: t.backgroundColor, color: t.textColor }"
+            :style="{ backgroundColor: t.bg, color: t.text }"
           >
             <div class="flex items-center gap-1 mb-1.5">
-              <span class="size-1.5 rounded-full shrink-0" :style="{ backgroundColor: t.accentColor }" />
-              <span class="h-px flex-1" :style="{ backgroundColor: t.accentColor, opacity: 0.3 }" />
+              <span class="size-1.5 rounded-full shrink-0" :style="{ backgroundColor: t.accent }" />
+              <span class="h-px flex-1" :style="{ backgroundColor: t.accent, opacity: 0.3 }" />
             </div>
             <div class="font-medium">Aa</div>
             <div class="opacity-40">之乎者也</div>
           </div>
-          <p class="text-xs font-medium text-center">{{ t.name }}</p>
+          <div class="flex items-center justify-center gap-1.5">
+            <component :is="t.icon" class="size-3.5" />
+            <p class="text-xs font-medium">{{ t.name }}</p>
+          </div>
         </button>
       </div>
     </section>
@@ -165,7 +169,6 @@ loadConfig()
         <p class="text-xs text-muted-foreground">调整阅读文字的外观与间距</p>
       </div>
 
-      <!-- Font picker: visual "Aa" cards -->
       <div class="grid grid-cols-2 gap-2">
         <button
           v-for="f in FONT_OPTIONS"
@@ -186,7 +189,6 @@ loadConfig()
         </button>
       </div>
 
-      <!-- Typography sliders -->
       <div class="space-y-4 pt-1">
         <div class="space-y-1.5">
           <div class="flex justify-between text-xs text-muted-foreground">
@@ -237,7 +239,6 @@ loadConfig()
       </div>
 
       <div class="grid grid-cols-3 gap-3">
-        <!-- Scroll mode -->
         <button
           class="rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer flex flex-col items-center gap-2 text-center"
           :class="scrollMode === 'scroll'
@@ -252,7 +253,6 @@ loadConfig()
           </div>
         </button>
 
-        <!-- Paged mode -->
         <button
           class="rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer flex flex-col items-center gap-2 text-center"
           :class="scrollMode === 'paged'
@@ -267,7 +267,6 @@ loadConfig()
           </div>
         </button>
 
-        <!-- Auto mode -->
         <button
           class="rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer flex flex-col items-center gap-2 text-center"
           :class="scrollMode === 'auto'
@@ -283,7 +282,6 @@ loadConfig()
         </button>
       </div>
 
-      <!-- Auto scroll speed (conditional) -->
       <div v-if="scrollMode === 'auto'" class="pt-4 border-t space-y-1.5">
         <div class="flex justify-between text-xs text-muted-foreground">
           <span>自动滚动速度</span>
@@ -299,10 +297,9 @@ loadConfig()
 
     <!-- Preview Section -->
     <section class="rounded-xl border bg-card shadow-sm overflow-hidden">
-      <!-- Decorative accent bar -->
       <div
         class="h-1"
-        :style="{ backgroundColor: currentThemePreset?.accentColor ?? '#8B7355' }"
+        :style="{ backgroundColor: currentThemeCard?.accent ?? '#A67C52' }"
       />
 
       <div class="p-5 space-y-1 border-b">

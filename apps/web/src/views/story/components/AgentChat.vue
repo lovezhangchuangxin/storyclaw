@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useDark } from '@vueuse/core'
 import { ChevronDown } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { runAgentLoop } from '@/agent/loop'
@@ -34,7 +33,7 @@ const transientMessages = ref<Message[]>([])
 const isGenerating = ref(false)
 const isCompacting = ref(false)
 const abortController = ref<AbortController | null>(null)
-const isDark = useDark()
+const isDark = computed(() => document.documentElement.classList.contains('dark'))
 let activeRequestId = 0
 let activeConversationLoadId = 0
 
