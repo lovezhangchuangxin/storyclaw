@@ -102,7 +102,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         type: 'object',
         properties: {
           index: { type: 'number', description: '章节序号（从0开始）' },
-          content: { type: 'string', description: '章节正文，Markdown格式' },
+          content: { type: 'string', description: '章节正文，纯文本格式' },
         },
         required: ['index', 'content'],
       },
@@ -134,7 +134,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         type: 'object',
         properties: {
           index: { type: 'number', description: '章节序号' },
-          content: { type: 'string', description: '重写后的章节内容' },
+          content: { type: 'string', description: '重写后的章节内容，纯文本格式' },
         },
         required: ['index', 'content'],
       },
