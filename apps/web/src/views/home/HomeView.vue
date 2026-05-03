@@ -4,6 +4,15 @@ import { useRouter } from 'vue-router'
 import { BookOpen, Plus, Trash2, Search } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { getAllNovels, deleteNovel, createNovel } from '@/db/novels'
 import type { Novel } from '@/db/types'
 import { relativeTime } from '@/lib/time'
@@ -50,6 +59,8 @@ const novels = ref<Novel[]>([])
 const loading = ref(true)
 const error = ref(false)
 const searchQuery = ref('')
+const deleteDialogOpen = ref(false)
+const novelToDelete = ref<Novel | null>(null)
 
 const filteredNovels = computed(() => {
   if (!searchQuery.value.trim()) return novels.value
@@ -102,8 +113,14 @@ async function startNewStory() {
   router.push(`/story/${id}?tab=agent`)
 }
 
-async function handleDelete(novel: Novel) {
-  if (!window.confirm(`确定要删除《${novel.title || '未命名故事'}》吗？此操作不可撤销。`)) return
+function handleDelete(novel: Novel) {
+  novelToDelete.value = novel
+  deleteDialogOpen.value = true
+}
+
+async function confirmDelete() {
+  const novel = novelToDelete.value
+  if (!novel) return
   try {
     await deleteNovel(novel.id)
     novels.value = novels.value.filter((n) => n.id !== novel.id)
@@ -111,6 +128,9 @@ async function handleDelete(novel: Novel) {
     toast.error('删除失败', {
       description: e instanceof Error ? e.message : String(e),
     })
+  } finally {
+    deleteDialogOpen.value = false
+    novelToDelete.value = null
   }
 }
 </script>
@@ -235,4 +255,22 @@ async function handleDelete(novel: Novel) {
       </section>
     </template>
   </div>
+
+  <!-- Delete Confirmation Dialog -->
+  <Dialog v-model:open="deleteDialogOpen">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>确认删除</DialogTitle>
+        <DialogDescription>
+          确定要删除《{{ novelToDelete?.title || '未命名故事' }}》吗？此操作不可撤销。
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <DialogClose as-child>
+          <Button variant="outline">取消</Button>
+        </DialogClose>
+        <Button variant="destructive" @click="confirmDelete">删除</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
