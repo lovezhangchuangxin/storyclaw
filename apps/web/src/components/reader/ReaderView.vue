@@ -58,6 +58,7 @@ function onPointerDown(e: PointerEvent) {
 }
 
 function onKeydown(e: KeyboardEvent) {
+  if (!container.value?.offsetParent) return
   if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
     e.preventDefault()
     emit('prevChapter')

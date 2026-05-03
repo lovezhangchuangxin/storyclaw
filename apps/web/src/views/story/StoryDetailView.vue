@@ -79,10 +79,13 @@ function updateSettings(s: ReaderSettings) {
 </script>
 
 <template>
-  <div class="h-full flex flex-col overflow-hidden">
-    <KeepAlive>
+  <div class="relative h-full flex flex-col overflow-hidden">
+    <div
+      class="absolute inset-0 transition-[visibility]"
+      :class="mode === 'reader' ? 'visible' : 'invisible pointer-events-none'"
+      :aria-hidden="mode !== 'reader'"
+    >
       <ReaderView
-        v-if="mode === 'reader'"
         key="reader"
         :content="currentChapter?.content ?? '<p>暂无内容</p>'"
         :title="currentChapter?.title ?? '无标题'"
@@ -94,12 +97,17 @@ function updateSettings(s: ReaderSettings) {
         @show-controls="onShowControls"
         @update-progress="() => {}"
       />
+    </div>
+    <div
+      class="absolute inset-0 transition-[visibility]"
+      :class="mode === 'agent' ? 'visible' : 'invisible pointer-events-none'"
+      :aria-hidden="mode !== 'agent'"
+    >
       <AgentChat
-        v-else
         :key="`agent:${storyId}`"
         :novel-id="storyId"
       />
-    </KeepAlive>
+    </div>
 
     <!-- Bottom controls sheet -->
     <Transition name="controls-slide">
