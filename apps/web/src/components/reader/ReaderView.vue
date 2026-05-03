@@ -12,6 +12,15 @@ const props = defineProps<{
   settings: ReaderSettings
 }>()
 
+const renderedContent = computed(() => {
+  const html = props.content
+    .split(/\n\n+/)
+    .filter((p) => p.trim())
+    .map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+    .join('')
+  return DOMPurify.sanitize(html)
+})
+
 const emit = defineEmits<{
   prevChapter: []
   nextChapter: []
@@ -118,14 +127,14 @@ defineExpose({ scrollToPos })
 
       <!-- Chapter content -->
       <article
-        class="prose max-w-none pb-12"
+        class="article-content prose max-w-none pb-12"
         :style="{
-          fontFamily: 'inherit',
-          fontSize: 'inherit',
-          lineHeight: 'inherit',
-          color: 'inherit',
+          fontFamily: 'var(--reader-font)',
+          fontSize: 'var(--reader-font-size)',
+          lineHeight: 'var(--reader-line-height)',
+          color: 'var(--reader-text)',
         }"
-        v-html="DOMPurify.sanitize(content)"
+        v-html="renderedContent"
       />
 
       <!-- Chapter navigation -->
@@ -163,5 +172,10 @@ defineExpose({ scrollToPos })
 }
 .reader::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--reader-text) 30%, transparent);
+}
+
+.article-content :deep(p) {
+  text-indent: 2em;
+  margin-bottom: var(--reader-paragraph-spacing) !important;
 }
 </style>

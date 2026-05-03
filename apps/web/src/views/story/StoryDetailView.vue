@@ -6,6 +6,7 @@ import { MessageCircle, BookOpen, Database } from 'lucide-vue-next'
 import ReaderView from '@/components/reader/ReaderView.vue'
 import ReaderControls from '@/components/reader/ReaderControls.vue'
 import { getChaptersByNovelId } from '@/db/chapters'
+import { getConfig } from '@/db/config'
 import type { ReaderSettings } from '@/components/reader/types'
 import type { Chapter } from '@/db/types'
 
@@ -75,12 +76,16 @@ onUnmounted(() => {
 const settings = ref<ReaderSettings>({
   fontFamily: '"Noto Sans SC", Inter, system-ui, sans-serif',
   fontSize: 18,
-  lineHeight: 1.8,
+  lineHeight: 1.6,
   paragraphSpacing: 1,
   textColor: '#333333',
   backgroundColor: '#F5F0E8',
   scrollMode: 'scroll',
   autoScrollSpeed: 50,
+})
+
+getConfig().then((c) => {
+  if (c?.readingSettings) settings.value = c.readingSettings as ReaderSettings
 })
 
 const chapters = ref<Chapter[]>([])
@@ -127,7 +132,7 @@ function onJumpToChapter(index: number) {
     >
       <ReaderView
         key="reader"
-        :content="currentChapter?.content ?? '<p>暂无内容</p>'"
+        :content="currentChapter?.content ?? '暂无内容'"
         :title="currentChapter?.title ?? '无标题'"
         :chapter-index="chapterIndex"
         :total-chapters="totalChapters"

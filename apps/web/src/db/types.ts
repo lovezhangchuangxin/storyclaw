@@ -280,7 +280,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   readingSettings: {
     fontFamily: 'Noto Sans SC',
     fontSize: 18,
-    lineHeight: 1.8,
+    lineHeight: 1.6,
     paragraphSpacing: 1,
     textColor: '#333333',
     backgroundColor: '#F5F0E8',
