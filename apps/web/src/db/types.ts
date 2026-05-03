@@ -12,6 +12,7 @@ export interface Novel {
   cover?: string
   createdAt: number
   updatedAt: number
+  selectedPromptIds?: string[]
   version: number
 }
 
@@ -20,6 +21,17 @@ export interface StyleSettings {
   tense: string
   languageStyle: string
   customPrompt?: string
+}
+
+// ---- Prompt ----
+
+export interface Prompt {
+  id: string
+  name: string
+  content: string
+  isBuiltin: boolean
+  createdAt: number
+  updatedAt: number
 }
 
 // ---- Outline ----

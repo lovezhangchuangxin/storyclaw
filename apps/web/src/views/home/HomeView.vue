@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { BookOpen, Plus, Trash2, Search } from 'lucide-vue-next'
+import { BookOpen, Plus, Trash2, Search, ArrowUp, ArrowDown, GripVertical, ChevronDown, X } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogClose,
@@ -13,8 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { getAllNovels, deleteNovel, createNovel } from '@/db/novels'
-import type { Novel } from '@/db/types'
+import { getAllPrompts } from '@/db/prompts'
+import type { Novel, Prompt } from '@/db/types'
 import { relativeTime } from '@/lib/time'
 import { toast } from 'vue-sonner'
 
@@ -62,15 +65,11 @@ const searchQuery = ref('')
 const deleteDialogOpen = ref(false)
 const novelToDelete = ref<Novel | null>(null)
 
-const filteredNovels = computed(() => {
-  if (!searchQuery.value.trim()) return novels.value
-  const q = searchQuery.value.toLowerCase()
-  return novels.value.filter(
-    (n) =>
-      n.title.toLowerCase().includes(q) ||
-      n.synopsis.toLowerCase().includes(q),
-  )
-})
+const newStoryDialogOpen = ref(false)
+const allPrompts = ref<Prompt[]>([])
+const selectedPromptIds = ref<string[]>(['builtin-persona'])
+const promptSearch = ref('')
+const promptPopoverOpen = ref(false)
 
 onMounted(async () => {
   try {
@@ -82,6 +81,128 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+const filteredNovels = computed(() => {
+  if (!searchQuery.value.trim()) return novels.value
+  const q = searchQuery.value.toLowerCase()
+  return novels.value.filter(
+    (n) =>
+      n.title.toLowerCase().includes(q) ||
+      n.synopsis.toLowerCase().includes(q),
+  )
+})
+
+const selectedPrompts = computed(() => {
+  const orderMap = new Map(selectedPromptIds.value.map((id, i) => [id, i]))
+  return allPrompts.value
+    .filter((p) => selectedPromptIds.value.includes(p.id))
+    .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+})
+
+const availablePrompts = computed(() => {
+  const q = promptSearch.value.toLowerCase()
+  return allPrompts.value.filter(
+    (p) =>
+      !selectedPromptIds.value.includes(p.id) &&
+      (!q || p.name.toLowerCase().includes(q)),
+  )
+})
+
+function selectPrompt(id: string) {
+  if (!selectedPromptIds.value.includes(id)) {
+    selectedPromptIds.value = [...selectedPromptIds.value, id]
+  }
+  promptSearch.value = ''
+  promptPopoverOpen.value = false
+}
+
+function removePrompt(id: string) {
+  const prompt = allPrompts.value.find((p) => p.id === id)
+  if (prompt?.isBuiltin) return
+  selectedPromptIds.value = selectedPromptIds.value.filter((pid) => pid !== id)
+}
+
+const dragIndex = ref<number | null>(null)
+const dragOverIndex = ref<number | null>(null)
+const dragTarget = ref<HTMLElement | null>(null)
+const dragPointerId = ref<number | null>(null)
+
+function onPointerDown(e: PointerEvent, idx: number) {
+  const grip = e.currentTarget as HTMLElement
+  grip.setPointerCapture(e.pointerId)
+  dragTarget.value = grip
+  dragIndex.value = idx
+  dragPointerId.value = e.pointerId
+}
+
+function onPointerMove(e: PointerEvent) {
+  if (dragIndex.value === null) return
+  const listEl = (e.currentTarget as HTMLElement).closest('[data-sortable-list]')
+  if (!listEl) return
+  const items = listEl.querySelectorAll('[data-sortable-item]')
+  let closest = dragIndex.value
+  let minDist = Infinity
+  items.forEach((el, i) => {
+    const rect = el.getBoundingClientRect()
+    const midY = rect.top + rect.height / 2
+    const dist = Math.abs(e.clientY - midY)
+    if (dist < minDist) {
+      minDist = dist
+      closest = i
+    }
+  })
+  dragOverIndex.value = closest
+}
+
+function onPointerUp() {
+  if (dragIndex.value === null) return
+  if (dragOverIndex.value !== null && dragOverIndex.value !== dragIndex.value) {
+    const arr = [...selectedPromptIds.value]
+    const [moved] = arr.splice(dragIndex.value, 1)
+    arr.splice(dragOverIndex.value, 0, moved)
+    selectedPromptIds.value = arr
+  }
+  if (dragTarget.value && dragPointerId.value !== null) {
+    dragTarget.value.releasePointerCapture(dragPointerId.value)
+  }
+  dragIndex.value = null
+  dragOverIndex.value = null
+  dragTarget.value = null
+  dragPointerId.value = null
+}
+
+function onPointerCancel() {
+  dragIndex.value = null
+  dragOverIndex.value = null
+  dragTarget.value = null
+  dragPointerId.value = null
+}
+
+function movePromptUp(id: string) {
+  const idx = selectedPromptIds.value.indexOf(id)
+  if (idx <= 0) return
+  const arr = [...selectedPromptIds.value]
+  ;[arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]
+  selectedPromptIds.value = arr
+}
+
+function movePromptDown(id: string) {
+  const idx = selectedPromptIds.value.indexOf(id)
+  if (idx === -1 || idx >= selectedPromptIds.value.length - 1) return
+  const arr = [...selectedPromptIds.value]
+  ;[arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]
+  selectedPromptIds.value = arr
+}
+
+function openNewStoryDialog() {
+  selectedPromptIds.value = ['builtin-persona']
+  promptSearch.value = ''
+  promptPopoverOpen.value = false
+  getAllPrompts().then((ps) => {
+    allPrompts.value = ps
+  })
+  newStoryDialogOpen.value = true
+}
 
 function openStory(novel: Novel) {
   if (novel.status === 'drafting' && !novel.synopsis) {
@@ -106,10 +227,12 @@ async function startNewStory() {
       tense: '',
       languageStyle: '',
     },
+    selectedPromptIds: [...selectedPromptIds.value],
     createdAt: Date.now(),
     updatedAt: Date.now(),
     version: 1,
   })
+  newStoryDialogOpen.value = false
   router.push(`/story/${id}?tab=agent`)
 }
 
@@ -180,7 +303,7 @@ async function confirmDelete() {
           v-if="novels.length > 0"
           size="sm"
           class="shrink-0 gap-1.5"
-          @click="startNewStory"
+          @click="openNewStoryDialog"
         >
           <Plus class="size-4" />
           创建
@@ -193,7 +316,7 @@ async function confirmDelete() {
           <BookOpen class="size-12 mb-4 text-muted-foreground/30" />
           <h3 class="text-sm font-medium mb-1">还没有故事</h3>
           <p class="text-xs text-muted-foreground mb-6">创建一个新故事，开始你的创作之旅</p>
-          <Button @click="startNewStory">
+          <Button @click="openNewStoryDialog">
             <Plus class="size-4" />
             开始第一个故事
           </Button>
@@ -255,6 +378,121 @@ async function confirmDelete() {
       </section>
     </template>
   </div>
+
+  <!-- New Story with Prompt Selection -->
+  <Dialog v-model:open="newStoryDialogOpen">
+    <DialogContent class="max-w-[calc(100vw-2rem)] sm:max-w-lg max-h-[85vh] overflow-hidden">
+      <DialogHeader>
+        <DialogTitle>开始新故事</DialogTitle>
+        <DialogDescription>
+          选择要使用的提示词，它们将作为系统提示词发送给模型。
+        </DialogDescription>
+      </DialogHeader>
+
+      <!-- Search dropdown -->
+      <Popover v-model:open="promptPopoverOpen">
+        <PopoverTrigger as-child>
+          <button
+            class="flex items-center border border-input rounded-lg px-2.5 py-1.5 text-sm h-9 w-full bg-transparent hover:border-primary/50 transition-colors outline-none"
+          >
+            <Search class="size-4 text-muted-foreground shrink-0 mr-2" />
+            <span class="flex-1 text-left text-muted-foreground truncate">
+              {{ promptSearch || '搜索提示词...' }}
+            </span>
+            <ChevronDown class="size-4 text-muted-foreground shrink-0 ml-1 transition-transform" :class="promptPopoverOpen ? 'rotate-180' : ''" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          side="bottom"
+          class="p-0 gap-0"
+          :style="{ width: 'var(--reka-popover-trigger-width)' }"
+        >
+          <div class="px-1 pt-1 pb-0.5">
+            <Input
+              v-model="promptSearch"
+              placeholder="搜索提示词..."
+              class="border-0 h-8 text-sm shadow-none focus-visible:ring-0"
+              @keydown.escape="promptPopoverOpen = false"
+            />
+          </div>
+          <div v-if="availablePrompts.length" class="max-h-48 overflow-auto border-t border-border/50 px-1 pt-0.5 pb-1">
+            <button
+              v-for="p in availablePrompts"
+              :key="p.id"
+              class="w-full text-left px-2 py-1.5 text-sm rounded-sm transition-colors truncate hover:bg-muted"
+              @mousedown.prevent="selectPrompt(p.id)"
+            >
+              {{ p.name }}
+            </button>
+          </div>
+          <div v-else class="px-3 py-4 text-xs text-muted-foreground text-center">
+            没有更多提示词
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <!-- Selected prompts list -->
+      <div class="overflow-y-auto min-h-0 -mx-1 px-1" data-sortable-list @pointermove="onPointerMove">
+        <div
+          v-for="(prompt, idx) in selectedPrompts"
+          :key="prompt.id"
+          data-sortable-item
+          class="flex items-center gap-2 py-1.5 rounded transition-colors select-none"
+          :class="{
+            'opacity-40': dragIndex === idx,
+            'bg-primary/5': dragOverIndex === idx && dragIndex !== idx,
+          }"
+        >
+          <GripVertical
+            class="size-4 text-muted-foreground/40 shrink-0"
+            :class="{
+              'cursor-grab': true,
+              'cursor-grabbing': dragIndex === idx,
+            }"
+            :style="{ touchAction: 'none' }"
+            @pointerdown.prevent="onPointerDown($event, idx)"
+            @pointerup="onPointerUp"
+            @pointercancel="onPointerCancel"
+          />
+          <span class="text-sm flex-1 truncate">{{ prompt.name }}</span>
+          <Badge v-if="prompt.isBuiltin" variant="secondary" class="text-[10px] px-1.5 py-0 shrink-0">
+            内置
+          </Badge>
+          <div class="flex items-center gap-0.5 shrink-0">
+            <button
+              class="size-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground transition-colors"
+              :disabled="idx === 0"
+              @click="movePromptUp(prompt.id)"
+            >
+              <ArrowUp class="size-3.5" />
+            </button>
+            <button
+              class="size-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground transition-colors"
+              :disabled="idx === selectedPrompts.length - 1"
+              @click="movePromptDown(prompt.id)"
+            >
+              <ArrowDown class="size-3.5" />
+            </button>
+            <button
+              v-if="!prompt.isBuiltin"
+              class="size-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              @click="removePrompt(prompt.id)"
+            >
+              <X class="size-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <DialogFooter class="mt-2">
+        <DialogClose as-child>
+          <Button variant="outline">取消</Button>
+        </DialogClose>
+        <Button @click="startNewStory">开始创作</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 
   <!-- Delete Confirmation Dialog -->
   <Dialog v-model:open="deleteDialogOpen">

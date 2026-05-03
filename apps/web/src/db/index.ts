@@ -1,7 +1,8 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
+import { STORYCLAW_PERSONA } from '@/agent/persona'
 
 const DB_NAME = 'storyclaw'
-const DB_VERSION = 4
+const DB_VERSION = 5
 
 export interface StoryClawDBSchema extends DBSchema {
   novels: {
@@ -53,6 +54,10 @@ export interface StoryClawDBSchema extends DBSchema {
     value: import('./types').OperationRecord
     indexes: { novelId: string }
   }
+  prompts: {
+    key: string
+    value: import('./types').Prompt
+  }
 }
 
 let dbInstance: IDBPDatabase<StoryClawDBSchema> | null = null
@@ -61,7 +66,7 @@ export async function getDB(): Promise<IDBPDatabase<StoryClawDBSchema>> {
   if (dbInstance) return dbInstance
 
   dbInstance = await openDB<StoryClawDBSchema>(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion) {
+    async upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains('novels')) {
         db.createObjectStore('novels', { keyPath: 'id' })
       }
@@ -105,6 +110,18 @@ export async function getDB(): Promise<IDBPDatabase<StoryClawDBSchema>> {
       if (oldVersion < 3 && db.objectStoreNames.contains('conversations')) {
         db.deleteObjectStore('conversations')
         db.createObjectStore('conversations', { keyPath: 'novelId' })
+      }
+
+      if (!db.objectStoreNames.contains('prompts')) {
+        const store = db.createObjectStore('prompts', { keyPath: 'id' })
+        await store.put({
+          id: 'builtin-persona',
+          name: 'StoryClaw 默认风格',
+          content: STORYCLAW_PERSONA,
+          isBuiltin: true,
+          createdAt: 0,
+          updatedAt: 0,
+        })
       }
     },
   })

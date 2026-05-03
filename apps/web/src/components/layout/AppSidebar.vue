@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { BookOpen, User, PanelLeftClose, PanelLeft } from 'lucide-vue-next'
+import { BookOpen, MessageSquareText, User, PanelLeftClose, PanelLeft } from 'lucide-vue-next'
 
 const props = defineProps<{
   collapsed: boolean
@@ -17,6 +17,7 @@ const route = useRoute()
 
 const items = [
   { path: '/', label: '书架', icon: BookOpen },
+  { path: '/prompts', label: '提示词', icon: MessageSquareText },
   { path: '/my', label: '我的', icon: User },
 ]
 

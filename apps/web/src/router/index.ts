@@ -19,6 +19,12 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: '我的' },
       },
       {
+        path: 'prompts',
+        name: 'prompts',
+        component: () => import('@/views/prompts/PromptsView.vue'),
+        meta: { title: '提示词' },
+      },
+      {
         path: 'story/:id',
         name: 'story',
         component: () => import('@/views/story/StoryDetailView.vue'),
