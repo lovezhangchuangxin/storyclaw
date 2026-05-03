@@ -229,16 +229,15 @@ function scrollToBottom() {
   cancelAnimationFrame(scrollRAF)
   scrollRAF = requestAnimationFrame(() => {
     nextTick(() => {
-      document.getElementById('chat-bottom')?.scrollIntoView({ behavior: 'smooth' })
+      const el = messagesContainer.value
+      if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
     })
   })
 }
 
 function forceScrollToBottom() {
-  const el = document.getElementById('chat-bottom')
-  if (el) {
-    el.scrollIntoView({ behavior: 'instant' })
-  }
+  const el = messagesContainer.value
+  if (el) el.scrollTop = el.scrollHeight
   isNearBottom.value = true
 }
 
