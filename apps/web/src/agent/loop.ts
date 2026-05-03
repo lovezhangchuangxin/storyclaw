@@ -61,12 +61,16 @@ const MAX_TOOL_ITERATIONS = 15
 function buildAssistantApiMessage(
   message: AssistantMessage,
   includeReasoning: boolean,
-): OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam {
+): OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam | null {
   const textContent = getAssistantTextParts(message).join('')
   const reasoningContent = getAssistantReasoningParts(message).join('')
   const toolUses = getAssistantToolUses(message).filter(
     (toolUse) => toolUse.status !== 'cancelled',
   )
+
+  if (!textContent && toolUses.length === 0) {
+    return null
+  }
 
   const assistantMessage: Record<string, unknown> = {
     role: 'assistant',
@@ -296,7 +300,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
         break
       }
 
-      localMessages.push(buildAssistantApiMessage(assistantMessage, context.includeReasoningContent))
+      const apiMsg = buildAssistantApiMessage(assistantMessage, context.includeReasoningContent)
+      if (apiMsg) localMessages.push(apiMsg)
 
       if (response.toolCalls.length > 0) {
         for (const toolCall of response.toolCalls) {

@@ -65,7 +65,7 @@ function convertToApiMessages(
           (toolUse) => toolUse.status !== 'cancelled' && toolUse.result !== null,
         )
 
-        if (!includeAssistantContent && toolUses.length === 0) {
+        if (!textContent && toolUses.length === 0) {
           break
         }
 
