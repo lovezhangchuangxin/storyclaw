@@ -2,7 +2,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { STORYCLAW_PERSONA } from '@/agent/persona'
 
 const DB_NAME = 'storyclaw'
-const DB_VERSION = 5
+const DB_VERSION = 6
 
 export interface StoryClawDBSchema extends DBSchema {
   novels: {
@@ -57,6 +57,10 @@ export interface StoryClawDBSchema extends DBSchema {
   prompts: {
     key: string
     value: import('./types').Prompt
+  }
+  assets: {
+    key: string
+    value: import('./types').BackgroundImage
   }
 }
 
@@ -122,6 +126,10 @@ export async function getDB(): Promise<IDBPDatabase<StoryClawDBSchema>> {
           createdAt: 0,
           updatedAt: 0,
         })
+      }
+
+      if (!db.objectStoreNames.contains('assets')) {
+        db.createObjectStore('assets', { keyPath: 'id' })
       }
     },
   })

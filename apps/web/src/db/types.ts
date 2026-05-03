@@ -225,6 +225,20 @@ export type Message = UserMessage | StatusMessage | AssistantMessage
 
 export type AppTheme = 'light' | 'dark' | 'parchment' | 'frost' | 'peach' | 'pine'
 
+export interface BackgroundSettings {
+  activeImageId: string | null
+  opacity: number
+  blur: number
+}
+
+export interface BackgroundImage {
+  id: string
+  blob: Blob
+  type: string
+  name: string
+  updatedAt: number
+}
+
 export interface AppConfig {
   id: 'app-config'
   models: ModelConfig[]
@@ -232,6 +246,7 @@ export interface AppConfig {
   skillModelMapping: Record<string, string>
   appTheme: AppTheme
   readingSettings: ReadingSettings
+  backgroundSettings: BackgroundSettings
   backendUrl?: string
   useBackendProxy: boolean
   updatedAt: number
@@ -296,6 +311,11 @@ export const DEFAULT_CONFIG: AppConfig = {
     paragraphSpacing: 1,
     scrollMode: 'scroll',
     autoScrollSpeed: 50,
+  },
+  backgroundSettings: {
+    activeImageId: null,
+    opacity: 30,
+    blur: 0,
   },
   backendUrl: '',
   useBackendProxy: false,

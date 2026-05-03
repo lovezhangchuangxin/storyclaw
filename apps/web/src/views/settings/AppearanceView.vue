@@ -1,16 +1,70 @@
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
-import { Sun, Moon, Coffee, Snowflake, Flower2, TreePine, Type, BookOpen, ScrollText, Play, Eye } from 'lucide-vue-next'
+import { Sun, Moon, Coffee, Snowflake, Flower2, TreePine, Type, BookOpen, ScrollText, Play, Eye, ImageIcon, Plus, Trash2 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { saveConfig, getConfig } from '@/db/config'
 import type { AppConfig, AppTheme } from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
 import { Slider } from '@/components/ui/slider'
 import { FONT_OPTIONS } from '@/components/reader/types'
+import { useBackgroundImage } from '@/composables/useBackgroundImage'
 
 const config = ref<AppConfig>({ ...DEFAULT_CONFIG })
 
 const applyTheme = inject<(theme: AppTheme) => void>('applyTheme', () => {})
+
+const {
+  images,
+  activeImageId,
+  bgOpacity: bgOpacityRef,
+  bgBlur: bgBlurRef,
+  loadAll,
+  uploadImage,
+  selectImage,
+  deselectImage,
+  removeImage,
+  updateSettingsDebounced,
+} = useBackgroundImage()
+
+const bgOpacity = computed({
+  get: () => [bgOpacityRef.value],
+  set: (v: number[]) => {
+    updateSettingsDebounced({ opacity: v[0] })
+  },
+})
+
+const bgBlur = computed({
+  get: () => [bgBlurRef.value],
+  set: (v: number[]) => {
+    updateSettingsDebounced({ blur: v[0] })
+  },
+})
+
+const fileInput = ref<HTMLInputElement | null>(null)
+
+function triggerUpload() {
+  fileInput.value?.click()
+}
+
+async function handleFileChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  await uploadImage(file)
+  input.value = ''
+}
+
+async function handleSelectImage(id: string) {
+  if (activeImageId.value === id) {
+    await deselectImage()
+  } else {
+    await selectImage(id)
+  }
+}
+
+async function handleRemoveImage(id: string) {
+  await removeImage(id)
+}
 
 const themeCards = [
   { id: 'light' as AppTheme, name: '浅色', icon: Sun, bg: '#FCFAF7', text: '#1A1A1A', accent: '#6B6B6B' },
@@ -118,6 +172,7 @@ function debouncedSave() {
 }
 
 loadConfig()
+loadAll()
 </script>
 
 <template>
@@ -160,6 +215,88 @@ loadConfig()
           </div>
         </button>
       </div>
+    </section>
+
+    <!-- Background Image Section -->
+    <section class="rounded-xl border bg-card shadow-sm p-5 space-y-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <ImageIcon class="size-4 text-muted-foreground" />
+          <h3 class="text-sm font-medium">背景图片</h3>
+        </div>
+        <p class="text-xs text-muted-foreground">上传图片作为应用背景，支持多张切换选择</p>
+      </div>
+
+      <div class="grid grid-cols-4 gap-3">
+        <!-- Image items -->
+        <div
+          v-for="img in images"
+          :key="img.id"
+          class="group relative aspect-square rounded-lg border-2 overflow-hidden cursor-pointer transition-all duration-200"
+          :class="activeImageId === img.id
+            ? 'border-primary ring-1 ring-primary/20 shadow-md'
+            : 'border-transparent hover:border-border/80 shadow-sm'"
+          @click="handleSelectImage(img.id)"
+        >
+          <img
+            :src="img.thumbnailUrl"
+            :alt="img.name"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
+          <button
+            class="absolute top-1 right-1 size-5 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+            aria-label="删除图片"
+            @click.stop="handleRemoveImage(img.id)"
+          >
+            <Trash2 class="size-3 text-white" />
+          </button>
+        </div>
+
+        <!-- Upload button -->
+        <button
+          class="aspect-square rounded-lg border-2 border-dashed border-border/60 flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-all duration-200"
+          @click="triggerUpload"
+        >
+          <Plus class="size-5 text-muted-foreground" />
+          <span class="text-[10px] text-muted-foreground">上传图片</span>
+        </button>
+      </div>
+
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        class="hidden"
+        @change="handleFileChange"
+      />
+
+      <template v-if="activeImageId">
+        <div class="space-y-4 pt-1">
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs text-muted-foreground">
+              <span>透明度</span>
+              <span>{{ bgOpacityRef }}%</span>
+            </div>
+            <Slider
+              :model-value="bgOpacity"
+              :min="0" :max="100" :step="5"
+              @update:model-value="(v?: number[]) => v && (bgOpacity = v)"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs text-muted-foreground">
+              <span>模糊度</span>
+              <span>{{ bgBlurRef }}px</span>
+            </div>
+            <Slider
+              :model-value="bgBlur"
+              :min="0" :max="20" :step="1"
+              @update:model-value="(v?: number[]) => v && (bgBlur = v)"
+            />
+          </div>
+        </div>
+      </template>
     </section>
 
     <!-- Font & Typography Section -->

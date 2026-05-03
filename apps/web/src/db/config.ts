@@ -32,6 +32,10 @@ function normalizeConfig(config: AppConfig): AppConfig {
     ...createDefaultConfig(),
     ...raw,
     models: (config.models ?? []).map((model) => normalizeModelConfig(model)),
+    backgroundSettings: {
+      ...createDefaultConfig().backgroundSettings,
+      ...((raw.backgroundSettings as Record<string, unknown>) ?? {}),
+    },
   }
 }
 
