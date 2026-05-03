@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { BookOpen, MessageSquareText, User, PanelLeftClose, PanelLeft } from 'lucide-vue-next'
+import { BookOpen, MessageSquareText, User, Settings, Server, Palette, PanelLeftClose, PanelLeft } from 'lucide-vue-next'
 
 const props = defineProps<{
   collapsed: boolean
@@ -18,12 +18,15 @@ const route = useRoute()
 const items = [
   { path: '/', label: '书架', icon: BookOpen },
   { path: '/prompts', label: '提示词', icon: MessageSquareText },
+  { path: '/settings/model', label: '模型配置', icon: Settings },
+  { path: '/settings/server', label: '后端连接', icon: Server },
+  { path: '/settings/reading', label: '阅读偏好', icon: Palette },
   { path: '/my', label: '我的', icon: User },
 ]
 
 function isActive(path: string) {
   if (path === '/') return route.path === '/'
-  return route.path.startsWith(path)
+  return route.path === path || route.path.startsWith(path + '/')
 }
 
 function navigate(path: string) {
