@@ -446,28 +446,6 @@ function onWelcomeFill(prompt: string) {
 </template>
 
 <style scoped>
-/* ---- Scrollbar ---- */
-.chat-messages::-webkit-scrollbar {
-  width: 5px;
-}
-.chat-messages::-webkit-scrollbar-track {
-  background: transparent;
-}
-.chat-messages::-webkit-scrollbar-thumb {
-  background: oklch(0.922 0 0);
-  border-radius: 3px;
-}
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.87 0 0);
-}
-.dark .chat-messages::-webkit-scrollbar-thumb {
-  background: oklch(0.269 0 0);
-}
-.dark .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.371 0 0);
-}
-
-/* Smooth scrolling */
 .scroll-smooth {
   scroll-behavior: smooth;
 }

@@ -2,7 +2,7 @@
 import { ref, computed, inject, h, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import type { Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { MessageCircle, BookOpen } from 'lucide-vue-next'
+import { MessageCircle, BookOpen, Database } from 'lucide-vue-next'
 import ReaderView from '@/components/reader/ReaderView.vue'
 import ReaderControls from '@/components/reader/ReaderControls.vue'
 import { getChaptersByNovelId } from '@/db/chapters'
@@ -10,6 +10,7 @@ import type { ReaderSettings } from '@/components/reader/types'
 import type { Chapter } from '@/db/types'
 
 const AgentChat = defineAsyncComponent(() => import('./components/AgentChat.vue'))
+const NovelDataDrawer = defineAsyncComponent(() => import('./components/NovelDataDrawer.vue'))
 
 const route = useRoute()
 const router = useRouter()
@@ -19,6 +20,7 @@ const mode = ref<'reader' | 'agent'>(
   route.query.tab === 'agent' ? 'agent' : 'reader'
 )
 const showControls = ref(false)
+const dataDrawerOpen = ref(false)
 
 const setTopbarExtra = inject<(c: Component | null) => void>('setTopbarExtra')
 const setTitle = inject<(t: string | null) => void>('setTitle')
@@ -36,15 +38,25 @@ onMounted(() => {
   setTitle?.(tabTitles[mode.value])
   setTopbarExtra?.({
     setup() {
-      return () => h('button', {
-        class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition duration-150 active:scale-90',
-        onClick: () => { mode.value = mode.value === 'reader' ? 'agent' : 'reader' },
-      }, [
-        h('span', {
-          key: mode.value,
-          class: 'inline-flex animate-in zoom-in-90 duration-200',
+      return () => h('div', { class: 'flex items-center gap-0.5' }, [
+        h('button', {
+          class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition duration-150 active:scale-90',
+          'aria-label': '查看小说数据',
+          onClick: () => { dataDrawerOpen.value = true },
         }, [
-          h(mode.value === 'reader' ? BookOpen : MessageCircle, { class: 'size-5' }),
+          h(Database, { class: 'size-5' }),
+        ]),
+        h('button', {
+          class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition duration-150 active:scale-90',
+          onClick: () => { mode.value = mode.value === 'reader' ? 'agent' : 'reader' },
+          'aria-label': mode.value === 'reader' ? '切换到对话' : '切换到阅读',
+        }, [
+          h('span', {
+            key: mode.value,
+            class: 'inline-flex animate-in zoom-in-90 duration-200',
+          }, [
+            h(mode.value === 'reader' ? BookOpen : MessageCircle, { class: 'size-5' }),
+          ]),
         ]),
       ])
     },
@@ -139,6 +151,8 @@ function updateSettings(s: ReaderSettings) {
         @close="showControls = false"
       />
     </Transition>
+
+    <NovelDataDrawer v-model:open="dataDrawerOpen" :novel-id="storyId" />
   </div>
 </template>
 

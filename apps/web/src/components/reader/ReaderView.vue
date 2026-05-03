@@ -149,3 +149,19 @@ defineExpose({ scrollToPos })
     </div>
   </div>
 </template>
+
+<style scoped>
+.reader::-webkit-scrollbar {
+  width: 5px;
+}
+.reader::-webkit-scrollbar-track {
+  background: transparent;
+}
+.reader::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--reader-text) 18%, transparent);
+  border-radius: 3px;
+}
+.reader::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--reader-text) 30%, transparent);
+}
+</style>
