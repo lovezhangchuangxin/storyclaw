@@ -185,10 +185,11 @@ const turnGroups = computed<TurnGroup[]>(() => {
 // ---- Scroll-to-bottom ----
 const messagesContainer = ref<HTMLElement | null>(null)
 const isNearBottom = ref(true)
+let programmaticScrolling = false
 
 function checkScrollPosition() {
   const el = messagesContainer.value
-  if (!el) return
+  if (!el || programmaticScrolling) return
   isNearBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 80
 }
 
@@ -225,19 +226,28 @@ function pushLocalStatus(kind: StatusMessage['kind'], content: string) {
 }
 
 let scrollRAF = 0
-function scrollToBottom() {
+function scrollToBottom(smooth = false) {
+  if (!isNearBottom.value) return
   cancelAnimationFrame(scrollRAF)
   scrollRAF = requestAnimationFrame(() => {
     nextTick(() => {
+      if (!isNearBottom.value) return
       const el = messagesContainer.value
-      if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+      if (!el) return
+      programmaticScrolling = true
+      el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'instant' })
+      programmaticScrolling = false
     })
   })
 }
 
 function forceScrollToBottom() {
   const el = messagesContainer.value
-  if (el) el.scrollTop = el.scrollHeight
+  if (el) {
+    programmaticScrolling = true
+    el.scrollTop = el.scrollHeight
+    programmaticScrolling = false
+  }
   isNearBottom.value = true
 }
 
@@ -328,7 +338,7 @@ async function send() {
     if (requestId === activeRequestId) {
       isGenerating.value = false
       abortController.value = null
-      if (isNearBottom.value) scrollToBottom()
+      if (isNearBottom.value) scrollToBottom(true)
     }
   }
 }
@@ -399,7 +409,7 @@ function onWelcomeFill(prompt: string) {
     <!-- Messages area -->
     <div
       ref="messagesContainer"
-      class="chat-messages flex-1 overflow-y-auto scroll-smooth overscroll-none"
+      class="chat-messages flex-1 overflow-y-auto overscroll-none"
     >
       <AgentWelcome
         v-if="displayItems.length === 0"
@@ -443,9 +453,3 @@ function onWelcomeFill(prompt: string) {
     />
   </div>
 </template>
-
-<style scoped>
-.scroll-smooth {
-  scroll-behavior: smooth;
-}
-</style>

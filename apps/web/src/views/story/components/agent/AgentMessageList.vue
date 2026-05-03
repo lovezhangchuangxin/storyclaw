@@ -25,6 +25,7 @@ const emit = defineEmits<{
         v-for="(group, gi) in turnGroups"
         :key="group.turnId"
         :style="{ '--stagger': gi }"
+        :class="{ 'cv-auto': gi < turnGroups.length - 1 }"
       >
         <!-- Turn divider with timestamp -->
         <div class="my-3 flex items-center gap-3 first:mt-0">
@@ -165,5 +166,10 @@ const emit = defineEmits<{
 .message-enter-enter-to {
   opacity: 1;
   transform: translateY(0);
+}
+
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
 }
 </style>
