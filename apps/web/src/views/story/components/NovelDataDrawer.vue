@@ -29,6 +29,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
+  (e: 'jumpToChapter', index: number): void
 }>()
 
 const novel = ref<Novel | null>(null)
@@ -111,7 +112,7 @@ function badgeClass(status: string): string {
 
 <template>
   <Sheet :open="open" @update:open="emit('update:open', $event)">
-    <SheetContent side="right" class="sm:max-w-md w-full">
+    <SheetContent side="right" class="sm:max-w-md w-full gap-0">
       <template v-if="loading">
         <div class="flex items-center justify-center h-32 text-muted-foreground text-sm">
           加载中...
@@ -365,7 +366,8 @@ function badgeClass(status: string): string {
                           <tr
                             v-for="cp in outline.chapterPlan"
                             :key="cp.index"
-                            class="border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors"
+                            class="border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                            @click="emit('jumpToChapter', cp.index); emit('update:open', false)"
                           >
                             <td class="px-3 py-2 tabular-nums text-muted-foreground">{{ cp.index + 1 }}</td>
                             <td class="px-3 py-2">

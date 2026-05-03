@@ -107,6 +107,11 @@ function onShowControls() {
 function updateSettings(s: ReaderSettings) {
   settings.value = s
 }
+
+function onJumpToChapter(index: number) {
+  if (mode.value === 'agent') mode.value = 'reader'
+  chapterIndex.value = index
+}
 </script>
 
 <template>
@@ -152,7 +157,7 @@ function updateSettings(s: ReaderSettings) {
       />
     </Transition>
 
-    <NovelDataDrawer v-model:open="dataDrawerOpen" :novel-id="storyId" />
+    <NovelDataDrawer v-model:open="dataDrawerOpen" :novel-id="storyId" @jump-to-chapter="onJumpToChapter" />
   </div>
 </template>
 
