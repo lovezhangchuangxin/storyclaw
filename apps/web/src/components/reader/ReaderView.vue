@@ -86,7 +86,7 @@ defineExpose({ scrollToPos })
 <template>
   <div
     ref="container"
-    class="reader h-full overflow-y-auto"
+    class="reader h-full overflow-y-auto overscroll-none"
     :style="readerStyle"
     @scroll="onScroll"
     @pointerdown="onPointerDown"
