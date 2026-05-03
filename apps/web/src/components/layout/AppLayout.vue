@@ -92,7 +92,7 @@ function closeMobile() {
       </header>
 
       <!-- Page content -->
-      <main class="flex-1 overflow-auto">
+      <main class="flex-1 overflow-auto overscroll-none">
         <router-view />
       </main>
     </div>

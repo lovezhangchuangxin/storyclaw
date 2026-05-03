@@ -400,7 +400,7 @@ function onWelcomeFill(prompt: string) {
     <!-- Messages area -->
     <div
       ref="messagesContainer"
-      class="chat-messages flex-1 overflow-y-auto scroll-smooth"
+      class="chat-messages flex-1 overflow-y-auto scroll-smooth overscroll-none"
     >
       <AgentWelcome
         v-if="displayItems.length === 0"
