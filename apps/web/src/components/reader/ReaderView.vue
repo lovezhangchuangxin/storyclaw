@@ -112,11 +112,11 @@ defineExpose({ scrollToPos })
     <!-- Content column -->
     <div class="w-full max-w-[680px] mx-auto px-5 sm:px-8">
       <!-- Chapter header -->
-      <header class="pt-14 pb-4 text-center">
-        <h2 class="text-2xl font-bold leading-relaxed tracking-wide">
+      <header class="pt-5 pb-2 text-center">
+        <h2 class="text-xl font-bold leading-relaxed tracking-wide">
           {{ title }}
         </h2>
-        <div class="flex items-center justify-center gap-3 mt-4">
+        <div class="flex items-center justify-center gap-3 mt-2">
           <div class="h-px flex-1 max-w-16 opacity-20" :style="{ backgroundColor: 'currentColor' }" />
           <span class="text-xs font-normal opacity-40 tracking-wider">
             {{ chapterIndex + 1 }} / {{ totalChapters }}
@@ -127,7 +127,7 @@ defineExpose({ scrollToPos })
 
       <!-- Chapter content -->
       <article
-        class="article-content prose max-w-none pb-12"
+        class="article-content prose max-w-none pb-6"
         :style="{
           fontFamily: 'var(--reader-font)',
           fontSize: 'var(--reader-font-size)',
@@ -138,7 +138,7 @@ defineExpose({ scrollToPos })
       />
 
       <!-- Chapter navigation -->
-      <nav class="flex items-center justify-between pb-14">
+      <nav class="flex items-center justify-between pb-8">
         <button
           v-if="chapterIndex > 0"
           class="text-sm opacity-50 hover:opacity-100 transition-opacity px-4 py-2.5 rounded-lg hover:bg-foreground/5"
