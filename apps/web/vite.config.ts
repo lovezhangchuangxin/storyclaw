@@ -5,6 +5,19 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'url'
 
 export default defineConfig({
+  build: {
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('node_modules/openai/')) return 'vendor-openai'
+          if (id.includes('node_modules/reka-ui/') || id.includes('node_modules/shadcn-vue/')) return 'vendor-ui'
+          if (id.includes('node_modules/lucide-vue-next/')) return 'vendor-icons'
+          if (id.includes('/markstream-vue/')) return 'vendor-markstream'
+        },
+      },
+    },
+  },
   plugins: [
     vue(),
     tailwindcss(),

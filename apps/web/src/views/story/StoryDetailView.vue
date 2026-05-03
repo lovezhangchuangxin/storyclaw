@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, inject, h, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, inject, h, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+import type { Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { MessageCircle, BookOpen } from 'lucide-vue-next'
 import ReaderView from '@/components/reader/ReaderView.vue'
 import ReaderControls from '@/components/reader/ReaderControls.vue'
-import AgentChat from './components/AgentChat.vue'
 import { getChaptersByNovelId } from '@/db/chapters'
 import type { ReaderSettings } from '@/components/reader/types'
 import type { Chapter } from '@/db/types'
-import type { Component } from 'vue'
+
+const AgentChat = defineAsyncComponent(() => import('./components/AgentChat.vue'))
 
 const route = useRoute()
 const router = useRouter()

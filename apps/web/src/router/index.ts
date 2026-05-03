@@ -1,11 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import HomeView from '@/views/home/HomeView.vue'
-import MyView from '@/views/my/MyView.vue'
-import StoryDetailView from '@/views/story/StoryDetailView.vue'
-import ModelConfigView from '@/views/settings/ModelConfigView.vue'
-import ServerView from '@/views/settings/ServerView.vue'
-import ReadingPrefsView from '@/views/settings/ReadingPrefsView.vue'
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -15,37 +9,37 @@ export const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'home',
-        component: HomeView,
+        component: () => import('@/views/home/HomeView.vue'),
         meta: { title: '书架' },
       },
       {
         path: 'my',
         name: 'my',
-        component: MyView,
+        component: () => import('@/views/my/MyView.vue'),
         meta: { title: '我的' },
       },
       {
         path: 'story/:id',
         name: 'story',
-        component: StoryDetailView,
+        component: () => import('@/views/story/StoryDetailView.vue'),
         meta: { title: '阅读', back: true },
       },
       {
         path: 'settings/model',
         name: 'model-config',
-        component: ModelConfigView,
+        component: () => import('@/views/settings/ModelConfigView.vue'),
         meta: { title: '模型配置', back: true },
       },
       {
         path: 'settings/server',
         name: 'server-config',
-        component: ServerView,
+        component: () => import('@/views/settings/ServerView.vue'),
         meta: { title: '后端连接', back: true },
       },
       {
         path: 'settings/reading',
         name: 'reading-prefs',
-        component: ReadingPrefsView,
+        component: () => import('@/views/settings/ReadingPrefsView.vue'),
         meta: { title: '阅读偏好', back: true },
       },
     ],
