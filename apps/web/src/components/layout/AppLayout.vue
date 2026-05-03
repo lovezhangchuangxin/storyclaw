@@ -102,7 +102,7 @@ function closeMobile() {
       <!-- Content -->
       <div class="flex-1 flex flex-col min-w-0">
         <!-- Top bar -->
-        <header class="flex items-center h-12 shrink-0 border-b px-3 gap-3 bg-background">
+        <header class="flex items-center h-12 shrink-0 border-b px-3 gap-3 bg-background/90 backdrop-blur-sm">
           <button
             aria-label="打开导航菜单"
             class="size-8 flex items-center justify-center rounded-md hover:bg-muted md:hidden"

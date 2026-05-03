@@ -401,7 +401,7 @@ function onWelcomeFill(prompt: string) {
 </script>
 
 <template>
-  <div class="relative flex h-full flex-col bg-background">
+  <div class="relative flex h-full flex-col bg-background/65">
     <!-- Messages area -->
     <div
       ref="messagesContainer"

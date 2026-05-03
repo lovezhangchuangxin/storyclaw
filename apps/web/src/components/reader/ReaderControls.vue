@@ -40,7 +40,7 @@ function updateSetting<K extends keyof ReaderSettings>(
 </script>
 
 <template>
-  <div class="border-t bg-background rounded-t-2xl shadow-lg">
+  <div class="border-t bg-background/90 backdrop-blur-sm rounded-t-2xl shadow-lg">
     <!-- Drag handle -->
     <div class="flex justify-center pt-2 pb-1">
       <button

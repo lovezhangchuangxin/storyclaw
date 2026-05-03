@@ -30,7 +30,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="shrink-0 bg-background">
+  <div class="shrink-0 bg-background/90 backdrop-blur-sm">
     <div class="mx-auto max-w-3xl px-4 pb-4 pt-2">
       <div
         class="rounded-lg border bg-card shadow-lg transition-all focus-within:border-ring/50 focus-within:shadow-xl dark:bg-card"
