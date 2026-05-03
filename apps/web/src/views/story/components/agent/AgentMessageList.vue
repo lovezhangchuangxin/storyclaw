@@ -146,7 +146,7 @@ const emit = defineEmits<{
       </div>
     </TransitionGroup>
 
-    <div id="chat-bottom" class="h-px" />
+    <div id="chat-bottom" class="h-px" style="overflow-anchor: auto;" />
   </div>
 </template>
 

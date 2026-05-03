@@ -185,11 +185,10 @@ const turnGroups = computed<TurnGroup[]>(() => {
 // ---- Scroll-to-bottom ----
 const messagesContainer = ref<HTMLElement | null>(null)
 const isNearBottom = ref(true)
-let programmaticScrolling = false
 
 function checkScrollPosition() {
   const el = messagesContainer.value
-  if (!el || programmaticScrolling) return
+  if (!el) return
   isNearBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 80
 }
 
@@ -225,29 +224,27 @@ function pushLocalStatus(kind: StatusMessage['kind'], content: string) {
   })
 }
 
-let scrollRAF = 0
+let lastAutoScrollTime = 0
 function scrollToBottom(smooth = false) {
   if (!isNearBottom.value) return
-  cancelAnimationFrame(scrollRAF)
-  scrollRAF = requestAnimationFrame(() => {
-    nextTick(() => {
-      if (!isNearBottom.value) return
-      const el = messagesContainer.value
-      if (!el) return
-      programmaticScrolling = true
-      el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'instant' })
-      programmaticScrolling = false
-    })
+  // Throttle instant scrolls during streaming to avoid layout jank.
+  // Smooth scrolls (final completion) always fire.
+  if (!smooth) {
+    const now = performance.now()
+    if (now - lastAutoScrollTime < 30) return
+    lastAutoScrollTime = now
+  }
+  nextTick(() => {
+    if (!isNearBottom.value) return
+    const el = messagesContainer.value
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'instant' })
   })
 }
 
 function forceScrollToBottom() {
   const el = messagesContainer.value
-  if (el) {
-    programmaticScrolling = true
-    el.scrollTop = el.scrollHeight
-    programmaticScrolling = false
-  }
+  if (el) el.scrollTop = el.scrollHeight
   isNearBottom.value = true
 }
 
