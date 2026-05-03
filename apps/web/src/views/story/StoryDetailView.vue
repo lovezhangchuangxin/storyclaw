@@ -24,10 +24,15 @@ onMounted(() => {
   setTopbarExtra?.({
     setup() {
       return () => h('button', {
-        class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0',
+        class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition-all duration-300 active:scale-90',
         onClick: () => { mode.value = mode.value === 'reader' ? 'agent' : 'reader' },
       }, [
-        h(mode.value === 'reader' ? BookOpen : MessageCircle, { class: 'size-5' }),
+        h('span', {
+          key: mode.value,
+          class: 'inline-flex animate-in zoom-in-90 duration-200',
+        }, [
+          h(mode.value === 'reader' ? BookOpen : MessageCircle, { class: 'size-5' }),
+        ]),
       ])
     },
   })
@@ -81,8 +86,8 @@ function updateSettings(s: ReaderSettings) {
 <template>
   <div class="relative h-full flex flex-col overflow-hidden">
     <div
-      class="absolute inset-0 transition-[visibility]"
-      :class="mode === 'reader' ? 'visible' : 'invisible pointer-events-none'"
+      class="tab-panel"
+      :class="mode === 'reader' ? 'tab-panel-active' : 'tab-panel-inactive'"
       :aria-hidden="mode !== 'reader'"
     >
       <ReaderView
@@ -99,8 +104,8 @@ function updateSettings(s: ReaderSettings) {
       />
     </div>
     <div
-      class="absolute inset-0 transition-[visibility]"
-      :class="mode === 'agent' ? 'visible' : 'invisible pointer-events-none'"
+      class="tab-panel"
+      :class="mode === 'agent' ? 'tab-panel-active' : 'tab-panel-inactive'"
       :aria-hidden="mode !== 'agent'"
     >
       <AgentChat
@@ -132,5 +137,25 @@ function updateSettings(s: ReaderSettings) {
 .controls-slide-leave-to {
   transform: translateY(100%);
   opacity: 0;
+}
+
+/* Tab panel transitions — pure crossfade */
+.tab-panel {
+  position: absolute;
+  inset: 0;
+  will-change: opacity;
+}
+
+.tab-panel-active {
+  opacity: 1;
+  z-index: 2;
+  transition: opacity 0.25s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.tab-panel-inactive {
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.65, 0, 0.35, 1);
 }
 </style>
