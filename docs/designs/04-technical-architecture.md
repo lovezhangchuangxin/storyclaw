@@ -209,7 +209,7 @@ let client = Client::with_config(config);
 
 PWA Manifest 配置：
 - `display: standalone` — 独立窗口
-- `theme_color` — 跟随阅读主题变化
+- `theme_color` — 跟随应用主题变化
 - 图标适配各尺寸
 - 快捷方式：新故事、继续阅读
 

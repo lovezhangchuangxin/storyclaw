@@ -38,8 +38,8 @@ StoryClaw 是一个 Agent 驱动的中短篇小说创作与阅读 Web 应用（W
 
 ### MVP（Phase 1）
 - 纯前端单页应用（Vite + Vue3 + PWA + Tailwind + shadcn-vue）
-- 阅读器：字体、字号、行距、文字颜色、阅读背景
-- 多套预设阅读主题 + 用户自定义
+- 阅读器：字体、字号、行距（颜色跟随应用主题）
+- 3 套应用主题（浅色/深色/护眼），作用于全 UI
 - 单 Agent + 基础 Tools（生成大纲、生成章节、修改文风）
 - IndexedDB 本地存储
 - 模型配置页（OpenAI 兼容接口）
@@ -49,7 +49,7 @@ StoryClaw 是一个 Agent 驱动的中短篇小说创作与阅读 Web 应用（W
 - Agent Loop 迁移到 Web Worker
 - Prompt Caching + Cache-aware Context Compaction
 - 更多 Tools（重写章节、角色调整、情节分支等）
-- 更多预设阅读主题
+- 更多应用主题
 - PWA 离线阅读完善
 
 ### Phase 3 — 后端 + 多 Agent

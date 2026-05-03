@@ -6,7 +6,7 @@
 
 ### 1.1 项目基础设施
 - [x] 初始化 shadcn-vue（`pnpm dlx shadcn-vue@latest init`）
-- [x] 配置 Tailwind CSS v4（颜色、字体、阅读主题变量）
+- [x] 配置 Tailwind CSS v4（颜色、字体、应用主题系统）
 - [x] 安装 vite-plugin-pwa，配置 Service Worker 缓存策略
 - [x] PWA manifest 与图标
 
@@ -28,8 +28,7 @@
 ### 1.4 故事详情页 — 阅读器
 - [x] 沉浸式阅读器布局（内容居中，最大宽度 680px）
 - [x] 字体/字号/行高/段间距调节
-- [x] 文字颜色 + 阅读背景色
-- [x] 6 套预设阅读主题
+- [x] 3 套应用主题（浅色/深色/护眼），作用于全 UI 包括阅读器
 - [x] 上下滚动 / 左右翻页 / 自动滚动
 - [x] 底部热区唤出控制栏
 - [x] 点击唤出章节目录
@@ -65,7 +64,7 @@
 - [x] context compaction（缓存友好、低频触发、70%/20% 双阈值、tool-call 边界安全）
 - [x] 上下文记忆快照与手动整理入口（`contextSnapshots` / `compact_context`）
 - [ ] Skills 系统（brainstorm, outline-design, character-create, chapter-write, ending-craft）
-- [ ] 更多预设阅读主题 + 用户自定义主题
+- [ ] 更多应用主题 + 用户自定义主题
 - [ ] PWA 离线阅读完善（已生成章节离线可读）
 - [ ] 自定义字体加载
 

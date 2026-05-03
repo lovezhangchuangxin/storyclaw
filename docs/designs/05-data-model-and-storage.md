@@ -253,7 +253,7 @@ interface AppConfig {
   models: ModelConfig[];
   defaultModelId: string;
   skillModelMapping: Record<string, string>;  // skillName → modelId
-  readingTheme: string;
+  appTheme: 'light' | 'dark' | 'parchment';
   readingSettings: ReadingSettings;
   backendUrl?: string;
   useBackendProxy: boolean;
