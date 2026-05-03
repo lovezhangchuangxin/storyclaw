@@ -19,19 +19,24 @@ const mode = ref<'reader' | 'agent'>(
 )
 const showControls = ref(false)
 
+const setTopbarExtra = inject<(c: Component | null) => void>('setTopbarExtra')
+const setTitle = inject<(t: string | null) => void>('setTitle')
+
+const tabTitles: Record<'reader' | 'agent', string> = { reader: '阅读', agent: '对话' }
+
 watch(mode, (val) => {
   router.replace({
     query: val === 'agent' ? { tab: 'agent' } : {},
   })
+  setTitle?.(tabTitles[val])
 })
 
-const setTopbarExtra = inject<(c: Component | null) => void>('setTopbarExtra')
-
 onMounted(() => {
+  setTitle?.(tabTitles[mode.value])
   setTopbarExtra?.({
     setup() {
       return () => h('button', {
-        class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition-all duration-300 active:scale-90',
+        class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition duration-150 active:scale-90',
         onClick: () => { mode.value = mode.value === 'reader' ? 'agent' : 'reader' },
       }, [
         h('span', {
@@ -47,6 +52,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   setTopbarExtra?.(null)
+  setTitle?.(null)
 })
 
 const settings = ref<ReaderSettings>({

@@ -10,7 +10,15 @@ const router = useRouter()
 const collapsed = ref(loadCollapsed())
 const mobileOpen = ref(false)
 
-const title = computed(() => (route.meta.title as string) ?? '')
+const title = ref((route.meta.title as string) ?? '')
+
+watch(() => route.meta.title, (t) => {
+  title.value = (t as string) ?? ''
+}, { immediate: true })
+
+provide('setTitle', (t: string | null) => {
+  title.value = t ?? (route.meta.title as string) ?? ''
+})
 const showBack = computed(() => !!route.meta.back)
 
 const topbarExtra = shallowRef<Component | null>(null)
