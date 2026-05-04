@@ -14,6 +14,7 @@ export interface Novel {
   updatedAt: number
   selectedPromptIds?: string[]
   version: number
+  backendId?: string
 }
 
 export interface StyleSettings {
@@ -346,4 +347,104 @@ export function createDefaultModelConfig(
     ...model,
     summaryModelId: model.summaryModelId ?? '',
   }
+}
+
+// ---- Backend Integration ----
+
+export interface UserInfo {
+  id: string
+  email: string
+  role: 'user' | 'admin'
+}
+
+export interface AuthTokens {
+  accessToken: string
+  refreshToken: string
+  expiresIn?: number
+}
+
+export interface AuthResponse {
+  user: UserInfo
+  access_token: string
+  refresh_token: string
+}
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface RegisterRequest {
+  email: string
+  password: string
+}
+
+export interface RefreshRequest {
+  refresh_token: string
+}
+
+export interface HealthResponse {
+  status: string
+  db?: boolean
+  redis?: boolean
+  uptime?: number
+  version?: string
+}
+
+export interface AdminStats {
+  totalUsers: number
+  totalNovels: number
+  totalLlmCalls: number
+  dailyActiveUsers?: number
+}
+
+export interface AdminUserSummary {
+  id: string
+  email: string
+  role: string
+  novelCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminNovelSummary {
+  id: string
+  title: string
+  authorEmail: string
+  wordCount: number
+  status: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  perPage: number
+}
+
+export interface SyncPayload {
+  novel: Novel
+  outline?: Outline
+  characters: Character[]
+  chapters: Chapter[]
+  worldBuilding?: WorldBuilding
+  conversation?: Conversation
+}
+
+export interface PushNovelRequest {
+  data: SyncPayload
+  version: number
+}
+
+export interface PushNovelResponse {
+  accepted: boolean
+  serverVersion: number
+  data?: SyncPayload
+}
+
+export interface PullNovelResponse {
+  data: SyncPayload
+  version: number
 }
