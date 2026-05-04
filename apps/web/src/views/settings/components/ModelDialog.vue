@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Eye, EyeOff, Loader2, Zap } from 'lucide-vue-next'
+import { Eye, EyeOff, Loader2, Zap, Globe } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import Combobox from './Combobox.vue'
 import { createDefaultModelConfig, type ModelConfig } from '@/db/types'
 import {
@@ -39,11 +40,17 @@ const showKey = ref(false)
 const modelsLoading = ref(false)
 const testing = ref(false)
 const fetchedModels = ref<string[]>([])
+const modelName = ref('')
+const isPublic = ref(false)
 let populating = false
 let fetchSeq = 0
 
 const isEdit = computed(() => !!props.model?.id)
-const title = computed(() => isEdit.value ? '编辑模型' : '添加模型')
+const isBackend = computed(() => !!props.model?.isBackendModel)
+const title = computed(() => {
+  if (isBackend.value) return isEdit.value ? '编辑后端模型' : '添加后端模型'
+  return isEdit.value ? '编辑模型' : '添加模型'
+})
 
 const modelOptions = computed(() => fetchedModels.value)
 
@@ -63,6 +70,8 @@ watch(() => props.open, (val) => {
     apiBase.value = props.model.apiBase
     apiKey.value = props.model.apiKey
     model.value = props.model.model
+    modelName.value = (props.model as any).backendName ?? props.model.provider
+    isPublic.value = (props.model as any).isPublic ?? false
     maxOutputTokens.value = String(props.model.maxOutputTokens ?? fallback.maxOutputTokens)
     contextWindowTokens.value = String(props.model.contextWindowTokens ?? fallback.contextWindowTokens)
     outputReserveTokens.value = String(props.model.outputReserveTokens ?? fallback.outputReserveTokens)
@@ -74,6 +83,8 @@ watch(() => props.open, (val) => {
     apiBase.value = ''
     apiKey.value = ''
     model.value = ''
+    modelName.value = ''
+    isPublic.value = false
     maxOutputTokens.value = String(fallback.maxOutputTokens)
     contextWindowTokens.value = String(fallback.contextWindowTokens)
     outputReserveTokens.value = String(fallback.outputReserveTokens)
@@ -136,7 +147,7 @@ async function handleTest() {
 }
 
 function handleSave() {
-  emit('save', {
+  const saved = {
     id: props.model?.id ?? crypto.randomUUID(),
     provider: provider.value,
     apiBase: apiBase.value,
@@ -148,7 +159,12 @@ function handleSave() {
     compactionTriggerRatio: toNumber(compactionTriggerRatio.value, 0.7),
     compactionTargetRatio: toNumber(compactionTargetRatio.value, 0.2),
     summaryModelId: summaryModelId.value.trim(),
-  })
+    isBackendModel: props.model?.isBackendModel ?? false,
+    backendId: (props.model as any)?.backendId ?? undefined,
+  } as ModelConfig & { name?: string; isPublic?: boolean; isBackendModel?: boolean; backendId?: string }
+  ;(saved as any).name = modelName.value
+  ;(saved as any).isPublic = isPublic.value
+  emit('save', saved)
   emit('update:open', false)
 }
 </script>
@@ -161,6 +177,11 @@ function handleSave() {
       </DialogHeader>
 
       <div class="space-y-4 mt-2">
+        <div v-if="isBackend" class="space-y-1.5">
+          <Label>模型名称</Label>
+          <Input v-model="modelName" placeholder="例如：DeepSeek V3" class="focus-visible:ring-0" />
+        </div>
+
         <div class="space-y-1.5">
           <Label>提供商</Label>
           <Combobox
@@ -208,6 +229,17 @@ function handleSave() {
             placeholder="选择或输入模型名"
             @open="handleModelComboOpen"
           />
+        </div>
+
+        <div v-if="isBackend" class="flex items-center justify-between px-1 py-2">
+          <div>
+            <Label class="flex items-center gap-1.5">
+              <Globe class="size-3" />
+              公开模型
+            </Label>
+            <p class="text-[11px] text-muted-foreground mt-0.5">开启后所有用户可见和使用</p>
+          </div>
+          <Switch v-model:checked="isPublic" />
         </div>
 
         <div class="space-y-3 rounded-lg border border-dashed p-3">

@@ -37,7 +37,35 @@ function openEdit(model: ModelConfig) {
   dialogOpen.value = true
 }
 
+function openBackendAdd() {
+  editingModel.value = null
+  dialogOpen.value = true
+}
+
+function openBackendEdit(bm: import('@/db/types').BackendModelConfig) {
+  editingModel.value = {
+    id: `backend-${bm.id}`,
+    provider: bm.provider,
+    apiBase: '',
+    apiKey: '',
+    model: bm.model,
+    maxOutputTokens: bm.maxOutputTokens,
+    contextWindowTokens: bm.contextWindowTokens,
+    outputReserveTokens: 0,
+    compactionTriggerRatio: 0.85,
+    compactionTargetRatio: 0.7,
+    isBackendModel: true,
+    backendId: bm.id,
+  }
+  dialogOpen.value = true
+}
+
 async function handleSave(model: ModelConfig) {
+  if (model.isBackendModel) {
+    await handleSaveBackendModel(model)
+    return
+  }
+
   const snapshot = JSON.parse(JSON.stringify(config.value)) as AppConfig
   if (editingModel.value?.id) {
     const idx = snapshot.models.findIndex((m) => m.id === editingModel.value!.id)
@@ -54,6 +82,51 @@ async function handleSave(model: ModelConfig) {
     toast.success(editingModel.value?.id ? '模型已更新' : '模型已添加')
   } catch (e) {
     toast.error('保存失败', {
+      description: e instanceof Error ? e.message : String(e),
+    })
+  }
+}
+
+async function handleSaveBackendModel(model: ModelConfig) {
+  const data: any = {
+    name: (model as any).name || model.provider,
+    provider: model.provider,
+    apiBase: model.apiBase || 'https://api.openai.com/v1',
+    model: model.model,
+    maxOutputTokens: model.maxOutputTokens,
+    contextWindowTokens: model.contextWindowTokens,
+    isPublic: (model as any).isPublic ?? false,
+  }
+  if (model.apiKey) {
+    data.apiKey = model.apiKey
+  }
+
+  try {
+    if (model.backendId && editingModel.value?.backendId) {
+      await backendModels.update(model.backendId, data)
+      toast.success('后端模型已更新')
+    } else {
+      if (!model.apiKey) {
+        toast.error('请输入 API Key')
+        return
+      }
+      await backendModels.create(data)
+      toast.success('后端模型已添加')
+    }
+    await backendModels.fetchModels()
+  } catch (e) {
+    toast.error('操作失败', {
+      description: e instanceof Error ? e.message : '请检查后端连接',
+    })
+  }
+}
+
+async function removeBackendModel(id: string) {
+  try {
+    await backendModels.remove(id)
+    toast.success('后端模型已删除')
+  } catch (e) {
+    toast.error('删除失败', {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -249,12 +322,14 @@ onMounted(() => {
             <button
               class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
               title="编辑"
+              @click="openBackendEdit(bm)"
             >
               <Pen class="size-3.5" />
             </button>
             <button
               class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-destructive transition-colors"
               title="删除"
+              @click="removeBackendModel(bm.id)"
             >
               <Trash2 class="size-3.5" />
             </button>
@@ -263,7 +338,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <Button v-if="auth.isAdmin" variant="outline" class="w-full cursor-pointer text-xs" @click="openAdd">
+      <Button v-if="auth.isAdmin" variant="outline" class="w-full cursor-pointer text-xs" @click="openBackendAdd">
         <Plus class="size-3.5 mr-1" />
         添加后端模型
       </Button>
