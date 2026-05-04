@@ -136,7 +136,7 @@ function closeMobile() {
         </header>
 
         <!-- Page content -->
-        <main class="flex-1 overflow-auto overscroll-none">
+        <main class="flex-1 overscroll-none" :class="route.meta.internalScroll ? 'overflow-hidden' : 'overflow-auto'">
           <router-view />
         </main>
       </div>

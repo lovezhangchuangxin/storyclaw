@@ -30,7 +30,7 @@ export const routes: RouteRecordRaw[] = [
         path: 'story/:id',
         name: 'story',
         component: () => import('@/views/story/StoryDetailView.vue'),
-        meta: { title: '阅读', back: true },
+        meta: { title: '阅读', back: true, internalScroll: true },
       },
       {
         path: 'settings/model',

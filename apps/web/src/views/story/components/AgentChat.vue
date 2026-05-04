@@ -288,6 +288,7 @@ async function send() {
   const requestId = ++activeRequestId
   const baseUnsavedMessages = cloneMessages(unsavedMessages.value)
   const baseHistoryMessages = cloneMessages(historyMessages.value)
+  await nextTick()
   forceScrollToBottom()
 
   try {
@@ -440,7 +441,7 @@ function onWelcomeFill(prompt: string) {
     <!-- Messages area -->
     <div
       ref="messagesContainer"
-      class="chat-messages flex-1 overflow-y-auto overscroll-none"
+      class="chat-messages flex-1 overflow-y-auto overscroll-none [overflow-anchor:none]"
     >
       <AgentWelcome
         v-if="displayItems.length === 0"
