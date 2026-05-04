@@ -90,6 +90,10 @@ storyclaw/
 - 通用布局组件放在 `components/layout/`
 - 通过 `pnpm add` / `pnpm add -D` 安装依赖，不手动编辑 package.json
 - API Key 明文存储于 IndexedDB
+- **Vue 模板内联表达式**：避免在 `@click` 等指令中写多语句表达式（如 `@click="a; b"`），应抽取为方法。
+  * 原因：oxfmt 会将长属性值拆成多行，多语句换行后 Vue 模板编译器无法解析。
+  * 推荐：`@click="handleClick"` 或 `@click="() => { a; b }"`（箭头函数安全换行）
+- `pnpm format`（oxfmt）不了解 Vue 模板语义，对 `<template>` 中内联 JS 表达式按纯文本格式化。
 
 ### 布局系统
 
