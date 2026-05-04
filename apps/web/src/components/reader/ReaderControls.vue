@@ -49,24 +49,29 @@ function updateSetting<K extends keyof ReaderSettings>(
       <!-- Theme -->
       <div>
         <p class="text-xs font-medium text-muted-foreground mb-2.5">主题</p>
-        <div class="flex items-center gap-3 overflow-x-auto scrollbar-none">
+        <div class="flex items-center gap-4 overflow-x-auto scrollbar-none">
           <button
             v-for="t in themes"
             :key="t.id"
-            class="group flex flex-col items-center gap-1 shrink-0"
+            class="group flex flex-col items-center gap-1.5 shrink-0 py-0.5"
             :title="t.name"
             @click="applyTheme?.(t.id)"
           >
+            <span class="relative">
+              <span
+                class="block size-9 rounded-full shadow-sm ring-1 ring-black/8 transition-all duration-200"
+                :style="{ backgroundColor: t.bg }"
+              />
+              <span
+                class="absolute inset-0 rounded-full ring-2 transition-all duration-200"
+                :class="appTheme?.value === t.id
+                  ? 'ring-foreground/70 scale-[1.12]'
+                  : 'ring-transparent group-hover:ring-muted-foreground/25 group-hover:scale-105'"
+              />
+            </span>
             <span
-              class="size-8 rounded-full border-2 transition-all duration-200"
-              :class="appTheme?.value === t.id
-                ? 'border-foreground scale-110'
-                : 'border-transparent hover:border-muted-foreground/30'"
-              :style="{ backgroundColor: t.bg }"
-            />
-            <span
-              class="text-[10px] transition-colors"
-              :class="appTheme?.value === t.id ? 'text-foreground font-medium' : 'text-muted-foreground'"
+              class="text-[10px] leading-none transition-colors"
+              :class="appTheme?.value === t.id ? 'text-foreground font-medium' : 'text-muted-foreground/70'"
             >
               {{ t.name }}
             </span>
