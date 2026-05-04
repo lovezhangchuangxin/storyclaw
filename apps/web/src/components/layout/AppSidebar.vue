@@ -27,7 +27,7 @@ const items = [
   { path: '/my', label: '我的', icon: User },
 ]
 
-const adminItem = { path: '/admin/users', label: '管理后台', icon: Shield }
+const adminItem = { path: '/admin', label: '管理后台', icon: Shield }
 
 const visibleItems = computed(() => {
   if (auth.isAdmin) {
