@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { BackendModelConfig } from '@/db/types'
+import type { BackendModelConfig, ModelConfig } from '@/db/types'
 import {
   listBackendModels,
   createBackendModel as apiCreate,
@@ -29,18 +29,24 @@ export const useBackendModelsStore = defineStore('backendModels', () => {
     }
   }
 
-  function toModelConfig(bm: BackendModelConfig) {
+  function toModelConfig(bm: BackendModelConfig): ModelConfig {
     return {
       id: `backend-${bm.id}`,
       provider: bm.provider,
       apiBase: '',
       apiKey: '',
       model: bm.model,
+      // Backend provides these values
       maxOutputTokens: bm.maxOutputTokens,
       contextWindowTokens: bm.contextWindowTokens,
+      // Use same compaction defaults as user-configured models
+      outputReserveTokens: 4096,
+      compactionTriggerRatio: 0.7,
+      compactionTargetRatio: 0.2,
+      summaryModelId: '',
       isBackendModel: true,
       backendId: bm.id,
-      backendName: bm.name,
+      name: bm.name,
     }
   }
 

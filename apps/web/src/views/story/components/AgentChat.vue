@@ -7,6 +7,7 @@ import { cloneMessages } from '@/agent/message-state'
 import { compactConversationContext } from '@/agent/context-compaction'
 import { loadStoryState } from '@/agent/story-state'
 import { getConfig } from '@/db/config'
+import { getAllModels } from '@/composables/useModels'
 import { deleteConversation, getConversationByNovelId } from '@/db/conversations'
 import { deleteContextSnapshotsByNovelId } from '@/db/context-snapshots'
 import type {
@@ -193,8 +194,10 @@ function checkScrollPosition() {
 
 async function loadModels() {
   const config = await getConfig()
-  models.value = config.models
-  selectedModelId.value = config.defaultModelId || config.models[0]?.id || ''
+  models.value = await getAllModels()
+  // Validate that defaultModelId still exists in available models
+  const defaultExists = models.value.some(m => m.id === config.defaultModelId)
+  selectedModelId.value = defaultExists ? config.defaultModelId : models.value[0]?.id || ''
 }
 
 async function loadConversation() {

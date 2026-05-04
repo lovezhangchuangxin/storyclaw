@@ -16,6 +16,7 @@ import {
 import { createNovel } from '@/db/novels'
 import { getConfig } from '@/db/config'
 import { useNovelList } from '@/composables/useNovelList'
+import { getAllModels } from '@/composables/useModels'
 import { toast } from 'vue-sonner'
 import NovelCard from './components/NovelCard.vue'
 import NewStoryDialog from './components/NewStoryDialog.vue'
@@ -60,8 +61,8 @@ const noModelDialogOpen = ref(false)
 const hasModels = ref(true)
 
 onMounted(async () => {
-  const config = await getConfig()
-  hasModels.value = config.models.length > 0
+  const allModels = await getAllModels()
+  hasModels.value = allModels.length > 0
 })
 
 function openCreateDialog() {

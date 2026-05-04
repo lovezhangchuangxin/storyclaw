@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Eye, EyeOff, Loader2, Zap, Globe } from 'lucide-vue-next'
+import { Eye, EyeOff, Loader2, Zap, Globe, X } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -52,6 +52,28 @@ const title = computed(() => {
   return isEdit.value ? '编辑模型' : '添加模型'
 })
 
+// Test button: disabled if testing, or if required fields are missing
+const testDisabled = computed(() => {
+  if (testing.value) return true
+  if (isBackend.value) {
+    // Backend models only need model name for test
+    return !model.value
+  }
+  // Regular models need apiBase, apiKey, and model
+  return !apiBase.value || !apiKey.value || !model.value
+})
+
+// Save button: disabled if required fields are missing
+const saveDisabled = computed(() => {
+  if (!provider.value || !model.value) return true
+  if (isBackend.value && isEdit.value) {
+    // Editing backend model: apiBase/apiKey optional
+    return false
+  }
+  // All other cases need apiBase and apiKey
+  return !apiBase.value || !apiKey.value
+})
+
 const modelOptions = computed(() => fetchedModels.value)
 
 watch(() => props.open, (val) => {
@@ -70,8 +92,8 @@ watch(() => props.open, (val) => {
     apiBase.value = props.model.apiBase
     apiKey.value = props.model.apiKey
     model.value = props.model.model
-    modelName.value = (props.model as any).backendName ?? props.model.provider
-    isPublic.value = (props.model as any).isPublic ?? false
+    modelName.value = props.model.name ?? ''
+    isPublic.value = props.model.isPublic ?? false
     maxOutputTokens.value = String(props.model.maxOutputTokens ?? fallback.maxOutputTokens)
     contextWindowTokens.value = String(props.model.contextWindowTokens ?? fallback.contextWindowTokens)
     outputReserveTokens.value = String(props.model.outputReserveTokens ?? fallback.outputReserveTokens)
@@ -147,7 +169,7 @@ async function handleTest() {
 }
 
 function handleSave() {
-  const saved = {
+  const saved: ModelConfig = {
     id: props.model?.id ?? crypto.randomUUID(),
     provider: provider.value,
     apiBase: apiBase.value,
@@ -160,10 +182,11 @@ function handleSave() {
     compactionTargetRatio: toNumber(compactionTargetRatio.value, 0.2),
     summaryModelId: summaryModelId.value.trim(),
     isBackendModel: props.model?.isBackendModel ?? false,
-    backendId: (props.model as any)?.backendId ?? undefined,
-  } as ModelConfig & { name?: string; isPublic?: boolean; isBackendModel?: boolean; backendId?: string }
-  ;(saved as any).name = modelName.value
-  ;(saved as any).isPublic = isPublic.value
+    backendId: props.model?.backendId ?? undefined,
+    // Only set name if non-empty after trimming; otherwise modelLabel() will fallback to "provider — model"
+    ...(modelName.value.trim() ? { name: modelName.value.trim() } : {}),
+    isPublic: isPublic.value,
+  }
   emit('save', saved)
   emit('update:open', false)
 }
@@ -177,9 +200,13 @@ function handleSave() {
       </DialogHeader>
 
       <div class="space-y-4 mt-2">
-        <div v-if="isBackend" class="space-y-1.5">
+        <div class="space-y-1.5">
           <Label>模型名称</Label>
-          <Input v-model="modelName" placeholder="例如：DeepSeek V3" class="focus-visible:ring-0" />
+          <Input
+            v-model="modelName"
+            placeholder="选填，默认为 提供商 - 模型ID"
+            class="focus-visible:ring-0"
+          />
         </div>
 
         <div class="space-y-1.5">
@@ -193,7 +220,14 @@ function handleSave() {
 
         <div class="space-y-1.5">
           <Label>API 地址</Label>
-          <Input v-model="apiBase" placeholder="https://api.openai.com/v1" class="focus-visible:ring-0" />
+          <Input
+            v-model="apiBase"
+            :placeholder="isBackend && isEdit ? '(已配置)' : 'https://api.openai.com/v1'"
+            class="focus-visible:ring-0"
+          />
+          <p v-if="isBackend && isEdit" class="text-[11px] text-muted-foreground">
+            留空则保留已配置的 API 地址。仅在你需要更改时填写。
+          </p>
         </div>
 
         <div class="space-y-1.5">
@@ -204,23 +238,37 @@ function handleSave() {
               :type="showKey ? 'text' : 'password'"
               autocomplete="off"
               data-1p-ignore
-              placeholder="sk-······"
+              :placeholder="isBackend && isEdit ? '(已配置，填写则更新)' : 'sk-······'"
               class="focus-visible:ring-0 pr-9"
             />
-            <button
-              type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-              @click="showKey = !showKey"
-            >
-              <Eye v-if="!showKey" class="size-4" />
-              <EyeOff v-else class="size-4" />
-            </button>
+            <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <button
+                v-if="isBackend && isEdit && apiKey"
+                type="button"
+                class="text-muted-foreground hover:text-destructive transition-opacity"
+                title="清空 API Key"
+                @click="apiKey = ''"
+              >
+                <X class="size-4" />
+              </button>
+              <button
+                type="button"
+                class="text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                @click="showKey = !showKey"
+              >
+                <Eye v-if="!showKey" class="size-4" />
+                <EyeOff v-else class="size-4" />
+              </button>
+            </div>
           </div>
+          <p v-if="isBackend && isEdit" class="text-[11px] text-muted-foreground">
+            留空则保留已配置的 API Key。填写新值则更新，点击 × 按钮清空。
+          </p>
         </div>
 
         <div class="space-y-1.5">
           <Label class="flex items-center gap-1.5">
-            模型名
+            模型 ID
             <Loader2 v-if="modelsLoading" class="size-3.5 animate-spin text-muted-foreground" />
           </Label>
           <Combobox
@@ -239,13 +287,15 @@ function handleSave() {
             </Label>
             <p class="text-[11px] text-muted-foreground mt-0.5">开启后所有用户可见和使用</p>
           </div>
-          <Switch v-model:checked="isPublic" />
+          <Switch v-model="isPublic" />
         </div>
 
         <div class="space-y-3 rounded-lg border border-dashed p-3">
           <div>
             <p class="text-xs font-medium">上下文管理</p>
-            <p class="text-[11px] text-muted-foreground">控制窗口预算、自动压缩阈值和摘要模型。</p>
+            <p class="text-[11px] text-muted-foreground">
+              {{ isBackend ? '后端模型的上下文压缩在前端执行，可自定义配置。' : '控制窗口预算、自动压缩阈值和摘要模型。' }}
+            </p>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
@@ -278,17 +328,13 @@ function handleSave() {
       </div>
 
       <div class="flex justify-end gap-2 mt-4">
-        <Button
-          variant="outline"
-          :disabled="!apiBase || !apiKey || !model || testing"
-          @click="handleTest"
-        >
+        <Button variant="outline" :disabled="testDisabled" @click="handleTest">
           <Loader2 v-if="testing" class="size-4 animate-spin mr-1.5" />
           <Zap v-else class="size-4 mr-1.5" />
           测试
         </Button>
         <Button variant="outline" @click="emit('update:open', false)">取消</Button>
-        <Button :disabled="!provider || !apiBase || !apiKey || !model" @click="handleSave">
+        <Button :disabled="saveDisabled" @click="handleSave">
           {{ isEdit ? '保存' : '添加' }}
         </Button>
       </div>

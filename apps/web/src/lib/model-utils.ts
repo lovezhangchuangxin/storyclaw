@@ -1,5 +1,6 @@
 import type { ModelConfig } from '@/db/types'
 
 export function modelLabel(m: ModelConfig): string {
-  return `${m.provider} — ${m.model}`
+  // Use custom name if available (backend models), otherwise fallback to provider — model
+  return m.name || `${m.provider} — ${m.model}`
 }

@@ -267,6 +267,16 @@ export interface ModelConfig {
   summaryModelId?: string
   isBackendModel?: boolean
   backendId?: string
+  /** Display name for the model (user-defined or backend-provided) */
+  name?: string
+  /** For backend models: whether the model is public to all users */
+  isPublic?: boolean
+  /**
+   * @deprecated Use `name` instead.
+   * Migration: In config migration v2, replace backendName with name for all models.
+   * Old data will continue to work via modelLabel() fallback.
+   */
+  backendName?: string
 }
 
 export interface ReadingSettings {

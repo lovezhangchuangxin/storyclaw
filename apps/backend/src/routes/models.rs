@@ -12,6 +12,22 @@ use crate::models::BackendModel;
 
 use crate::crypto;
 
+/// Static SQL queries to avoid runtime string formatting
+const LIST_ALL_SQL: &str = "\
+    SELECT id, name, provider, api_base, api_key_encrypted, model, \
+    max_output_tokens, context_window_tokens, is_public, created_by, \
+    created_at, updated_at FROM backend_models ORDER BY created_at DESC";
+
+const LIST_PUBLIC_SQL: &str = "\
+    SELECT id, name, provider, api_base, api_key_encrypted, model, \
+    max_output_tokens, context_window_tokens, is_public, created_by, \
+    created_at, updated_at FROM backend_models WHERE is_public = TRUE ORDER BY created_at DESC";
+
+const GET_BY_ID_SQL: &str = "\
+    SELECT id, name, provider, api_base, api_key_encrypted, model, \
+    max_output_tokens, context_window_tokens, is_public, created_by, \
+    created_at, updated_at FROM backend_models WHERE id = $1";
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateModelRequest {
@@ -70,17 +86,13 @@ pub async fn list_models(
 ) -> Result<Json<Vec<BackendModelResponse>>> {
     let is_admin = auth_user.role == "admin";
     let models = if is_admin {
-        sqlx::query_as::<_, BackendModel>(
-            "SELECT * FROM backend_models ORDER BY created_at DESC",
-        )
-        .fetch_all(&state.pool)
-        .await?
+        sqlx::query_as::<_, BackendModel>(LIST_ALL_SQL)
+            .fetch_all(&state.pool)
+            .await?
     } else {
-        sqlx::query_as::<_, BackendModel>(
-            "SELECT * FROM backend_models WHERE is_public = TRUE ORDER BY created_at DESC",
-        )
-        .fetch_all(&state.pool)
-        .await?
+        sqlx::query_as::<_, BackendModel>(LIST_PUBLIC_SQL)
+            .fetch_all(&state.pool)
+            .await?
     };
 
     let result: Vec<_> = models
@@ -92,11 +104,11 @@ pub async fn list_models(
 }
 
 pub async fn get_model_by_id(pool: &sqlx::PgPool, id: Uuid) -> Result<BackendModel> {
-    sqlx::query_as::<_, BackendModel>("SELECT * FROM backend_models WHERE id = $1")
+    sqlx::query_as::<_, BackendModel>(GET_BY_ID_SQL)
         .bind(id)
         .fetch_optional(pool)
         .await?
-        .ok_or(AppError::NotFound)
+        .ok_or_else(|| AppError::Validation(format!("backend model not found: {id}")))
 }
 
 pub async fn create_model(
@@ -143,11 +155,12 @@ pub async fn update_model(
     let context_window_tokens = req.context_window_tokens.unwrap_or(existing.context_window_tokens);
     let is_public = req.is_public.unwrap_or(existing.is_public);
 
-    let encrypted = if let Some(key) = req.api_key {
-        crypto::encrypt(&key, &state.config.model_key)
-            .map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?
-    } else {
-        existing.api_key_encrypted
+    let encrypted = match req.api_key {
+        Some(ref key) if !key.is_empty() => {
+            crypto::encrypt(key, &state.config.model_key)
+                .map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?
+        }
+        _ => existing.api_key_encrypted,
     };
 
     let updated = sqlx::query_as::<_, BackendModel>(

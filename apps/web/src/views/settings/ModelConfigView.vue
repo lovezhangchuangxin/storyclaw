@@ -4,7 +4,7 @@ import { Plus, Trash2, Pen, Star, Settings, Bot, Server, Shield } from 'lucide-v
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { saveConfig, getConfig } from '@/db/config'
-import type { AppConfig, ModelConfig } from '@/db/types'
+import type { AppConfig, ModelConfig, BackendModelConfig } from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
 import { modelLabel } from '@/lib/model-utils'
 import { useAuthStore } from '@/stores/auth'
@@ -44,33 +44,39 @@ function openBackendAdd() {
     apiBase: '',
     apiKey: '',
     model: '',
+    // Default values matching createDefaultModelConfig
     maxOutputTokens: 16384,
     contextWindowTokens: 128000,
     outputReserveTokens: 4096,
     compactionTriggerRatio: 0.7,
     compactionTargetRatio: 0.2,
+    summaryModelId: '',
     isBackendModel: true,
+    backendId: undefined, // New model, no backend ID yet
   }
   dialogOpen.value = true
 }
 
-function openBackendEdit(bm: import('@/db/types').BackendModelConfig) {
+function openBackendEdit(bm: BackendModelConfig) {
   editingModel.value = {
     id: `backend-${bm.id}`,
     provider: bm.provider,
     apiBase: '',
     apiKey: '',
     model: bm.model,
+    // Backend provides these values
     maxOutputTokens: bm.maxOutputTokens,
     contextWindowTokens: bm.contextWindowTokens,
-    outputReserveTokens: 0,
-    compactionTriggerRatio: 0.85,
-    compactionTargetRatio: 0.7,
+    // Use same compaction defaults as user-configured models
+    outputReserveTokens: 4096,
+    compactionTriggerRatio: 0.7,
+    compactionTargetRatio: 0.2,
+    summaryModelId: '',
     isBackendModel: true,
     backendId: bm.id,
     isPublic: bm.isPublic,
-  } as any
-  editingModel.value.backendName = bm.name
+    name: bm.name,
+  }
   dialogOpen.value = true
 }
 
@@ -104,13 +110,14 @@ async function handleSave(model: ModelConfig) {
 async function handleSaveBackendModel(model: ModelConfig) {
   const isUpdate = !!(model.backendId && editingModel.value?.backendId)
 
-  const data: any = {
-    name: (model as any).name || model.provider,
+  const data: Record<string, unknown> = {
+    // Only send name if provided; backend will handle fallback
+    ...(model.name?.trim() && { name: model.name.trim() }),
     provider: model.provider,
     model: model.model,
     maxOutputTokens: model.maxOutputTokens,
     contextWindowTokens: model.contextWindowTokens,
-    isPublic: (model as any).isPublic ?? false,
+    isPublic: model.isPublic ?? false,
   }
 
   if (isUpdate) {
