@@ -290,7 +290,7 @@ onMounted(() => {
 
     <!-- Backend Models Section -->
     <section
-      v-if="auth.isAuthenticated && (backendModels.models.length > 0 || auth.isAdmin)"
+      v-if="auth.isAuthenticated"
       class="rounded-xl border bg-card shadow-sm p-5 space-y-4"
     >
       <div>
@@ -300,6 +300,10 @@ onMounted(() => {
           <span class="text-[11px] px-1.5 py-0.5 rounded-full border text-muted-foreground">后端</span>
         </div>
         <p class="text-xs text-muted-foreground">管理员配置的共享模型，所有用户可见</p>
+      </div>
+
+      <div v-if="backendModels.error" class="text-xs text-destructive bg-destructive/10 rounded px-3 py-2">
+        {{ backendModels.error }}
       </div>
 
       <div v-if="backendModels.loading" class="text-xs text-muted-foreground py-4 text-center">
