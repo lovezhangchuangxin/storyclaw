@@ -33,7 +33,7 @@ export default defineConfig({
         background_color: '#F5F0E8',
         display: 'standalone',
         orientation: 'any',
-        start_url: '/',
+        start_url: '/storyclaw/',
         icons: [
           {
             src: 'icon-192x192.png',
