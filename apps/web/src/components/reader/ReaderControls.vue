@@ -64,14 +64,14 @@ function updateSetting<K extends keyof ReaderSettings>(
               />
               <span
                 class="absolute inset-0 rounded-full ring-2 transition-all duration-200"
-                :class="appTheme?.value === t.id
+                :class="appTheme === t.id
                   ? 'ring-foreground/70 scale-[1.12]'
                   : 'ring-transparent group-hover:ring-muted-foreground/25 group-hover:scale-105'"
               />
             </span>
             <span
               class="text-[10px] leading-none transition-colors"
-              :class="appTheme?.value === t.id ? 'text-foreground font-medium' : 'text-muted-foreground/70'"
+              :class="appTheme === t.id ? 'text-foreground font-medium' : 'text-muted-foreground/70'"
             >
               {{ t.name }}
             </span>

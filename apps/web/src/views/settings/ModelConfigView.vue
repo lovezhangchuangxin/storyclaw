@@ -4,7 +4,7 @@ import { Plus, Trash2, Pen, Star, Settings, Bot, Server, Shield } from 'lucide-v
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { saveConfig, getConfig } from '@/db/config'
-import type { AppConfig, ModelConfig, BackendModelConfig } from '@/db/types'
+import type { AppConfig, ModelConfig, BackendModelConfig, CreateBackendModelRequest, UpdateBackendModelRequest } from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
 import { modelLabel } from '@/lib/model-utils'
 import { useAuthStore } from '@/stores/auth'
@@ -132,14 +132,14 @@ async function handleSaveBackendModel(model: ModelConfig) {
 
   try {
     if (isUpdate) {
-      await backendModels.update(model.backendId, data)
+      await backendModels.update(model.backendId!, data as UpdateBackendModelRequest)
       toast.success('后端模型已更新')
     } else {
       if (!model.apiKey) {
         toast.error('请输入 API Key')
         return
       }
-      await backendModels.create(data)
+      await backendModels.create(data as unknown as CreateBackendModelRequest)
       toast.success('后端模型已添加')
     }
     await backendModels.fetchModels()

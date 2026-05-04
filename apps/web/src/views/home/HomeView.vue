@@ -14,7 +14,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { createNovel } from '@/db/novels'
-import { getConfig } from '@/db/config'
 import { useNovelList } from '@/composables/useNovelList'
 import { getAllModels } from '@/composables/useModels'
 import { toast } from 'vue-sonner'

@@ -68,7 +68,7 @@ const filteredNovels = computed(() => {
   )
 })
 
-function onTabChange(val: string) {
+function onTabChange(val: string | number) {
   router.replace({ query: val === 'overview' ? {} : { tab: val } })
 }
 
