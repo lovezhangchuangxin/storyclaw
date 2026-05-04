@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import DOMPurify from 'dompurify'
 import type { ReaderSettings } from './types'
 
@@ -70,6 +70,10 @@ function scrollToPos(pos: number) {
   if (!container.value) return
   container.value.scrollTo({ top: pos, behavior: 'instant' })
 }
+
+watch(() => props.chapterIndex, () => {
+  container.value?.scrollTo({ top: 0, behavior: 'instant' })
+})
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
