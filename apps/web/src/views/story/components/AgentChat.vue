@@ -7,7 +7,8 @@ import { cloneMessages } from '@/agent/message-state'
 import { compactConversationContext } from '@/agent/context-compaction'
 import { loadStoryState } from '@/agent/story-state'
 import { getConfig } from '@/db/config'
-import { getConversationByNovelId } from '@/db/conversations'
+import { deleteConversation, getConversationByNovelId } from '@/db/conversations'
+import { deleteContextSnapshotsByNovelId } from '@/db/context-snapshots'
 import type {
   AssistantMessage,
   AssistantPart,
@@ -345,8 +346,27 @@ function cancel() {
 function handleCommand(cmdId: string) {
   const handlers: Record<string, () => void> = {
     compact: compactContext,
+    new: newConversation,
   }
   handlers[cmdId]?.()
+}
+
+async function newConversation() {
+  if (isGenerating.value) return
+  try {
+    await deleteConversation(props.novelId)
+    await deleteContextSnapshotsByNovelId(props.novelId)
+    persistedMessages.value = []
+    unsavedMessages.value = []
+    localStatusMessages.value = []
+    transientMessages.value = []
+    toast.success('已创建新会话')
+  }
+  catch (error) {
+    toast.error('创建新会话失败', {
+      description: error instanceof Error ? error.message : String(error),
+    })
+  }
 }
 
 async function compactContext() {

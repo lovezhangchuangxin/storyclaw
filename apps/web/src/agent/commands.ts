@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import { Zap } from 'lucide-vue-next'
+import { Zap, RefreshCw } from 'lucide-vue-next'
 
 export interface SlashCommand {
   id: string
@@ -14,6 +14,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     label: '/compact',
     description: '整理上下文，压缩对话历史',
     icon: Zap,
+  },
+  {
+    id: 'new',
+    label: '/new',
+    description: '新建会话，清除当前对话记录',
+    icon: RefreshCw,
   },
 ]
 
