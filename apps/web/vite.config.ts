@@ -32,7 +32,7 @@ export default defineConfig({
         theme_color: '#F5F0E8',
         background_color: '#F5F0E8',
         display: 'standalone',
-        orientation: 'any',
+        orientation: 'portrait',
         start_url: '/storyclaw/',
         icons: [
           {
