@@ -8,6 +8,8 @@ export interface LLMClientOptions {
   onToolStreamToken?: (toolCallId: string, toolName: string, token: string) => void
   onReasoningToken?: (token: string) => void
   signal?: AbortSignal
+  useBackendProxy?: boolean
+  backendUrl?: string
 }
 
 export interface LLMUsage {
@@ -25,11 +27,15 @@ function isAbortError(error: unknown): boolean {
 }
 
 export function createLLMClient(options: LLMClientOptions) {
-  const { config, onToken, onToolCallStart, onToolStreamToken, onReasoningToken, signal } = options
+  const { config, onToken, onToolCallStart, onToolStreamToken, onReasoningToken, signal, useBackendProxy, backendUrl } = options
+
+  const baseURL = useBackendProxy && backendUrl
+    ? `${backendUrl}/api/llm/v1`
+    : config.apiBase
 
   const client = new OpenAI({
-    baseURL: config.apiBase,
-    apiKey: config.apiKey,
+    baseURL,
+    apiKey: useBackendProxy && backendUrl ? 'proxy' : config.apiKey,
     dangerouslyAllowBrowser: true,
   })
 

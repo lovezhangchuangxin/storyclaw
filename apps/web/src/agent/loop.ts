@@ -218,6 +218,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
   const client = createLLMClient({
     config: modelConfig,
     signal,
+    useBackendProxy: config.useBackendProxy,
+    backendUrl: config.backendUrl,
     onToken(token) {
       if (!currentAssistantMessage) return
       appendAssistantText(currentAssistantMessage, token)

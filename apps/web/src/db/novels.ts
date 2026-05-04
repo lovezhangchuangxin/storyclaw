@@ -18,6 +18,14 @@ export async function createNovel(novel: Novel): Promise<string> {
 }
 
 export async function updateNovel(novel: Novel): Promise<void> {
+  novel.version = (novel.version ?? 0) + 1
+  novel.updatedAt = Date.now()
+  const db = await getDB()
+  await db.put('novels', novel)
+}
+
+export async function updateNovelFromSync(novel: Novel): Promise<void> {
+  novel.updatedAt = Date.now()
   const db = await getDB()
   await db.put('novels', novel)
 }
