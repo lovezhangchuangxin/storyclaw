@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { adminListUsers, adminGetStats } from '@/lib/api-client'
-import type { AdminUserSummary, AdminStats, PaginatedResponse } from '@/db/types'
+import type { AdminUserSummary, AdminStats } from '@/db/types'
 import { toast } from 'vue-sonner'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, BookOpen, BarChart3 } from 'lucide-vue-next'
 

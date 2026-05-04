@@ -1,5 +1,4 @@
 import { ref, computed } from 'vue'
-import type { Novel } from '@/db/types'
 import { getAllNovels, getNovelById, updateNovelFromSync } from '@/db/novels'
 import { getOutlineByNovelId } from '@/db/outlines'
 import { getCharactersByNovelId } from '@/db/characters'
@@ -9,7 +8,6 @@ import { getConversationByNovelId } from '@/db/conversations'
 import {
   pushNovel as apiPushNovel,
   pullNovel as apiPullNovel,
-  listNovels as apiListNovels,
 } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth'
 import type { SyncPayload } from '@/db/types'
@@ -97,9 +95,8 @@ export function useSync() {
         await updateNovelFromSync({ ...resp.data.novel, version: resp.version, backendId })
         const { saveOutline } = await import('@/db/outlines')
         const { saveChapter } = await import('@/db/chapters')
-        const { saveBuilding } = await import('@/db/worldBuilding')
+        const { saveWorldBuilding } = await import('@/db/worldBuilding')
 
-        await updateNovel({ ...resp.data.novel, version: resp.version, backendId })
         if (resp.data.outline) await saveOutline({ ...resp.data.outline, novelId })
         for (const ch of resp.data.characters) {
           const { saveCharacter } = await import('@/db/characters')
@@ -108,7 +105,7 @@ export function useSync() {
         for (const ch of resp.data.chapters) {
           await saveChapter({ ...ch, novelId })
         }
-        if (resp.data.worldBuilding) await saveBuilding({ ...resp.data.worldBuilding, novelId })
+        if (resp.data.worldBuilding) await saveWorldBuilding({ ...resp.data.worldBuilding, novelId })
 
         syncStatusMap.value[novelId] = 'synced'
         lastSyncMap.value[novelId] = Date.now()

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { adminListNovels } from '@/lib/api-client'
-import type { AdminNovelSummary, PaginatedResponse } from '@/db/types'
+import type { AdminNovelSummary } from '@/db/types'
 import { toast } from 'vue-sonner'
 
 const novels = ref<AdminNovelSummary[]>([])

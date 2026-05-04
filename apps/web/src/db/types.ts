@@ -441,6 +441,7 @@ export interface PushNovelRequest {
 export interface PushNovelResponse {
   accepted: boolean
   serverVersion: number
+  backendId?: string
   data?: SyncPayload
 }
 
