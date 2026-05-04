@@ -15,8 +15,12 @@
 # Build
 dist/
 *.tsbuildinfo
+target/
 
 # Dependencies
 node_modules/
+
+# Environment
+.env
 
 .worktrees/
