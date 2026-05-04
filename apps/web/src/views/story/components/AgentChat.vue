@@ -15,7 +15,6 @@ import type {
   ModelConfig,
   StatusMessage,
 } from '@/db/types'
-import { modelLabel } from '@/lib/model-utils'
 import AgentWelcome from './agent/AgentWelcome.vue'
 import AgentMessageList from './agent/AgentMessageList.vue'
 import AgentInputBar from './agent/AgentInputBar.vue'
@@ -42,7 +41,7 @@ const selectedModelId = ref('')
 
 const selectedModelLabel = computed(() => {
   const model = models.value.find((item) => item.id === selectedModelId.value)
-  return model ? modelLabel(model) : '选择模型'
+  return model ? model.model : '选择模型'
 })
 
 const selectedModelProvider = computed(() => {

@@ -7,7 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { modelLabel } from '@/lib/model-utils'
 import type { ModelConfig } from '@/db/types'
 
 defineProps<{
@@ -68,7 +67,7 @@ const emit = defineEmits<{
                 <span class="flex size-5 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70">
                   {{ model.provider[0]?.toUpperCase() }}
                 </span>
-                <span class="text-xs">{{ modelLabel(model) }}</span>
+                <span class="text-xs">{{ model.model }}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
