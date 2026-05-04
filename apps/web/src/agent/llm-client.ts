@@ -1,5 +1,7 @@
 import OpenAI from 'openai'
 import type { ModelConfig } from '@/db/types'
+import { getAccessToken } from '@/lib/api-client'
+import { isAbortError } from './utils'
 
 export interface LLMClientOptions {
   config: ModelConfig
@@ -19,14 +21,6 @@ export interface LLMUsage {
   totalTokens: number
 }
 
-function isAbortError(error: unknown): boolean {
-  return (
-    error instanceof DOMException && error.name === 'AbortError'
-  ) || (
-    error instanceof Error && error.name === 'AbortError'
-  )
-}
-
 export function createLLMClient(options: LLMClientOptions) {
   const { config, onToken, onToolCallStart, onToolStreamToken, onReasoningToken, signal, useBackendProxy, backendUrl, modelId } = options
 
@@ -36,8 +30,27 @@ export function createLLMClient(options: LLMClientOptions) {
 
   const client = new OpenAI({
     baseURL,
-    apiKey: useBackendProxy && backendUrl ? 'proxy' : config.apiKey,
+    apiKey: (() => {
+      if (useBackendProxy && backendUrl) {
+        const token = getAccessToken()
+        if (!token) throw new Error('使用后端模型需要登录，请先登录或刷新页面。')
+        return token
+      }
+      return config.apiKey
+    })(),
     dangerouslyAllowBrowser: true,
+    fetch: async (url, init) => {
+      if (init?.headers) {
+        const headers = new Headers(init.headers as HeadersInit)
+        for (const key of headers.keys()) {
+          if (key === 'user-agent' || key.startsWith('x-stainless-')) {
+            headers.delete(key)
+          }
+        }
+        return globalThis.fetch(url, { ...init, headers })
+      }
+      return globalThis.fetch(url, init)
+    },
   })
 
   return {
@@ -54,8 +67,8 @@ export function createLLMClient(options: LLMClientOptions) {
             temperature: 0.8,
             stream: true,
             stream_options: { include_usage: true },
-            ...(modelId ? { model_id: modelId } as any : {}),
-        },
+            ...(modelId ? { model_id: modelId } : {}),
+        } as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming,
         { signal },
       )
 

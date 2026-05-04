@@ -10,9 +10,10 @@ mod llm;
 mod admin;
 mod rate_limit;
 
-use axum::{routing::get, Router, http::{Method, header}};
+use axum::{routing::get, Router, http::Method};
 use std::net::SocketAddr;
-use tower_http::cors::CorsLayer;
+use std::time::Duration;
+use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::auth::handlers::AppState;
@@ -38,7 +39,10 @@ async fn main() -> anyhow::Result<()> {
     sqlx::migrate!("./migrations").run(&pool).await?;
     tracing::info!("Migrations applied");
 
-    let http_client = reqwest::Client::new();
+    let http_client = reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(10))
+        .read_timeout(Duration::from_secs(120))
+        .build()?;
 
     let state = AppState {
         pool: pool.clone(),
@@ -53,8 +57,7 @@ async fn main() -> anyhow::Result<()> {
     let cors = CorsLayer::new()
         .allow_origin(cors_origin)
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
-        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
-        .allow_credentials(true);
+        .allow_headers(Any);
     let auth_router = routes::auth::auth_routes(state.clone());
     let novels_router = routes::novels::sync_routes(state.clone());
     let llm_router = routes::llm::llm_routes(state.clone());

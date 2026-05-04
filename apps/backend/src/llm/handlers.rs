@@ -1,7 +1,8 @@
 use axum::{
+    body::Body,
     extract::State,
-    http::StatusCode,
-    response::{IntoResponse, Response, sse::{Event, Sse}},
+    http::{StatusCode, header},
+    response::{IntoResponse, Response},
     Json,
 };
 use futures::StreamExt;
@@ -50,10 +51,10 @@ pub async fn chat_completions(
     if !resp.status().is_success() {
         let status = resp.status();
         let text = resp.text().await.unwrap_or_default();
+        tracing::error!("Upstream LLM error: {} - {}", status, text);
         return Err(AppError::Internal(anyhow::anyhow!(
-            "Upstream LLM error: {} - {}",
-            status,
-            text
+            "Upstream LLM request failed (status {})",
+            status
         )));
     }
 
@@ -68,15 +69,18 @@ pub async fn chat_completions(
     let stream = resp
         .bytes_stream()
         .map(|chunk| match chunk {
-            Ok(bytes) => {
-                let text = String::from_utf8_lossy(&bytes).to_string();
-                Ok(Event::default().data(text))
-            }
+            Ok(bytes) => Ok(bytes),
             Err(e) => {
-                tracing::error!("SSE stream error: {}", e);
-                Err(axum::Error::new(e))
+                tracing::error!("Stream error: {}", e);
+                Err(std::io::Error::other(e))
             }
         });
 
-    Ok(Sse::new(stream).into_response())
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/event-stream")
+        .header(header::CACHE_CONTROL, "no-cache")
+        .header("X-Accel-Buffering", "no")
+        .body(Body::from_stream(stream))
+        .map_err(|e| AppError::Internal(anyhow::anyhow!("Failed to build SSE response: {}", e)))
 }

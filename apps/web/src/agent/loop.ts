@@ -1,5 +1,6 @@
 import type OpenAI from 'openai'
 import { getConfig } from '@/db/config'
+import { getAllModels } from '@/composables/useModels'
 import { getConversationByNovelId, saveConversation } from '@/db/conversations'
 import type { AssistantMessage, AssistantToolUsePart, Message } from '@/db/types'
 import { buildContext, maybeCompactBeforeBuild } from './context'
@@ -23,6 +24,7 @@ import {
 } from './message-state'
 import { executeToolCall } from './tools'
 import type { ToolContext } from './tools/types'
+import { isAbortError } from './utils'
 
 export interface AgentLoopOptions {
   novelId: string
@@ -104,14 +106,6 @@ function serializeToolExecutionError(error: unknown): string {
   return JSON.stringify({ error: message })
 }
 
-function isAbortError(error: unknown): boolean {
-  return (
-    error instanceof DOMException && error.name === 'AbortError'
-  ) || (
-    error instanceof Error && error.name === 'AbortError'
-  )
-}
-
 function finalizeInFlightAssistant(
   turnMessages: Message[],
   assistantMessage: AssistantMessage | null,
@@ -166,14 +160,17 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
   } = options
 
   const config = await getConfig()
+  const allModels = await getAllModels()
   const modelId = modelConfigId ?? config.defaultModelId
-  const modelConfig = config.models.find((model) => model.id === modelId) ?? config.models[0]
+  const modelConfig = allModels.find((model) => model.id === modelId) ?? allModels[0]
   const existingConversation = await getConversationByNovelId(novelId)
   const historyMessages = providedHistoryMessages ?? existingConversation?.messages ?? []
   const turnMessages: Message[] = [createUserMessage(userMessage)]
 
   if (!modelConfig) {
-    const errorMessage = '没有配置模型。请在模型配置中配置至少一个模型。'
+    const errorMessage = modelId
+      ? `找不到模型（${modelId}）。可能是后端模型未加载，请检查后端连接。`
+      : '没有配置模型。请在模型配置中配置至少一个模型。'
     onError?.(errorMessage)
     turnMessages.push(createStatusMessage('error', errorMessage))
     const persistence = await persistTurn(novelId, historyMessages, turnMessages)
