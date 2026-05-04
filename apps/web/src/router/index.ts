@@ -1,5 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import { useAuthStore } from '@/stores/auth'
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -48,6 +50,47 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/views/settings/AppearanceView.vue'),
         meta: { title: '外观', back: true },
       },
+      {
+        path: 'admin/users',
+        name: 'admin-users',
+        component: () => import('@/views/admin/UsersView.vue'),
+        meta: { title: '用户管理', requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: 'admin/novels',
+        name: 'admin-novels',
+        component: () => import('@/views/admin/NovelsView.vue'),
+        meta: { title: '小说管理', requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: 'admin/stats',
+        name: 'admin-stats',
+        component: () => import('@/views/admin/StatsView.vue'),
+        meta: { title: '数据统计', requiresAuth: true, requiresAdmin: true },
+      },
     ],
   },
 ]
+
+export const router = createRouter({
+  history: createWebHistory(),
+  routes,
+})
+
+router.beforeEach((to, _from, next) => {
+  const auth = useAuthStore()
+
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    next({ name: 'server-config' })
+    return
+  }
+
+  if (to.meta.requiresAdmin && !auth.isAdmin) {
+    next({ name: 'home' })
+    return
+  }
+
+  next()
+})
+
+export default router
