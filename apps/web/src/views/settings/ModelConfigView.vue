@@ -68,6 +68,7 @@ function openBackendEdit(bm: import('@/db/types').BackendModelConfig) {
     compactionTargetRatio: 0.7,
     isBackendModel: true,
     backendId: bm.id,
+    isPublic: bm.isPublic,
   } as any
   editingModel.value.backendName = bm.name
   dialogOpen.value = true
@@ -101,21 +102,29 @@ async function handleSave(model: ModelConfig) {
 }
 
 async function handleSaveBackendModel(model: ModelConfig) {
+  const isUpdate = !!(model.backendId && editingModel.value?.backendId)
+
   const data: any = {
     name: (model as any).name || model.provider,
     provider: model.provider,
-    apiBase: model.apiBase || 'https://api.openai.com/v1',
     model: model.model,
     maxOutputTokens: model.maxOutputTokens,
     contextWindowTokens: model.contextWindowTokens,
     isPublic: (model as any).isPublic ?? false,
   }
-  if (model.apiKey) {
-    data.apiKey = model.apiKey
+
+  if (isUpdate) {
+    // Update: only send apiBase/apiKey if admin explicitly filled them in
+    if (model.apiBase) data.apiBase = model.apiBase
+    if (model.apiKey) data.apiKey = model.apiKey
+  } else {
+    // Create: apiBase required, default to OpenAI; apiKey required
+    data.apiBase = model.apiBase || 'https://api.openai.com/v1'
+    if (model.apiKey) data.apiKey = model.apiKey
   }
 
   try {
-    if (model.backendId && editingModel.value?.backendId) {
+    if (isUpdate) {
       await backendModels.update(model.backendId, data)
       toast.success('后端模型已更新')
     } else {
