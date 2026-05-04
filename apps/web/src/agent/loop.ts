@@ -173,7 +173,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
   const turnMessages: Message[] = [createUserMessage(userMessage)]
 
   if (!modelConfig) {
-    const errorMessage = '没有配置模型。请在设置中配置至少一个模型。'
+    const errorMessage = '没有配置模型。请在模型配置中配置至少一个模型。'
     onError?.(errorMessage)
     turnMessages.push(createStatusMessage('error', errorMessage))
     const persistence = await persistTurn(novelId, historyMessages, turnMessages)

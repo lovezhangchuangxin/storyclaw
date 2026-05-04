@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BookOpen, Plus, Search } from 'lucide-vue-next'
+import { BookOpen, Plus, Search, Settings } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { createNovel } from '@/db/novels'
+import { getConfig } from '@/db/config'
 import { useNovelList } from '@/composables/useNovelList'
 import { toast } from 'vue-sonner'
 import NovelCard from './components/NovelCard.vue'
@@ -55,6 +56,21 @@ const {
 const router = useRouter()
 
 const newStoryDialogOpen = ref(false)
+const noModelDialogOpen = ref(false)
+const hasModels = ref(true)
+
+onMounted(async () => {
+  const config = await getConfig()
+  hasModels.value = config.models.length > 0
+})
+
+function openCreateDialog() {
+  if (!hasModels.value) {
+    noModelDialogOpen.value = true
+    return
+  }
+  newStoryDialogOpen.value = true
+}
 
 async function handleCreateStory(selectedPromptIds: string[]) {
   try {
@@ -132,7 +148,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           v-if="novels.length > 0"
           size="sm"
           class="shrink-0 gap-1.5"
-          @click="newStoryDialogOpen = true"
+          @click="openCreateDialog"
         >
           <Plus class="size-4" />
           创建
@@ -145,7 +161,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           <BookOpen class="size-12 mb-4 text-muted-foreground/30" />
           <h3 class="text-sm font-medium mb-1">还没有故事</h3>
           <p class="text-xs text-muted-foreground mb-6">创建一个新故事，开始你的创作之旅</p>
-          <Button @click="newStoryDialogOpen = true">
+          <Button @click="openCreateDialog">
             <Plus class="size-4" />
             开始第一个故事
           </Button>
@@ -173,6 +189,30 @@ async function handleCreateStory(selectedPromptIds: string[]) {
       </section>
     </template>
   </div>
+
+  <!-- No Model Warning Dialog -->
+  <Dialog v-model:open="noModelDialogOpen">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>还没有配置模型</DialogTitle>
+        <DialogDescription>
+          创建故事前需要至少配置一个 AI 模型，用于驱动 Agent 创作引擎。
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <DialogClose as-child>
+          <Button variant="outline">取消</Button>
+        </DialogClose>
+        <Button
+          class="gap-1.5"
+          @click="noModelDialogOpen = false; router.push('/settings/model')"
+        >
+          <Settings class="size-4" />
+          前往配置
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 
   <!-- New Story Dialog -->
   <NewStoryDialog
