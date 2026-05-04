@@ -7,10 +7,15 @@
     "perf": "warn"
   },
   "rules": {
-    "no-console": "warn",
+    "no-console": "off",
     "no-debugger": "error",
+    "no-underscore-dangle": "off",
     "import/no-unassigned-import": "off",
-    "no-await-in-loop": "off"
+    "no-await-in-loop": "off",
+    "unicorn/no-instanceof-builtins": "off",
+    "unicorn/no-array-sort": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "unicorn/prefer-set-has": "off"
   },
   "env": {
     "browser": true,
