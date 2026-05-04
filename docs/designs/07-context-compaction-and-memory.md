@@ -336,4 +336,3 @@ interface ContextSnapshot {
 - `assistant.parts` 作为顺序唯一来源
 - story state 与 conversational memory 分层
 - 压缩只改 effective context，不改原始历史
-

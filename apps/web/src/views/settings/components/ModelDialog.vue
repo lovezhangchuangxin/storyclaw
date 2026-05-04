@@ -9,11 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import Combobox from './Combobox.vue'
 import { createDefaultModelConfig, type ModelConfig } from '@/db/types'
-import {
-  PROVIDER_NAMES,
-  getApiBaseForProvider,
-  fetchModels,
-} from '@/lib/provider-data'
+import { PROVIDER_NAMES, getApiBaseForProvider, fetchModels } from '@/lib/provider-data'
 import { testConnection } from '@/lib/test-connection'
 
 const props = defineProps<{
@@ -76,46 +72,57 @@ const saveDisabled = computed(() => {
 
 const modelOptions = computed(() => fetchedModels.value)
 
-watch(() => props.open, (val) => {
-  if (!val) return
-  populating = true
-  fetchedModels.value = []
-  const fallback = createDefaultModelConfig({
-    id: props.model?.id ?? crypto.randomUUID(),
-    provider: props.model?.provider ?? '',
-    apiBase: props.model?.apiBase ?? '',
-    apiKey: props.model?.apiKey ?? '',
-    model: props.model?.model ?? '',
-  })
-  if (props.model) {
-    provider.value = props.model.provider
-    apiBase.value = props.model.apiBase
-    apiKey.value = props.model.apiKey
-    model.value = props.model.model
-    modelName.value = props.model.name ?? ''
-    isPublic.value = props.model.isPublic ?? false
-    maxOutputTokens.value = String(props.model.maxOutputTokens ?? fallback.maxOutputTokens)
-    contextWindowTokens.value = String(props.model.contextWindowTokens ?? fallback.contextWindowTokens)
-    outputReserveTokens.value = String(props.model.outputReserveTokens ?? fallback.outputReserveTokens)
-    compactionTriggerRatio.value = String(props.model.compactionTriggerRatio ?? fallback.compactionTriggerRatio)
-    compactionTargetRatio.value = String(props.model.compactionTargetRatio ?? fallback.compactionTargetRatio)
-    summaryModelId.value = props.model.summaryModelId ?? ''
-  } else {
-    provider.value = ''
-    apiBase.value = ''
-    apiKey.value = ''
-    model.value = ''
-    modelName.value = ''
-    isPublic.value = false
-    maxOutputTokens.value = String(fallback.maxOutputTokens)
-    contextWindowTokens.value = String(fallback.contextWindowTokens)
-    outputReserveTokens.value = String(fallback.outputReserveTokens)
-    compactionTriggerRatio.value = String(fallback.compactionTriggerRatio)
-    compactionTargetRatio.value = String(fallback.compactionTargetRatio)
-    summaryModelId.value = ''
-  }
-  populating = false
-})
+watch(
+  () => props.open,
+  (val) => {
+    if (!val) return
+    populating = true
+    fetchedModels.value = []
+    const fallback = createDefaultModelConfig({
+      id: props.model?.id ?? crypto.randomUUID(),
+      provider: props.model?.provider ?? '',
+      apiBase: props.model?.apiBase ?? '',
+      apiKey: props.model?.apiKey ?? '',
+      model: props.model?.model ?? '',
+    })
+    if (props.model) {
+      provider.value = props.model.provider
+      apiBase.value = props.model.apiBase
+      apiKey.value = props.model.apiKey
+      model.value = props.model.model
+      modelName.value = props.model.name ?? ''
+      isPublic.value = props.model.isPublic ?? false
+      maxOutputTokens.value = String(props.model.maxOutputTokens ?? fallback.maxOutputTokens)
+      contextWindowTokens.value = String(
+        props.model.contextWindowTokens ?? fallback.contextWindowTokens,
+      )
+      outputReserveTokens.value = String(
+        props.model.outputReserveTokens ?? fallback.outputReserveTokens,
+      )
+      compactionTriggerRatio.value = String(
+        props.model.compactionTriggerRatio ?? fallback.compactionTriggerRatio,
+      )
+      compactionTargetRatio.value = String(
+        props.model.compactionTargetRatio ?? fallback.compactionTargetRatio,
+      )
+      summaryModelId.value = props.model.summaryModelId ?? ''
+    } else {
+      provider.value = ''
+      apiBase.value = ''
+      apiKey.value = ''
+      model.value = ''
+      modelName.value = ''
+      isPublic.value = false
+      maxOutputTokens.value = String(fallback.maxOutputTokens)
+      contextWindowTokens.value = String(fallback.contextWindowTokens)
+      outputReserveTokens.value = String(fallback.outputReserveTokens)
+      compactionTriggerRatio.value = String(fallback.compactionTriggerRatio)
+      compactionTargetRatio.value = String(fallback.compactionTargetRatio)
+      summaryModelId.value = ''
+    }
+    populating = false
+  },
+)
 
 watch(provider, (p) => {
   if (populating) return
@@ -211,11 +218,7 @@ function handleSave() {
 
         <div class="space-y-1.5">
           <Label>提供商</Label>
-          <Combobox
-            v-model="provider"
-            :options="PROVIDER_NAMES"
-            placeholder="选择或输入提供商"
-          />
+          <Combobox v-model="provider" :options="PROVIDER_NAMES" placeholder="选择或输入提供商" />
         </div>
 
         <div class="space-y-1.5">
@@ -294,7 +297,11 @@ function handleSave() {
           <div>
             <p class="text-xs font-medium">上下文管理</p>
             <p class="text-[11px] text-muted-foreground">
-              {{ isBackend ? '后端模型的上下文压缩在前端执行，可自定义配置。' : '控制窗口预算、自动压缩阈值和摘要模型。' }}
+              {{
+                isBackend
+                  ? '后端模型的上下文压缩在前端执行，可自定义配置。'
+                  : '控制窗口预算、自动压缩阈值和摘要模型。'
+              }}
             </p>
           </div>
 
@@ -305,23 +312,51 @@ function handleSave() {
             </div>
             <div class="space-y-1.5">
               <Label class="text-xs">上下文窗口</Label>
-              <Input v-model="contextWindowTokens" type="number" min="1" class="focus-visible:ring-0" />
+              <Input
+                v-model="contextWindowTokens"
+                type="number"
+                min="1"
+                class="focus-visible:ring-0"
+              />
             </div>
             <div class="space-y-1.5">
               <Label class="text-xs">输出预留</Label>
-              <Input v-model="outputReserveTokens" type="number" min="0" class="focus-visible:ring-0" />
+              <Input
+                v-model="outputReserveTokens"
+                type="number"
+                min="0"
+                class="focus-visible:ring-0"
+              />
             </div>
             <div class="space-y-1.5">
               <Label class="text-xs">触发比例</Label>
-              <Input v-model="compactionTriggerRatio" type="number" min="0" max="1" step="0.05" class="focus-visible:ring-0" />
+              <Input
+                v-model="compactionTriggerRatio"
+                type="number"
+                min="0"
+                max="1"
+                step="0.05"
+                class="focus-visible:ring-0"
+              />
             </div>
             <div class="space-y-1.5">
               <Label class="text-xs">目标比例</Label>
-              <Input v-model="compactionTargetRatio" type="number" min="0" max="1" step="0.05" class="focus-visible:ring-0" />
+              <Input
+                v-model="compactionTargetRatio"
+                type="number"
+                min="0"
+                max="1"
+                step="0.05"
+                class="focus-visible:ring-0"
+              />
             </div>
             <div class="space-y-1.5">
               <Label class="text-xs">摘要模型 ID</Label>
-              <Input v-model="summaryModelId" placeholder="留空则复用当前模型" class="focus-visible:ring-0" />
+              <Input
+                v-model="summaryModelId"
+                placeholder="留空则复用当前模型"
+                class="focus-visible:ring-0"
+              />
             </div>
           </div>
         </div>

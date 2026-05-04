@@ -61,16 +61,26 @@ const isCircular = computed(() => {
 
 const valueColorClass = computed(() => {
   switch (type.value) {
-    case 'string': return 'text-[var(--jt-string)]'
-    case 'number': return 'text-[var(--jt-number)]'
-    case 'boolean': return 'text-[var(--jt-boolean)]'
-    case 'null': return 'text-[var(--jt-null)]'
-    case 'undefined': return 'text-[var(--jt-undefined)]'
-    case 'date': return 'text-[var(--jt-date)]'
-    case 'regexp': return 'text-[var(--jt-regexp)]'
-    case 'function': return 'text-[var(--jt-function)]'
-    case 'bigint': return 'text-[var(--jt-number)]'
-    default: return 'text-[var(--jt-null)]'
+    case 'string':
+      return 'text-[var(--jt-string)]'
+    case 'number':
+      return 'text-[var(--jt-number)]'
+    case 'boolean':
+      return 'text-[var(--jt-boolean)]'
+    case 'null':
+      return 'text-[var(--jt-null)]'
+    case 'undefined':
+      return 'text-[var(--jt-undefined)]'
+    case 'date':
+      return 'text-[var(--jt-date)]'
+    case 'regexp':
+      return 'text-[var(--jt-regexp)]'
+    case 'function':
+      return 'text-[var(--jt-function)]'
+    case 'bigint':
+      return 'text-[var(--jt-number)]'
+    default:
+      return 'text-[var(--jt-null)]'
   }
 })
 
@@ -132,65 +142,59 @@ const indentStyle = computed(() => {
   <div>
     <!-- Empty object -->
     <template v-if="type === 'object' && objKeys.length === 0">
-      <div
-        class="jt-row"
-        :style="indentStyle"
-      >
+      <div class="jt-row" :style="indentStyle">
         <span class="jt-arrow-placeholder" />
-        <span v-if="keyName !== null" class="jt-key">{{ formatKey(keyName) }}:<span class="jt-colon-space" /></span>
+        <span v-if="keyName !== null" class="jt-key"
+          >{{ formatKey(keyName) }}:<span class="jt-colon-space"
+        /></span>
         <span class="jt-bracket">{}</span>
       </div>
     </template>
 
     <!-- Empty array -->
     <template v-else-if="type === 'array' && arrLen === 0">
-      <div
-        class="jt-row"
-        :style="indentStyle"
-      >
+      <div class="jt-row" :style="indentStyle">
         <span class="jt-arrow-placeholder" />
-        <span v-if="keyName !== null" class="jt-key">{{ formatKey(keyName) }}:<span class="jt-colon-space" /></span>
+        <span v-if="keyName !== null" class="jt-key"
+          >{{ formatKey(keyName) }}:<span class="jt-colon-space"
+        /></span>
         <span class="jt-bracket">[]</span>
       </div>
     </template>
 
     <!-- Circular reference -->
     <template v-else-if="isCircular">
-      <div
-        class="jt-row"
-        :style="indentStyle"
-      >
+      <div class="jt-row" :style="indentStyle">
         <span class="jt-arrow-placeholder" />
-        <span v-if="keyName !== null" class="jt-key">{{ formatKey(keyName) }}:<span class="jt-colon-space" /></span>
+        <span v-if="keyName !== null" class="jt-key"
+          >{{ formatKey(keyName) }}:<span class="jt-colon-space"
+        /></span>
         <span class="jt-circular">Circular</span>
       </div>
     </template>
 
     <!-- Max depth -->
     <template v-else-if="depth >= maxRenderDepth">
-      <div
-        class="jt-row"
-        :style="indentStyle"
-      >
+      <div class="jt-row" :style="indentStyle">
         <span class="jt-arrow-placeholder" />
-        <span v-if="keyName !== null" class="jt-key">{{ formatKey(keyName) }}:<span class="jt-colon-space" /></span>
+        <span v-if="keyName !== null" class="jt-key"
+          >{{ formatKey(keyName) }}:<span class="jt-colon-space"
+        /></span>
         <span class="jt-max-depth">···</span>
       </div>
     </template>
 
     <!-- Expandable: object or array with items -->
     <template v-else-if="isExpandable(type)">
-      <button
-        class="jt-row jt-expandable"
-        :style="indentStyle"
-        @click="toggle"
-      >
+      <button class="jt-row jt-expandable" :style="indentStyle" @click="toggle">
         <span class="jt-arrow" :class="isExpanded && 'jt-arrow-open'">
           <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
             <path d="M3 1.5L7.5 5L3 8.5Z" />
           </svg>
         </span>
-        <span v-if="keyName !== null" class="jt-key">{{ formatKey(keyName) }}:<span class="jt-colon-space" /></span>
+        <span v-if="keyName !== null" class="jt-key"
+          >{{ formatKey(keyName) }}:<span class="jt-colon-space"
+        /></span>
         <span v-if="!isExpanded" class="jt-count">
           {{ type === 'array' ? childCount : `${childCount} k` }}
         </span>
@@ -199,10 +203,7 @@ const indentStyle = computed(() => {
         </span>
       </button>
 
-      <div
-        v-show="isExpanded"
-        class="jt-children"
-      >
+      <div v-show="isExpanded" class="jt-children">
         <JsonNode
           v-for="[k, val] in entries"
           :key="String(k)"
@@ -218,11 +219,7 @@ const indentStyle = computed(() => {
           :visited="childVisited"
         />
       </div>
-      <div
-        v-show="isExpanded"
-        class="jt-row jt-close-bracket"
-        :style="indentStyle"
-      >
+      <div v-show="isExpanded" class="jt-row jt-close-bracket" :style="indentStyle">
         <span class="jt-arrow-placeholder" />
         <span class="jt-bracket">{{ type === 'array' ? ']' : '}' }}</span>
       </div>
@@ -230,18 +227,15 @@ const indentStyle = computed(() => {
 
     <!-- Primitive leaf -->
     <template v-else>
-      <div
-        class="jt-row jt-leaf"
-        :style="indentStyle"
-      >
+      <div class="jt-row jt-leaf" :style="indentStyle">
         <span class="jt-arrow-placeholder" />
-        <span v-if="keyName !== null" class="jt-key">{{ formatKey(keyName) }}:<span class="jt-colon-space" /></span>
-        <span :class="[valueColorClass, type === 'string' ? 'jt-string-value' : 'jt-value']">{{ displayValue }}</span>
-        <button
-          v-if="isLongString"
-          class="jt-string-toggle"
-          @click="toggleString"
-        >
+        <span v-if="keyName !== null" class="jt-key"
+          >{{ formatKey(keyName) }}:<span class="jt-colon-space"
+        /></span>
+        <span :class="[valueColorClass, type === 'string' ? 'jt-string-value' : 'jt-value']">{{
+          displayValue
+        }}</span>
+        <button v-if="isLongString" class="jt-string-toggle" @click="toggleString">
           {{ stringExpanded ? '收起' : '展开' }}
         </button>
         <button
@@ -308,7 +302,9 @@ const indentStyle = computed(() => {
   height: 16px;
   flex-shrink: 0;
   color: var(--jt-arrow);
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.15s ease;
 }
 .jt-expandable:hover .jt-arrow {
   color: var(--jt-arrow-hover);
@@ -437,7 +433,9 @@ const indentStyle = computed(() => {
   border-radius: 10px;
   border: none;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
   flex-shrink: 0;
   line-height: 1.5;
 }
@@ -457,7 +455,10 @@ const indentStyle = computed(() => {
   padding: 2px;
   border-radius: 3px;
   opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
   flex-shrink: 0;
   margin-left: 2px;
 }

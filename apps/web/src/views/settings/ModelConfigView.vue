@@ -4,7 +4,13 @@ import { Plus, Trash2, Pen, Star, Settings, Bot, Server, Shield } from 'lucide-v
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { saveConfig, getConfig } from '@/db/config'
-import type { AppConfig, ModelConfig, BackendModelConfig, CreateBackendModelRequest, UpdateBackendModelRequest } from '@/db/types'
+import type {
+  AppConfig,
+  ModelConfig,
+  BackendModelConfig,
+  CreateBackendModelRequest,
+  UpdateBackendModelRequest,
+} from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
 import { modelLabel } from '@/lib/model-utils'
 import { useAuthStore } from '@/stores/auth'
@@ -108,38 +114,39 @@ async function handleSave(model: ModelConfig) {
 }
 
 async function handleSaveBackendModel(model: ModelConfig) {
-  const isUpdate = !!(model.backendId && editingModel.value?.backendId)
-
-  const data: Record<string, unknown> = {
-    // Only send name if provided; backend will handle fallback
-    ...(model.name?.trim() && { name: model.name.trim() }),
-    provider: model.provider,
-    model: model.model,
-    maxOutputTokens: model.maxOutputTokens,
-    contextWindowTokens: model.contextWindowTokens,
-    isPublic: model.isPublic ?? false,
-  }
-
-  if (isUpdate) {
-    // Update: only send apiBase/apiKey if admin explicitly filled them in
-    if (model.apiBase) data.apiBase = model.apiBase
-    if (model.apiKey) data.apiKey = model.apiKey
-  } else {
-    // Create: apiBase required, default to OpenAI; apiKey required
-    data.apiBase = model.apiBase || 'https://api.openai.com/v1'
-    if (model.apiKey) data.apiKey = model.apiKey
-  }
-
   try {
-    if (isUpdate) {
-      await backendModels.update(model.backendId!, data as UpdateBackendModelRequest)
+    if (model.backendId && editingModel.value?.backendId) {
+      // Update: only include apiBase/apiKey if admin explicitly filled them in
+      const updateData: UpdateBackendModelRequest = {
+        name: model.name?.trim() || undefined,
+        provider: model.provider,
+        model: model.model,
+        maxOutputTokens: model.maxOutputTokens,
+        contextWindowTokens: model.contextWindowTokens,
+        isPublic: model.isPublic ?? false,
+      }
+      if (model.apiBase) updateData.apiBase = model.apiBase
+      if (model.apiKey) updateData.apiKey = model.apiKey
+
+      await backendModels.update(model.backendId, updateData)
       toast.success('后端模型已更新')
     } else {
       if (!model.apiKey) {
         toast.error('请输入 API Key')
         return
       }
-      await backendModels.create(data as unknown as CreateBackendModelRequest)
+      const createData: CreateBackendModelRequest = {
+        name: model.name?.trim() || model.model || 'Unnamed',
+        provider: model.provider,
+        apiBase: model.apiBase || 'https://api.openai.com/v1',
+        apiKey: model.apiKey,
+        model: model.model,
+        maxOutputTokens: model.maxOutputTokens,
+        contextWindowTokens: model.contextWindowTokens,
+        isPublic: model.isPublic ?? false,
+      }
+
+      await backendModels.create(createData)
       toast.success('后端模型已添加')
     }
     await backendModels.fetchModels()
@@ -214,7 +221,6 @@ onMounted(() => {
 
 <template>
   <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
-
     <!-- Model List Section -->
     <section class="rounded-xl border bg-card shadow-sm p-5 space-y-4">
       <!-- Section Header -->
@@ -232,9 +238,11 @@ onMounted(() => {
           v-for="m in config.models"
           :key="m.id"
           class="flex items-center gap-3 rounded-lg border px-3.5 py-3 transition-all duration-200"
-          :class="m.id === config.defaultModelId
-            ? 'border-primary/30 bg-card shadow-md'
-            : 'hover:shadow-md hover:border-border'"
+          :class="
+            m.id === config.defaultModelId
+              ? 'border-primary/30 bg-card shadow-md'
+              : 'hover:shadow-md hover:border-border'
+          "
         >
           <!-- Provider icon -->
           <div
@@ -288,10 +296,7 @@ onMounted(() => {
       </div>
 
       <!-- Empty state -->
-      <div
-        v-else
-        class="flex flex-col items-center justify-center py-16 text-muted-foreground"
-      >
+      <div v-else class="flex flex-col items-center justify-center py-16 text-muted-foreground">
         <Bot class="size-10 mb-3 text-muted-foreground/30" />
         <p class="text-sm font-medium mb-1">还没有配置模型</p>
         <p class="text-xs">添加一个 AI 模型来开始故事创作</p>
@@ -305,20 +310,22 @@ onMounted(() => {
     </Button>
 
     <!-- Backend Models Section -->
-    <section
-      v-if="auth.isAuthenticated"
-      class="rounded-xl border bg-card shadow-sm p-5 space-y-4"
-    >
+    <section v-if="auth.isAuthenticated" class="rounded-xl border bg-card shadow-sm p-5 space-y-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
           <Server class="size-4 text-muted-foreground" />
           <h3 class="text-sm font-medium">后端模型</h3>
-          <span class="text-[11px] px-1.5 py-0.5 rounded-full border text-muted-foreground">后端</span>
+          <span class="text-[11px] px-1.5 py-0.5 rounded-full border text-muted-foreground"
+            >后端</span
+          >
         </div>
         <p class="text-xs text-muted-foreground">管理员配置的共享模型，所有用户可见</p>
       </div>
 
-      <div v-if="backendModels.error" class="text-xs text-destructive bg-destructive/10 rounded px-3 py-2">
+      <div
+        v-if="backendModels.error"
+        class="text-xs text-destructive bg-destructive/10 rounded px-3 py-2"
+      >
         {{ backendModels.error }}
       </div>
 
@@ -326,7 +333,10 @@ onMounted(() => {
         加载中...
       </div>
 
-      <div v-else-if="backendModels.models.length === 0" class="text-xs text-muted-foreground py-4 text-center">
+      <div
+        v-else-if="backendModels.models.length === 0"
+        class="text-xs text-muted-foreground py-4 text-center"
+      >
         {{ auth.isAdmin ? '还没有配置后端模型，点击下方按钮添加' : '暂无可用后端模型' }}
       </div>
 
@@ -336,19 +346,25 @@ onMounted(() => {
           :key="bm.id"
           class="flex items-center gap-3 rounded-lg border px-3.5 py-3 transition-all duration-200 hover:shadow-md"
         >
-          <div class="size-9 rounded-lg flex items-center justify-center shrink-0 text-xs font-semibold"
-            :class="providerDotClass(bm.provider)">
+          <div
+            class="size-9 rounded-lg flex items-center justify-center shrink-0 text-xs font-semibold"
+            :class="providerDotClass(bm.provider)"
+          >
             {{ bm.provider.charAt(0).toUpperCase() }}
           </div>
 
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
               <p class="text-sm font-medium truncate">{{ bm.name }}</p>
-              <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+              <span
+                class="text-[11px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0"
+              >
                 {{ bm.model }}
               </span>
             </div>
-            <p class="text-xs text-muted-foreground truncate mt-0.5">{{ bm.provider }} · {{ bm.contextWindowTokens / 1000 }}K</p>
+            <p class="text-xs text-muted-foreground truncate mt-0.5">
+              {{ bm.provider }} · {{ bm.contextWindowTokens / 1000 }}K
+            </p>
           </div>
 
           <div v-if="bm.canEdit" class="flex items-center gap-0.5 shrink-0">
@@ -367,11 +383,20 @@ onMounted(() => {
               <Trash2 class="size-3.5" />
             </button>
           </div>
-          <Shield v-else class="size-3.5 text-muted-foreground/40 shrink-0" title="仅管理员可编辑" />
+          <Shield
+            v-else
+            class="size-3.5 text-muted-foreground/40 shrink-0"
+            title="仅管理员可编辑"
+          />
         </div>
       </div>
 
-      <Button v-if="auth.isAdmin" variant="outline" class="w-full cursor-pointer text-xs" @click="openBackendAdd">
+      <Button
+        v-if="auth.isAdmin"
+        variant="outline"
+        class="w-full cursor-pointer text-xs"
+        @click="openBackendAdd"
+      >
         <Plus class="size-3.5 mr-1" />
         添加后端模型
       </Button>

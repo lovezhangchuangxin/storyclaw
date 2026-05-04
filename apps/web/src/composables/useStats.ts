@@ -12,9 +12,11 @@ interface SessionRecord {
 function isToday(ts: number): boolean {
   const d = new Date(ts)
   const n = new Date()
-  return d.getFullYear() === n.getFullYear()
-    && d.getMonth() === n.getMonth()
-    && d.getDate() === n.getDate()
+  return (
+    d.getFullYear() === n.getFullYear() &&
+    d.getMonth() === n.getMonth() &&
+    d.getDate() === n.getDate()
+  )
 }
 
 function formatDuration(totalSeconds: number): string {
@@ -50,8 +52,7 @@ function closeSessionOnUnload(): void {
       session.end = Date.now()
       localStorage.setItem(SESSION_KEY, JSON.stringify(sessions))
     }
-  } catch {
-  }
+  } catch {}
 }
 
 persistSessionStart()
@@ -104,8 +105,7 @@ export function useStats() {
         }
       }
       todayWordCount.value = count
-    } catch {
-    }
+    } catch {}
   }
 
   async function loadTokenUsage() {
@@ -121,8 +121,7 @@ export function useStats() {
         }
       }
       todayTokens.value = tokens
-    } catch {
-    }
+    } catch {}
   }
 
   onMounted(async () => {

@@ -63,8 +63,7 @@ const filteredNovels = computed(() => {
   if (!novelSearch.value.trim()) return novels.value
   const q = novelSearch.value.toLowerCase()
   return novels.value.filter(
-    (n) =>
-      n.title.toLowerCase().includes(q) || n.authorEmail.toLowerCase().includes(q),
+    (n) => n.title.toLowerCase().includes(q) || n.authorEmail.toLowerCase().includes(q),
   )
 })
 
@@ -75,8 +74,8 @@ function onTabChange(val: string | number) {
 async function loadStats() {
   try {
     stats.value = await adminGetStats()
-  } catch {
-    // stay at defaults
+  } catch (e) {
+    console.error('Failed to load stats:', e)
   } finally {
     statsLoading.value = false
   }
@@ -87,8 +86,8 @@ async function loadOverviewUsers() {
     const resp = await adminListUsers(1, 5)
     recentUsers.value = resp.data
     usersTotal.value = resp.total
-  } catch {
-    // overview stays empty
+  } catch (e) {
+    console.error('Failed to load overview users:', e)
   }
 }
 
@@ -97,8 +96,8 @@ async function loadOverviewNovels() {
     const resp = await adminListNovels(1, 5)
     recentNovels.value = resp.data
     novelsTotal.value = resp.total
-  } catch {
-    // overview stays empty
+  } catch (e) {
+    console.error('Failed to load overview novels:', e)
   }
 }
 
@@ -194,7 +193,9 @@ onMounted(() => {
               <Activity class="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div class="text-2xl font-bold">{{ stats ? (stats.totalLlmCalls ?? 0).toLocaleString() : '--' }}</div>
+              <div class="text-2xl font-bold">
+                {{ stats ? (stats.totalLlmCalls ?? 0).toLocaleString() : '--' }}
+              </div>
               <p class="text-xs text-muted-foreground mt-1">模型调用</p>
             </CardContent>
           </Card>
@@ -333,11 +334,7 @@ onMounted(() => {
 
         <!-- Loading -->
         <div v-if="usersLoading" class="space-y-3">
-          <div
-            v-for="i in 5"
-            :key="i"
-            class="h-12 rounded-lg bg-muted animate-pulse"
-          />
+          <div v-for="i in 5" :key="i" class="h-12 rounded-lg bg-muted animate-pulse" />
         </div>
 
         <!-- Table -->
@@ -397,10 +394,7 @@ onMounted(() => {
           </div>
 
           <!-- Pagination -->
-          <div
-            v-if="usersTotal > perPage"
-            class="flex items-center justify-between p-3 border-t"
-          >
+          <div v-if="usersTotal > perPage" class="flex items-center justify-between p-3 border-t">
             <Button
               variant="outline"
               size="sm"
@@ -441,11 +435,7 @@ onMounted(() => {
 
         <!-- Loading -->
         <div v-if="novelsLoading" class="space-y-3">
-          <div
-            v-for="i in 5"
-            :key="i"
-            class="h-12 rounded-lg bg-muted animate-pulse"
-          />
+          <div v-for="i in 5" :key="i" class="h-12 rounded-lg bg-muted animate-pulse" />
         </div>
 
         <!-- Table -->
@@ -500,10 +490,7 @@ onMounted(() => {
           </div>
 
           <!-- Pagination -->
-          <div
-            v-if="novelsTotal > perPage"
-            class="flex items-center justify-between p-3 border-t"
-          >
+          <div v-if="novelsTotal > perPage" class="flex items-center justify-between p-3 border-t">
             <Button
               variant="outline"
               size="sm"

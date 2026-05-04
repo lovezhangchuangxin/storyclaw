@@ -101,9 +101,9 @@ function buildDisplayItemFromAssistantPart(
       content: part.text,
       timestamp: message.timestamp,
       isStreaming:
-        !!streamingAssistant
-        && isSameAssistantMessage(message, streamingAssistant)
-        && index === getLastTextPartIndex(streamingAssistant),
+        !!streamingAssistant &&
+        isSameAssistantMessage(message, streamingAssistant) &&
+        index === getLastTextPartIndex(streamingAssistant),
     }
   }
 
@@ -196,7 +196,7 @@ async function loadModels() {
   const config = await getConfig()
   models.value = await getAllModels()
   // Validate that defaultModelId still exists in available models
-  const defaultExists = models.value.some(m => m.id === config.defaultModelId)
+  const defaultExists = models.value.some((m) => m.id === config.defaultModelId)
   selectedModelId.value = defaultExists ? config.defaultModelId : models.value[0]?.id || ''
 }
 
@@ -273,9 +273,12 @@ watch(messagesContainer, (el) => {
   if (el) el.addEventListener('scroll', checkScrollPosition, { passive: true })
 })
 
-watch(() => props.novelId, async () => {
-  await reloadForNovel()
-})
+watch(
+  () => props.novelId,
+  async () => {
+    await reloadForNovel()
+  },
+)
 
 async function send() {
   const text = input.value.trim()
@@ -354,8 +357,7 @@ function handleCommand(cmdId: string) {
   }
   if (handlers[cmdId]) {
     handlers[cmdId]()
-  }
-  else {
+  } else {
     toast.error(`未知命令：/${cmdId}`)
   }
 }
@@ -371,8 +373,7 @@ async function newConversation() {
     transientMessages.value = []
     toast.success('已创建新会话')
     pushLocalStatus('info', '已创建新会话，对话记录已清空')
-  }
-  catch (error) {
+  } catch (error) {
     toast.error('创建新会话失败', {
       description: error instanceof Error ? error.message : String(error),
     })
@@ -424,7 +425,9 @@ async function copyAssistantText(item: DisplayItem) {
   try {
     await navigator.clipboard.writeText(item.content)
     copiedId.value = item.id
-    setTimeout(() => { if (copiedId.value === item.id) copiedId.value = null }, 2000)
+    setTimeout(() => {
+      if (copiedId.value === item.id) copiedId.value = null
+    }, 2000)
   } catch {
     toast.error('复制失败')
   }
@@ -443,10 +446,7 @@ function onWelcomeFill(prompt: string) {
       ref="messagesContainer"
       class="chat-messages flex-1 overflow-y-auto overscroll-none [overflow-anchor:none]"
     >
-      <AgentWelcome
-        v-if="displayItems.length === 0"
-        @fill="onWelcomeFill"
-      />
+      <AgentWelcome v-if="displayItems.length === 0" @fill="onWelcomeFill" />
       <AgentMessageList
         v-else
         :turn-groups="turnGroups"

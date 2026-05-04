@@ -21,16 +21,11 @@ const preview = computed(() => {
 <template>
   <div class="flex flex-col w-full">
     <button
-      class="flex items-center gap-1.5 text-xs w-full text-left
-        border-l-2 border-muted-foreground/[0.10] pl-2.5 pr-3 py-0.5
-        hover:border-muted-foreground/[0.18]
-        transition-colors duration-200
-        group cursor-pointer select-none"
+      class="flex items-center gap-1.5 text-xs w-full text-left border-l-2 border-muted-foreground/[0.10] pl-2.5 pr-3 py-0.5 hover:border-muted-foreground/[0.18] transition-colors duration-200 group cursor-pointer select-none"
       @click="toggle"
     >
       <Brain
-        class="size-3 shrink-0 text-muted-foreground/40
-          group-hover:text-muted-foreground/60 transition-colors duration-200"
+        class="size-3 shrink-0 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors duration-200"
       />
 
       <!-- Collapsed: label + preview -->
@@ -44,8 +39,7 @@ const preview = computed(() => {
         <span class="font-medium text-muted-foreground/70">思考过程</span>
         <span class="text-muted-foreground/35 tabular-nums">{{ content.length }} 字</span>
         <ChevronDown
-          class="size-3 shrink-0 ml-auto text-muted-foreground/35
-            transition-transform duration-200 rotate-180"
+          class="size-3 shrink-0 ml-auto text-muted-foreground/35 transition-transform duration-200 rotate-180"
         />
       </template>
     </button>
@@ -57,9 +51,9 @@ const preview = computed(() => {
     >
       <div class="think-scroll bg-muted/30 rounded-lg px-3 py-2.5 max-h-72 overflow-y-auto">
         <pre
-          class="whitespace-pre-wrap text-xs font-mono
-            text-muted-foreground/65 leading-relaxed"
-        >{{ content }}</pre>
+          class="whitespace-pre-wrap text-xs font-mono text-muted-foreground/65 leading-relaxed"
+          >{{ content }}</pre
+        >
       </div>
     </div>
   </div>

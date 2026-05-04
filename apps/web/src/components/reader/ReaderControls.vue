@@ -27,10 +27,7 @@ const emit = defineEmits<{
 const appTheme = inject<Ref<AppTheme>>('appTheme')
 const applyTheme = inject<(theme: AppTheme) => void>('applyTheme')
 
-function updateSetting<K extends keyof ReaderSettings>(
-  key: K,
-  value: ReaderSettings[K],
-) {
+function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSettings[K]) {
   emit('update:settings', { ...props.settings, [key]: value })
 }
 </script>
@@ -64,14 +61,18 @@ function updateSetting<K extends keyof ReaderSettings>(
               />
               <span
                 class="absolute inset-0 rounded-full ring-2 transition-all duration-200"
-                :class="appTheme === t.id
-                  ? 'ring-foreground/70 scale-[1.12]'
-                  : 'ring-transparent group-hover:ring-muted-foreground/25 group-hover:scale-105'"
+                :class="
+                  appTheme === t.id
+                    ? 'ring-foreground/70 scale-[1.12]'
+                    : 'ring-transparent group-hover:ring-muted-foreground/25 group-hover:scale-105'
+                "
               />
             </span>
             <span
               class="text-[10px] leading-none transition-colors"
-              :class="appTheme === t.id ? 'text-foreground font-medium' : 'text-muted-foreground/70'"
+              :class="
+                appTheme === t.id ? 'text-foreground font-medium' : 'text-muted-foreground/70'
+              "
             >
               {{ t.name }}
             </span>

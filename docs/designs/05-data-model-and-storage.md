@@ -35,182 +35,186 @@ storyclaw (database)
 ### 详细 Schema
 
 #### novels
+
 ```typescript
 interface Novel {
-  id: string;                // nanoid
-  title: string;
-  synopsis: string;
-  genre: string;             // 类型标签
-  targetWordCount: number;   // 目标字数（≤50000）
-  currentWordCount: number;
-  status: 'drafting' | 'writing' | 'completed' | 'paused';
-  styleSettings: StyleSettings;
-  cover?: string;            // 封面图 base64
-  createdAt: number;         // timestamp
-  updatedAt: number;
-  version: number;           // 同步版本号
+  id: string // nanoid
+  title: string
+  synopsis: string
+  genre: string // 类型标签
+  targetWordCount: number // 目标字数（≤50000）
+  currentWordCount: number
+  status: 'drafting' | 'writing' | 'completed' | 'paused'
+  styleSettings: StyleSettings
+  cover?: string // 封面图 base64
+  createdAt: number // timestamp
+  updatedAt: number
+  version: number // 同步版本号
 }
 ```
 
 #### outlines
+
 ```typescript
 interface Outline {
-  novelId: string;
-  premise: string;           // 故事前提
+  novelId: string
+  premise: string // 故事前提
   threeActs: {
-    act1: ActOutline;        // 建置
-    act2: ActOutline;        // 对抗
-    act3: ActOutline;        // 解决
-  };
-  chapterPlan: ChapterPlan[];
-  updatedAt: number;
+    act1: ActOutline // 建置
+    act2: ActOutline // 对抗
+    act3: ActOutline // 解决
+  }
+  chapterPlan: ChapterPlan[]
+  updatedAt: number
 }
 
 interface ActOutline {
-  summary: string;
-  keyEvents: string[];
-  characterArcs: string[];
+  summary: string
+  keyEvents: string[]
+  characterArcs: string[]
 }
 
 interface ChapterPlan {
-  index: number;
-  title: string;
-  summary: string;
-  estimatedWordCount: number;
-  pointOfView: string;      // POV 角色
-  status: 'planned' | 'writing' | 'completed';
+  index: number
+  title: string
+  summary: string
+  estimatedWordCount: number
+  pointOfView: string // POV 角色
+  status: 'planned' | 'writing' | 'completed'
 }
 ```
 
 #### characters
+
 ```typescript
 interface Character {
-  id: string;
-  novelId: string;
-  name: string;
-  role: 'protagonist' | 'antagonist' | 'supporting' | 'minor';
-  appearance: string;
-  personality: string;
-  background: string;
-  motivation: string;
-  arc: string;
-  relationships: Relationship[];
-  updatedAt: number;
+  id: string
+  novelId: string
+  name: string
+  role: 'protagonist' | 'antagonist' | 'supporting' | 'minor'
+  appearance: string
+  personality: string
+  background: string
+  motivation: string
+  arc: string
+  relationships: Relationship[]
+  updatedAt: number
 }
 
 interface Relationship {
-  characterId: string;
-  characterName: string;
-  relation: string;
-  description: string;
+  characterId: string
+  characterName: string
+  relation: string
+  description: string
 }
 ```
 
 #### chapters
+
 ```typescript
 interface Chapter {
-  novelId: string;
-  index: number;
-  title: string;
-  content: string;           // Markdown 格式
-  wordCount: number;
-  status: 'planned' | 'draft' | 'completed';
-  pointOfView?: string;
-  summary?: string;          // AI 生成的摘要（用于 context）
-  scenes: Scene[];
-  createdAt: number;
-  updatedAt: number;
+  novelId: string
+  index: number
+  title: string
+  content: string // Markdown 格式
+  wordCount: number
+  status: 'planned' | 'draft' | 'completed'
+  pointOfView?: string
+  summary?: string // AI 生成的摘要（用于 context）
+  scenes: Scene[]
+  createdAt: number
+  updatedAt: number
 }
 
 interface Scene {
-  id: string;
-  title: string;
-  content: string;
+  id: string
+  title: string
+  content: string
 }
 ```
 
 #### worldBuilding
+
 ```typescript
 interface WorldBuilding {
-  novelId: string;
-  era: string;               // 时代背景
-  location: string;          // 主要地点
-  rules: string;             // 世界观规则（魔法体系、科技设定等）
-  culture: string;           // 文化背景
-  factions: Faction[];
-  notes: string;             // 其他设定
-  updatedAt: number;
+  novelId: string
+  era: string // 时代背景
+  location: string // 主要地点
+  rules: string // 世界观规则（魔法体系、科技设定等）
+  culture: string // 文化背景
+  factions: Faction[]
+  notes: string // 其他设定
+  updatedAt: number
 }
 
 interface Faction {
-  name: string;
-  description: string;
-  goals: string;
+  name: string
+  description: string
+  goals: string
 }
 ```
 
 #### conversations
+
 ```typescript
 interface Conversation {
-  novelId: string;
-  messages: Message[];       // 完整对话历史
-  updatedAt: number;
+  novelId: string
+  messages: Message[] // 完整对话历史
+  updatedAt: number
 }
 
 interface BaseMessage {
-  id: string;
-  timestamp: number;
-  promptTokens?: number;     // 本次 assistant 响应对应的 prompt tokens
-  completionTokens?: number; // 本次 assistant 响应对应的 completion tokens
+  id: string
+  timestamp: number
+  promptTokens?: number // 本次 assistant 响应对应的 prompt tokens
+  completionTokens?: number // 本次 assistant 响应对应的 completion tokens
 }
 
 interface UserMessage extends BaseMessage {
-  role: 'user';
-  content: string;
+  role: 'user'
+  content: string
 }
 
 interface StatusMessage extends BaseMessage {
-  role: 'status';
-  kind: 'info' | 'warning' | 'error' | 'cancelled';
-  content: string;
+  role: 'status'
+  kind: 'info' | 'warning' | 'error' | 'cancelled'
+  content: string
 }
 
 interface AssistantReasoningPart {
-  type: 'reasoning';
-  text: string;
+  type: 'reasoning'
+  text: string
 }
 
 interface AssistantTextPart {
-  type: 'text';
-  text: string;
+  type: 'text'
+  text: string
 }
 
 interface AssistantToolUsePart {
-  type: 'tool_use';
-  toolCallId: string;
-  toolName: string;
-  rawArguments: string;      // 原始 JSON 字符串，保证回放稳定
-  arguments: Record<string, unknown> | null; // 尝试解析后的参数，仅用于 UI 摘要
-  result: string | null;     // tool result JSON 字符串
-  status: 'pending' | 'completed' | 'cancelled' | 'error';
+  type: 'tool_use'
+  toolCallId: string
+  toolName: string
+  rawArguments: string // 原始 JSON 字符串，保证回放稳定
+  arguments: Record<string, unknown> | null // 尝试解析后的参数，仅用于 UI 摘要
+  result: string | null // tool result JSON 字符串
+  status: 'pending' | 'completed' | 'cancelled' | 'error'
 }
 
-type AssistantPart =
-  | AssistantReasoningPart
-  | AssistantTextPart
-  | AssistantToolUsePart;
+type AssistantPart = AssistantReasoningPart | AssistantTextPart | AssistantToolUsePart
 
 interface AssistantMessage extends BaseMessage {
-  role: 'assistant';
-  parts: AssistantPart[];    // 按流式到达顺序保存，UI 与回放共用
-  state: 'completed' | 'cancelled' | 'error' | 'truncated';
-  finishReason?: string;
+  role: 'assistant'
+  parts: AssistantPart[] // 按流式到达顺序保存，UI 与回放共用
+  state: 'completed' | 'cancelled' | 'error' | 'truncated'
+  finishReason?: string
 }
 
-type Message = UserMessage | StatusMessage | AssistantMessage;
+type Message = UserMessage | StatusMessage | AssistantMessage
 ```
 
 说明：
+
 - 不再存储 `system` / `tool` 平铺消息，tool 调用折叠进 `assistant.parts`
 - 不再使用 `compactedSummary` 或会话级 settings
 - `status` 消息只用于 UI 提示，不参与下轮模型上下文
@@ -218,28 +222,30 @@ type Message = UserMessage | StatusMessage | AssistantMessage;
 - 未来的上下文快照与记忆块使用独立的 `contextSnapshots` 存储，详见 [07 — 上下文压缩与记忆管理](./07-context-compaction-and-memory.md)
 
 #### contextSnapshots
+
 ```typescript
 interface ContextSnapshot {
-  id: string;
-  novelId: string;
-  scopeId: string;           // main / sub-agent id
-  revision: number;
-  kind: 'auto' | 'manual';
-  serializerVersion: number;
-  promptTemplateVersion: number;
-  compactedThroughMessageId: string | null;
-  retainedTailMessageIds: string[];
-  sourceMessageIds: string[];
-  memory: CompactedMemory;
-  estimatedInputTokensBefore: number;
-  estimatedInputTokensAfter: number;
-  summaryModelId?: string;
-  manualInstructions?: string;
-  createdAt: number;
+  id: string
+  novelId: string
+  scopeId: string // main / sub-agent id
+  revision: number
+  kind: 'auto' | 'manual'
+  serializerVersion: number
+  promptTemplateVersion: number
+  compactedThroughMessageId: string | null
+  retainedTailMessageIds: string[]
+  sourceMessageIds: string[]
+  memory: CompactedMemory
+  estimatedInputTokensBefore: number
+  estimatedInputTokensAfter: number
+  summaryModelId?: string
+  manualInstructions?: string
+  createdAt: number
 }
 ```
 
 说明：
+
 - `keyPath: id`
 - 索引建议：`novelId`、`scopeId`、`[novelId, scopeId, revision]`、`createdAt`
 - 最新有效快照 = 同一 `novelId + scopeId` 下 `revision` 最大的记录
@@ -247,61 +253,66 @@ interface ContextSnapshot {
 - `CompactedMemory` 的结构见 [07 — 上下文压缩与记忆管理](./07-context-compaction-and-memory.md)
 
 #### config
+
 ```typescript
 interface AppConfig {
-  id: 'app-config';
-  models: ModelConfig[];
-  defaultModelId: string;
-  skillModelMapping: Record<string, string>;  // skillName → modelId
-  appTheme: 'light' | 'dark' | 'parchment';
-  readingSettings: ReadingSettings;
-  backendUrl?: string;
-  useBackendProxy: boolean;
-  updatedAt: number;
+  id: 'app-config'
+  models: ModelConfig[]
+  defaultModelId: string
+  skillModelMapping: Record<string, string> // skillName → modelId
+  appTheme: 'light' | 'dark' | 'parchment'
+  readingSettings: ReadingSettings
+  backendUrl?: string
+  useBackendProxy: boolean
+  updatedAt: number
 }
 
 interface ModelConfig {
-  id: string;
-  provider: string;
-  apiBase: string;           // OpenAI 兼容 endpoint
-  apiKey: string;            // 明文存储
-  model: string;             // 模型名
-  maxOutputTokens: number;   // 单轮生成上限
-  contextWindowTokens: number; // 模型上下文窗口
-  outputReserveTokens: number; // 给本轮输出预留的 token
-  compactionTriggerRatio: number;
-  compactionTargetRatio: number;
-  summaryModelId?: string;
+  id: string
+  provider: string
+  apiBase: string // OpenAI 兼容 endpoint
+  apiKey: string // 明文存储
+  model: string // 模型名
+  maxOutputTokens: number // 单轮生成上限
+  contextWindowTokens: number // 模型上下文窗口
+  outputReserveTokens: number // 给本轮输出预留的 token
+  compactionTriggerRatio: number
+  compactionTargetRatio: number
+  summaryModelId?: string
 }
 ```
 
 说明：
+
 - `maxOutputTokens` 仅控制生成上限，不参与上下文预算计算。
 - `contextWindowTokens`、`outputReserveTokens`、`compactionTriggerRatio`、`compactionTargetRatio` 用于 compaction 预算计算。
 - `summaryModelId` 可选，用于压缩阶段的专用模型。
 
 #### readingProgress
+
 ```typescript
 interface ReadingProgress {
-  novelId: string;
-  chapterIndex: number;       // 当前阅读到的章节
-  scrollPosition: number;     // 章节内滚动位置（百分比 0-1）
-  updatedAt: number;
+  novelId: string
+  chapterIndex: number // 当前阅读到的章节
+  scrollPosition: number // 章节内滚动位置（百分比 0-1）
+  updatedAt: number
 }
 ```
 
 #### operationHistory
+
 ```typescript
 interface OperationRecord {
-  id: string;                 // nanoid
-  novelId: string;
-  timestamp: number;
-  store: string;              // IndexedDB store 名
-  key: any;                   // 记录 key
-  before: any;                // 变更前数据快照
-  after: any;                 // 变更后数据
+  id: string // nanoid
+  novelId: string
+  timestamp: number
+  store: string // IndexedDB store 名
+  key: any // 记录 key
+  before: any // 变更前数据快照
+  after: any // 变更后数据
 }
 ```
+
 最多保留 50 条操作记录，超出时删除最旧的。
 
 ---

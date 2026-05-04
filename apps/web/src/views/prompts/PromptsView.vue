@@ -32,9 +32,7 @@ const filteredPrompts = computed(() => {
   if (!searchQuery.value.trim()) return prompts.value
   const q = searchQuery.value.toLowerCase()
   return prompts.value.filter(
-    (p) =>
-      p.name.toLowerCase().includes(q) ||
-      p.content.toLowerCase().includes(q),
+    (p) => p.name.toLowerCase().includes(q) || p.content.toLowerCase().includes(q),
   )
 })
 
@@ -100,18 +98,16 @@ async function confirmDelete() {
     <template v-if="loading">
       <section class="rounded-xl border bg-card shadow-sm p-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div
-            v-for="i in 4"
-            :key="i"
-            class="h-24 rounded-xl bg-muted animate-pulse"
-          />
+          <div v-for="i in 4" :key="i" class="h-24 rounded-xl bg-muted animate-pulse" />
         </div>
       </section>
     </template>
 
     <!-- Error State -->
     <template v-else-if="error">
-      <section class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center">
+      <section
+        class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
+      >
         <h3 class="text-sm font-medium mb-1">加载失败</h3>
         <p class="text-xs text-muted-foreground mb-4">请检查后重试</p>
         <button
@@ -128,12 +124,10 @@ async function confirmDelete() {
       <!-- Toolbar -->
       <div class="flex items-center gap-2">
         <div class="relative flex-1">
-          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-          <Input
-            v-model="searchQuery"
-            placeholder="搜索提示词..."
-            class="pl-8"
+          <Search
+            class="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
           />
+          <Input v-model="searchQuery" placeholder="搜索提示词..." class="pl-8" />
         </div>
         <Button size="sm" class="shrink-0 gap-1.5" @click="openCreate">
           <Plus class="size-4" />
@@ -143,7 +137,9 @@ async function confirmDelete() {
 
       <!-- Empty search results -->
       <template v-if="filteredPrompts.length === 0 && prompts.length > 0">
-        <section class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center">
+        <section
+          class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
+        >
           <Search class="size-8 mb-3 text-muted-foreground/30" />
           <p class="text-sm text-muted-foreground">没有找到匹配的提示词</p>
         </section>
@@ -166,7 +162,11 @@ async function confirmDelete() {
                 <h3 class="font-semibold text-sm leading-snug line-clamp-1">
                   {{ prompt.name }}
                 </h3>
-                <Badge v-if="prompt.isBuiltin" variant="secondary" class="shrink-0 text-[10px] px-1.5 py-0">
+                <Badge
+                  v-if="prompt.isBuiltin"
+                  variant="secondary"
+                  class="shrink-0 text-[10px] px-1.5 py-0"
+                >
                   内置
                 </Badge>
               </div>
@@ -179,7 +179,9 @@ async function confirmDelete() {
                 <Trash2 class="size-3.5" />
               </button>
             </div>
-            <p class="text-xs text-muted-foreground mt-1.5 line-clamp-3 leading-relaxed whitespace-pre-wrap">
+            <p
+              class="text-xs text-muted-foreground mt-1.5 line-clamp-3 leading-relaxed whitespace-pre-wrap"
+            >
               {{ prompt.content }}
             </p>
           </div>

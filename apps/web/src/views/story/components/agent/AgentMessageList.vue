@@ -81,7 +81,9 @@ const emit = defineEmits<{
 
             <!-- ASSISTANT AVATAR + BUBBLE (wraps assistant, reasoning, tool_card) -->
             <div
-              v-else-if="item.type === 'assistant' || item.type === 'reasoning' || item.type === 'tool_card'"
+              v-else-if="
+                item.type === 'assistant' || item.type === 'reasoning' || item.type === 'tool_card'
+              "
               class="flex items-start gap-2.5"
             >
               <!-- AI Avatar (hidden on mobile to save horizontal space) -->

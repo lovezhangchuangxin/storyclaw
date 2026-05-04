@@ -23,9 +23,6 @@
   },
   "lint-staged": {
     "*.{ts,vue,tsx,js,jsx}": [
-      "oxlint"
-    ],
-    "*.{ts,vue,tsx,js,jsx,json,css,html,md}": [
       "oxfmt --check"
     ]
   }

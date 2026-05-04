@@ -37,9 +37,7 @@ const readerStyle = computed(() => ({
   '--reader-paragraph-spacing': `${props.settings.paragraphSpacing}em`,
 }))
 
-const progressPercent = computed(() =>
-  Math.round(scrollPercent.value * 100),
-)
+const progressPercent = computed(() => Math.round(scrollPercent.value * 100))
 
 function onScroll() {
   if (!container.value) return
@@ -71,9 +69,12 @@ function scrollToPos(pos: number) {
   container.value.scrollTo({ top: pos, behavior: 'instant' })
 }
 
-watch(() => props.chapterIndex, () => {
-  container.value?.scrollTo({ top: 0, behavior: 'instant' })
-})
+watch(
+  () => props.chapterIndex,
+  () => {
+    container.value?.scrollTo({ top: 0, behavior: 'instant' })
+  },
+)
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
@@ -110,11 +111,17 @@ defineExpose({ scrollToPos })
           {{ title }}
         </h2>
         <div class="flex items-center justify-center gap-3 mt-2">
-          <div class="h-px flex-1 max-w-16 opacity-20" :style="{ backgroundColor: 'currentColor' }" />
+          <div
+            class="h-px flex-1 max-w-16 opacity-20"
+            :style="{ backgroundColor: 'currentColor' }"
+          />
           <span class="text-xs font-normal opacity-40 tracking-wider">
             {{ chapterIndex + 1 }} / {{ totalChapters }}
           </span>
-          <div class="h-px flex-1 max-w-16 opacity-20" :style="{ backgroundColor: 'currentColor' }" />
+          <div
+            class="h-px flex-1 max-w-16 opacity-20"
+            :style="{ backgroundColor: 'currentColor' }"
+          />
         </div>
       </header>
 

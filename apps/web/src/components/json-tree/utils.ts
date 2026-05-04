@@ -73,6 +73,7 @@ export function isObjectOrArray(val: unknown): val is Record<string, unknown> | 
   if (typeof val !== 'object') return false
   // Exclude boxed primitives — they are not expandable containers
   const tag = Object.prototype.toString.call(val)
-  if (tag === '[object String]' || tag === '[object Number]' || tag === '[object Boolean]') return false
+  if (tag === '[object String]' || tag === '[object Number]' || tag === '[object Boolean]')
+    return false
   return true
 }

@@ -23,4 +23,4 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
 ]
 
-export const COMMAND_IDS = new Set(SLASH_COMMANDS.map(cmd => cmd.id))
+export const COMMAND_IDS = new Set(SLASH_COMMANDS.map((cmd) => cmd.id))

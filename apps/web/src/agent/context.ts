@@ -6,8 +6,17 @@ import { getNovelById } from '@/db/novels'
 import { getPromptsByIds } from '@/db/prompts'
 import type { Conversation, Message, ModelConfig } from '@/db/types'
 import { supportsReasoningContent } from '@/lib/model-capabilities'
-import { compactConversationContext, CONTEXT_SCOPE_MAIN, serializeContextSnapshot } from './context-compaction'
-import { getAssistantReasoningParts, getAssistantTextParts, getAssistantToolUses, isMessageIncludedInContext } from './message-state'
+import {
+  compactConversationContext,
+  CONTEXT_SCOPE_MAIN,
+  serializeContextSnapshot,
+} from './context-compaction'
+import {
+  getAssistantReasoningParts,
+  getAssistantTextParts,
+  getAssistantToolUses,
+  isMessageIncludedInContext,
+} from './message-state'
 import { loadStoryState, serializeStoryState } from './story-state'
 import { calculateTriggerThreshold, estimatePromptTokens } from './token-estimator'
 import { getToolDefinitions } from './tools'
@@ -34,7 +43,9 @@ function getEffectiveConversationMessages(
     return includedMessages
   }
 
-  const boundaryIndex = includedMessages.findIndex((message) => message.id === compactedThroughMessageId)
+  const boundaryIndex = includedMessages.findIndex(
+    (message) => message.id === compactedThroughMessageId,
+  )
   if (boundaryIndex === -1) {
     return includedMessages
   }
@@ -123,12 +134,9 @@ export async function maybeCompactBeforeBuild(
   )
   const novel = await getNovelById(novelId)
   const selectedPromptIds = novel?.selectedPromptIds ?? []
-  const selectedPrompts = selectedPromptIds.length > 0
-    ? await getPromptsByIds(selectedPromptIds)
-    : []
-  const customPromptContents = selectedPrompts
-    .filter((p) => !p.isBuiltin)
-    .map((p) => p.content)
+  const selectedPrompts =
+    selectedPromptIds.length > 0 ? await getPromptsByIds(selectedPromptIds) : []
+  const customPromptContents = selectedPrompts.filter((p) => !p.isBuiltin).map((p) => p.content)
 
   const tools = getToolDefinitions({ novelId })
   const tokens = estimatePromptTokens(
@@ -175,9 +183,8 @@ export async function buildContext(
 
   const novel = await getNovelById(novelId)
   const selectedPromptIds = novel?.selectedPromptIds ?? []
-  const selectedPrompts = selectedPromptIds.length > 0
-    ? await getPromptsByIds(selectedPromptIds)
-    : []
+  const selectedPrompts =
+    selectedPromptIds.length > 0 ? await getPromptsByIds(selectedPromptIds) : []
 
   const customSystemMessages: OpenAI.Chat.Completions.ChatCompletionSystemMessageParam[] =
     selectedPrompts

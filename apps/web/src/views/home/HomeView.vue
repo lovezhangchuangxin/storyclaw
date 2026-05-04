@@ -34,7 +34,7 @@ const COVER_COLORS = [
 function getCoverColor(id: string): string {
   let hash = 0
   for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i)
+    hash = (hash << 5) - hash + id.charCodeAt(i)
   }
   return COVER_COLORS[Math.abs(hash) % COVER_COLORS.length]
 }
@@ -109,18 +109,16 @@ async function handleCreateStory(selectedPromptIds: string[]) {
     <template v-if="loading">
       <section class="rounded-xl border bg-card shadow-sm p-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div
-            v-for="i in 4"
-            :key="i"
-            class="h-24 rounded-xl bg-muted animate-pulse"
-          />
+          <div v-for="i in 4" :key="i" class="h-24 rounded-xl bg-muted animate-pulse" />
         </div>
       </section>
     </template>
 
     <!-- Error State -->
     <template v-else-if="error">
-      <section class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center">
+      <section
+        class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
+      >
         <h3 class="text-sm font-medium mb-1">加载失败</h3>
         <p class="text-xs text-muted-foreground mb-4">请检查后重试</p>
         <button
@@ -137,12 +135,10 @@ async function handleCreateStory(selectedPromptIds: string[]) {
       <!-- Toolbar -->
       <div class="flex items-center gap-2">
         <div class="relative flex-1">
-          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-          <Input
-            v-model="searchQuery"
-            placeholder="搜索小说标题或简介..."
-            class="pl-8"
+          <Search
+            class="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
           />
+          <Input v-model="searchQuery" placeholder="搜索小说标题或简介..." class="pl-8" />
         </div>
         <Button
           v-if="novels.length > 0"
@@ -157,7 +153,9 @@ async function handleCreateStory(selectedPromptIds: string[]) {
 
       <!-- Empty State -->
       <template v-if="novels.length === 0">
-        <section class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center">
+        <section
+          class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
+        >
           <BookOpen class="size-12 mb-4 text-muted-foreground/30" />
           <h3 class="text-sm font-medium mb-1">还没有故事</h3>
           <p class="text-xs text-muted-foreground mb-6">创建一个新故事，开始你的创作之旅</p>
@@ -170,7 +168,9 @@ async function handleCreateStory(selectedPromptIds: string[]) {
 
       <!-- Empty search results -->
       <template v-else-if="filteredNovels.length === 0">
-        <section class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center">
+        <section
+          class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
+        >
           <Search class="size-8 mb-3 text-muted-foreground/30" />
           <p class="text-sm text-muted-foreground">没有找到匹配的小说</p>
         </section>
@@ -205,7 +205,10 @@ async function handleCreateStory(selectedPromptIds: string[]) {
         </DialogClose>
         <Button
           class="gap-1.5"
-          @click="noModelDialogOpen = false; router.push('/settings/model')"
+          @click="
+            noModelDialogOpen = false
+            router.push('/settings/model')
+          "
         >
           <Settings class="size-4" />
           前往配置

@@ -30,9 +30,13 @@ onBeforeUnmount(() => {
 
 const title = ref((route.meta.title as string) ?? '')
 
-watch(() => route.meta.title, (t) => {
-  title.value = (t as string) ?? ''
-}, { immediate: true })
+watch(
+  () => route.meta.title,
+  (t) => {
+    title.value = (t as string) ?? ''
+  },
+  { immediate: true },
+)
 
 provide('setTitle', (t: string | null) => {
   title.value = t ?? (route.meta.title as string) ?? ''
@@ -40,7 +44,9 @@ provide('setTitle', (t: string | null) => {
 const showBack = computed(() => !!route.meta.back)
 
 const topbarExtra = shallowRef<Component | null>(null)
-provide('setTopbarExtra', (c: Component | null) => { topbarExtra.value = c })
+provide('setTopbarExtra', (c: Component | null) => {
+  topbarExtra.value = c
+})
 
 function loadCollapsed(): boolean {
   try {
@@ -85,11 +91,7 @@ function closeMobile() {
         <div v-if="mobileOpen" class="md:hidden fixed inset-0 z-50">
           <div class="absolute inset-0 bg-black/40" @click="closeMobile" />
           <div class="absolute inset-y-0 left-0 w-60 shadow-xl">
-            <AppSidebar
-              variant="mobile"
-              :collapsed="false"
-              @navigate="closeMobile"
-            />
+            <AppSidebar variant="mobile" :collapsed="false" @navigate="closeMobile" />
           </div>
         </div>
       </Transition>
@@ -99,17 +101,15 @@ function closeMobile() {
         class="hidden md:block shrink-0 overflow-hidden transition-all duration-300 ease-in-out"
         :class="collapsed ? 'w-[60px]' : 'w-[216px]'"
       >
-        <AppSidebar
-          variant="desktop"
-          :collapsed="collapsed"
-          @toggle="toggleCollapsed"
-        />
+        <AppSidebar variant="desktop" :collapsed="collapsed" @toggle="toggleCollapsed" />
       </div>
 
       <!-- Content -->
       <div class="flex-1 flex flex-col min-w-0">
         <!-- Top bar -->
-        <header class="flex items-center h-12 shrink-0 border-b px-3 gap-3 bg-background/90 backdrop-blur-sm">
+        <header
+          class="flex items-center h-12 shrink-0 border-b px-3 gap-3 bg-background/90 backdrop-blur-sm"
+        >
           <button
             aria-label="打开导航菜单"
             class="size-8 flex items-center justify-center rounded-md hover:bg-muted md:hidden"
@@ -136,7 +136,10 @@ function closeMobile() {
         </header>
 
         <!-- Page content -->
-        <main class="flex-1 overscroll-none" :class="route.meta.internalScroll ? 'overflow-hidden' : 'overflow-auto'">
+        <main
+          class="flex-1 overscroll-none"
+          :class="route.meta.internalScroll ? 'overflow-hidden' : 'overflow-auto'"
+        >
           <router-view />
         </main>
       </div>

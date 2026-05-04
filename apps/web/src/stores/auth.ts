@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login as apiLogin, register as apiRegister, refreshAuthToken, clearTokens, loadTokensFromStorage } from '@/lib/api-client'
+import {
+  login as apiLogin,
+  register as apiRegister,
+  refreshAuthToken,
+  clearTokens,
+  loadTokensFromStorage,
+} from '@/lib/api-client'
 import type { AuthResponse, UserInfo } from '@/db/types'
 
 const USER_KEY = 'storyclaw_user'

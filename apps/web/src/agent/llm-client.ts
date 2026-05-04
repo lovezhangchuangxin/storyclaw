@@ -22,11 +22,19 @@ export interface LLMUsage {
 }
 
 export function createLLMClient(options: LLMClientOptions) {
-  const { config, onToken, onToolCallStart, onToolStreamToken, onReasoningToken, signal, useBackendProxy, backendUrl, modelId } = options
+  const {
+    config,
+    onToken,
+    onToolCallStart,
+    onToolStreamToken,
+    onReasoningToken,
+    signal,
+    useBackendProxy,
+    backendUrl,
+    modelId,
+  } = options
 
-  const baseURL = useBackendProxy && backendUrl
-    ? `${backendUrl}/api/llm/v1`
-    : config.apiBase
+  const baseURL = useBackendProxy && backendUrl ? `${backendUrl}/api/llm/v1` : config.apiBase
 
   const client = new OpenAI({
     baseURL,
@@ -59,27 +67,30 @@ export function createLLMClient(options: LLMClientOptions) {
       tools: OpenAI.Chat.Completions.ChatCompletionTool[],
     ) {
       const stream = await client.chat.completions.create(
-          {
-            model: config.model,
-            messages,
-            tools,
-            max_tokens: config.maxOutputTokens,
-            temperature: 0.8,
-            stream: true,
-            stream_options: { include_usage: true },
-            ...(modelId ? { model_id: modelId } : {}),
+        {
+          model: config.model,
+          messages,
+          tools,
+          max_tokens: config.maxOutputTokens,
+          temperature: 0.8,
+          stream: true,
+          stream_options: { include_usage: true },
+          ...(modelId ? { model_id: modelId } : {}),
         } as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming,
         { signal },
       )
 
       let content = ''
       let reasoningContent = ''
-      const toolCalls: Map<number, {
-        id: string
-        name: string
-        arguments: string
-        started: boolean
-      }> = new Map()
+      const toolCalls: Map<
+        number,
+        {
+          id: string
+          name: string
+          arguments: string
+          started: boolean
+        }
+      > = new Map()
       let usage: LLMUsage | undefined
       let finishReason = 'stop'
       let aborted = false

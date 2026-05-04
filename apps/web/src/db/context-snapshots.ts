@@ -3,9 +3,7 @@ import type { ContextSnapshot } from './types'
 
 const MAX_SNAPSHOTS_PER_SCOPE = 3
 
-export async function getContextSnapshotsByNovelId(
-  novelId: string,
-): Promise<ContextSnapshot[]> {
+export async function getContextSnapshotsByNovelId(novelId: string): Promise<ContextSnapshot[]> {
   const db = await getDB()
   return db.getAllFromIndex('contextSnapshots', 'novelId', novelId)
 }
@@ -38,10 +36,7 @@ export async function saveContextSnapshot(snapshot: ContextSnapshot): Promise<vo
   await db.put('contextSnapshots', snapshot)
 }
 
-export async function pruneOldSnapshots(
-  novelId: string,
-  scopeId = 'main',
-): Promise<void> {
+export async function pruneOldSnapshots(novelId: string, scopeId = 'main'): Promise<void> {
   const db = await getDB()
   const range = IDBKeyRange.bound(
     [novelId, scopeId, 0],

@@ -5,10 +5,7 @@ import { getCharactersByNovelId } from '@/db/characters'
 import { getChaptersByNovelId } from '@/db/chapters'
 import { getWorldBuildingByNovelId } from '@/db/worldBuilding'
 import { getConversationByNovelId } from '@/db/conversations'
-import {
-  pushNovel as apiPushNovel,
-  pullNovel as apiPullNovel,
-} from '@/lib/api-client'
+import { pushNovel as apiPushNovel, pullNovel as apiPullNovel } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth'
 import type { SyncPayload } from '@/db/types'
 
@@ -105,7 +102,8 @@ export function useSync() {
         for (const ch of resp.data.chapters) {
           await saveChapter({ ...ch, novelId })
         }
-        if (resp.data.worldBuilding) await saveWorldBuilding({ ...resp.data.worldBuilding, novelId })
+        if (resp.data.worldBuilding)
+          await saveWorldBuilding({ ...resp.data.worldBuilding, novelId })
 
         syncStatusMap.value[novelId] = 'synced'
         lastSyncMap.value[novelId] = Date.now()

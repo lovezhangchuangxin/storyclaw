@@ -92,17 +92,17 @@ StoryClaw 把创作权完全交给 Agent，用户只负责 **想象、阅读和�
 
 ### 技术栈
 
-| 层级 | 技术 |
-|------|------|
+| 层级 | 技术                                 |
+| ---- | ------------------------------------ |
 | 框架 | Vue 3 + TypeScript + Composition API |
-| 样式 | Tailwind CSS v4 + shadcn-vue |
-| 构建 | Vite + pnpm workspace |
-| 存储 | IndexedDB (via idb) |
-| AI | OpenAI SDK (兼容任意 OpenAI API) |
-| 状态 | Pinia |
-| 路由 | Vue Router |
-| Lint | oxlint + oxfmt |
-| PWA | vite-plugin-pwa |
+| 样式 | Tailwind CSS v4 + shadcn-vue         |
+| 构建 | Vite + pnpm workspace                |
+| 存储 | IndexedDB (via idb)                  |
+| AI   | OpenAI SDK (兼容任意 OpenAI API)     |
+| 状态 | Pinia                                |
+| 路由 | Vue Router                           |
+| Lint | oxlint + oxfmt                       |
+| PWA  | vite-plugin-pwa                      |
 
 ---
 
@@ -152,6 +152,7 @@ storyclaw/
 - 一个 OpenAI 兼容的 API Key（支持 DeepSeek、Ollama 等）
 
 可选后端：
+
 - Rust (最新 stable)
 - PostgreSQL ≥ 14
 - Redis（缓存与速率限制）

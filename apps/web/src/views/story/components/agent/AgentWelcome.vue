@@ -6,7 +6,11 @@ const emit = defineEmits<{
 }>()
 
 const suggestions = [
-  { icon: '✨', label: '告诉我你想要什么样的故事...', prompt: '告诉我你想要什么样的故事，我来帮你创作。' },
+  {
+    icon: '✨',
+    label: '告诉我你想要什么样的故事...',
+    prompt: '告诉我你想要什么样的故事，我来帮你创作。',
+  },
   { icon: '🎭', label: '帮我设计角色和世界观', prompt: '帮我设计一个故事的角色和世界观。' },
   { icon: '📖', label: '写一个章节让我看看', prompt: '写一个章节让我看看你的写作能力。' },
 ]
@@ -32,12 +36,8 @@ const suggestions = [
       </div>
 
       <!-- Headline -->
-      <h2 class="mb-2 text-xl font-semibold tracking-tight text-foreground">
-        开始创作你的故事
-      </h2>
-      <p class="mb-8 text-sm text-muted-foreground">
-        告诉我你的想法，我会帮你将灵感变为文字
-      </p>
+      <h2 class="mb-2 text-xl font-semibold tracking-tight text-foreground">开始创作你的故事</h2>
+      <p class="mb-8 text-sm text-muted-foreground">告诉我你的想法，我会帮你将灵感变为文字</p>
 
       <!-- Suggestion chips -->
       <div class="flex flex-col gap-2.5">
@@ -49,7 +49,9 @@ const suggestions = [
         >
           <span class="text-base">{{ s.icon }}</span>
           <span class="leading-snug">{{ s.label }}</span>
-          <span class="ml-auto shrink-0 text-xs text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100">
+          <span
+            class="ml-auto shrink-0 text-xs text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100"
+          >
             ↵
           </span>
         </button>

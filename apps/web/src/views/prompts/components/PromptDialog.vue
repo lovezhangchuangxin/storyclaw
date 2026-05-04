@@ -31,17 +31,20 @@ const content = ref('')
 const saving = ref(false)
 const nameError = ref('')
 
-watch(() => props.open, (val) => {
-  if (!val) return
-  if (props.prompt) {
-    name.value = props.prompt.name
-    content.value = props.prompt.content
-  } else {
-    name.value = ''
-    content.value = ''
-  }
-  nameError.value = ''
-})
+watch(
+  () => props.open,
+  (val) => {
+    if (!val) return
+    if (props.prompt) {
+      name.value = props.prompt.name
+      content.value = props.prompt.content
+    } else {
+      name.value = ''
+      content.value = ''
+    }
+    nameError.value = ''
+  },
+)
 
 async function handleSave() {
   const trimmedName = name.value.trim()

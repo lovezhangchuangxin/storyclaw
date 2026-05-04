@@ -40,51 +40,51 @@ Conversation
 
 ```typescript
 interface Conversation {
-  novelId: string;
-  messages: Message[];
-  updatedAt: number;
+  novelId: string
+  messages: Message[]
+  updatedAt: number
 }
 
-type Message = UserMessage | StatusMessage | AssistantMessage;
+type Message = UserMessage | StatusMessage | AssistantMessage
 
 interface UserMessage {
-  id: string;
-  role: 'user';
-  content: string;
-  timestamp: number;
+  id: string
+  role: 'user'
+  content: string
+  timestamp: number
 }
 
 interface StatusMessage {
-  id: string;
-  role: 'status';
-  kind: 'info' | 'warning' | 'error' | 'cancelled';
-  content: string;
-  timestamp: number;
+  id: string
+  role: 'status'
+  kind: 'info' | 'warning' | 'error' | 'cancelled'
+  content: string
+  timestamp: number
 }
 
 interface AssistantMessage {
-  id: string;
-  role: 'assistant';
-  parts: AssistantPart[];
-  state: 'completed' | 'cancelled' | 'error' | 'truncated';
-  finishReason?: string;
-  timestamp: number;
-  promptTokens?: number;
-  completionTokens?: number;
+  id: string
+  role: 'assistant'
+  parts: AssistantPart[]
+  state: 'completed' | 'cancelled' | 'error' | 'truncated'
+  finishReason?: string
+  timestamp: number
+  promptTokens?: number
+  completionTokens?: number
 }
 
 type AssistantPart =
   | { type: 'reasoning'; text: string }
   | { type: 'text'; text: string }
   | {
-      type: 'tool_use';
-      toolCallId: string;
-      toolName: string;
-      rawArguments: string;
-      arguments: Record<string, unknown> | null;
-      result: string | null;
-      status: 'pending' | 'completed' | 'cancelled' | 'error';
-    };
+      type: 'tool_use'
+      toolCallId: string
+      toolName: string
+      rawArguments: string
+      arguments: Record<string, unknown> | null
+      result: string | null
+      status: 'pending' | 'completed' | 'cancelled' | 'error'
+    }
 ```
 
 设计说明：

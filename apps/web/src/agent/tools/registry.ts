@@ -19,7 +19,9 @@ export function getToolRegistry(context: ToolContext): Map<string, ToolDefinitio
   const map = new Map<string, ToolDefinition>()
   for (const tool of tools) {
     if (map.has(tool.name)) {
-      console.warn(`[ToolRegistry] Duplicate tool name: "${tool.name}" — overwriting previous definition`)
+      console.warn(
+        `[ToolRegistry] Duplicate tool name: "${tool.name}" — overwriting previous definition`,
+      )
     }
     map.set(tool.name, tool)
   }

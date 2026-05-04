@@ -15,12 +15,18 @@ async function applyTheme(theme: AppTheme) {
   if (theme === 'frost') el.classList.add('frost')
   if (theme === 'peach') el.classList.add('peach')
   if (theme === 'pine') el.classList.add('pine')
-  try { localStorage.setItem('app-theme', theme) } catch { /* quota exceeded */ }
+  try {
+    localStorage.setItem('app-theme', theme)
+  } catch {
+    /* quota exceeded */
+  }
   try {
     const config = await getConfig()
     config.appTheme = theme
     await saveConfig(config)
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 onMounted(async () => {

@@ -6,10 +6,10 @@ export function usePromptDrag(selectedIds: Ref<string[]>) {
   const dragTarget = ref<Element | null>(null)
   const dragPointerId = ref<number | null>(null)
 
-function onPointerDown(e: PointerEvent, idx: number) {
-  const grip = e.currentTarget as Element
-  grip.setPointerCapture(e.pointerId)
-  dragTarget.value = grip as HTMLElement
+  function onPointerDown(e: PointerEvent, idx: number) {
+    const grip = e.currentTarget as Element
+    grip.setPointerCapture(e.pointerId)
+    dragTarget.value = grip as HTMLElement
     dragIndex.value = idx
     dragPointerId.value = e.pointerId
   }
@@ -35,10 +35,7 @@ function onPointerDown(e: PointerEvent, idx: number) {
 
   function onPointerUp() {
     if (dragIndex.value === null) return
-    if (
-      dragOverIndex.value !== null &&
-      dragOverIndex.value !== dragIndex.value
-    ) {
+    if (dragOverIndex.value !== null && dragOverIndex.value !== dragIndex.value) {
       const arr = [...selectedIds.value]
       const [moved] = arr.splice(dragIndex.value, 1)
       arr.splice(dragOverIndex.value, 0, moved)

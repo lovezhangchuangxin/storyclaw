@@ -10,12 +10,12 @@
     <title>StoryClaw</title>
     <script>
       // Apply saved theme before first paint to prevent flash
-      (function() {
-        var t = localStorage.getItem('app-theme');
+      ;(function () {
+        var t = localStorage.getItem('app-theme')
         if (t && t !== 'light') {
-          document.documentElement.classList.add(t);
+          document.documentElement.classList.add(t)
         }
-      })();
+      })()
     </script>
   </head>
   <body>

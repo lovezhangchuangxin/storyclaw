@@ -46,7 +46,9 @@ function statusBadgeClass(status: string): string {
       <div class="flex items-start justify-between gap-2">
         <div class="flex items-center gap-2 min-w-0">
           <span class="size-2 rounded-full shrink-0" :class="coverColor" />
-          <h3 class="font-semibold text-sm leading-snug line-clamp-1 group-hover:text-primary transition-colors">
+          <h3
+            class="font-semibold text-sm leading-snug line-clamp-1 group-hover:text-primary transition-colors"
+          >
             {{ novel.title || '未命名故事' }}
           </h3>
         </div>

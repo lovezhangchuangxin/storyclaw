@@ -4,13 +4,16 @@ import { ChevronDown } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
-const props = withDefaults(defineProps<{
-  modelValue: string
-  options: string[]
-  placeholder?: string
-}>(), {
-  placeholder: '请选择或输入',
-})
+const props = withDefaults(
+  defineProps<{
+    modelValue: string
+    options: string[]
+    placeholder?: string
+  }>(),
+  {
+    placeholder: '请选择或输入',
+  },
+)
 
 const emit = defineEmits<{
   'update:modelValue': [v: string]
@@ -20,9 +23,12 @@ const emit = defineEmits<{
 const open = ref(false)
 const search = ref(props.modelValue)
 
-watch(() => props.modelValue, (v) => {
-  search.value = v
-})
+watch(
+  () => props.modelValue,
+  (v) => {
+    search.value = v
+  },
+)
 
 const filtered = computed(() => {
   if (!search.value) return props.options
@@ -59,7 +65,9 @@ watch(open, (val) => {
         class="flex items-center border border-input rounded-lg px-2.5 py-1 text-sm h-8 w-full bg-transparent hover:border-primary/50 focus-within:border-ring transition-colors outline-none"
       >
         <span v-if="modelValue" class="flex-1 text-left truncate">{{ modelValue }}</span>
-        <span v-else class="flex-1 text-left text-muted-foreground truncate">{{ placeholder }}</span>
+        <span v-else class="flex-1 text-left text-muted-foreground truncate">{{
+          placeholder
+        }}</span>
         <ChevronDown
           class="size-4 text-muted-foreground shrink-0 ml-1 transition-transform"
           :class="open ? 'rotate-180' : ''"
@@ -82,14 +90,19 @@ watch(open, (val) => {
           @keydown.escape="open = false"
         />
       </div>
-      <div v-if="filtered.length" class="max-h-48 overflow-auto border-t border-border/50 px-1 pt-0.5 pb-1">
+      <div
+        v-if="filtered.length"
+        class="max-h-48 overflow-auto border-t border-border/50 px-1 pt-0.5 pb-1"
+      >
         <button
           v-for="opt in filtered"
           :key="opt"
           class="w-full text-left px-2 py-1.5 text-sm rounded-sm transition-colors truncate"
           :class="opt === modelValue ? 'bg-primary/10 text-primary' : 'hover:bg-muted'"
           @mousedown.prevent="select(opt)"
-        >{{ opt }}</button>
+        >
+          {{ opt }}
+        </button>
       </div>
     </PopoverContent>
   </Popover>

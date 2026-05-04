@@ -3,13 +3,7 @@ import { getCharactersByNovelId } from '@/db/characters'
 import { getNovelById } from '@/db/novels'
 import { getOutlineByNovelId } from '@/db/outlines'
 import { getWorldBuildingByNovelId } from '@/db/worldBuilding'
-import type {
-  Chapter,
-  Character,
-  Novel,
-  Outline,
-  WorldBuilding,
-} from '@/db/types'
+import type { Chapter, Character, Novel, Outline, WorldBuilding } from '@/db/types'
 
 export interface StoryStateSnapshot {
   novel: Pick<
@@ -138,18 +132,30 @@ function serializeOutline(outline: Outline | undefined): StoryStateSnapshot['out
   const threeActs = {
     act1: {
       summary: compactText(outline.threeActs.act1.summary, 600),
-      keyEvents: outline.threeActs.act1.keyEvents.map((item) => compactText(item, 180)).filter(Boolean),
-      characterArcs: outline.threeActs.act1.characterArcs.map((item) => compactText(item, 180)).filter(Boolean),
+      keyEvents: outline.threeActs.act1.keyEvents
+        .map((item) => compactText(item, 180))
+        .filter(Boolean),
+      characterArcs: outline.threeActs.act1.characterArcs
+        .map((item) => compactText(item, 180))
+        .filter(Boolean),
     },
     act2: {
       summary: compactText(outline.threeActs.act2.summary, 600),
-      keyEvents: outline.threeActs.act2.keyEvents.map((item) => compactText(item, 180)).filter(Boolean),
-      characterArcs: outline.threeActs.act2.characterArcs.map((item) => compactText(item, 180)).filter(Boolean),
+      keyEvents: outline.threeActs.act2.keyEvents
+        .map((item) => compactText(item, 180))
+        .filter(Boolean),
+      characterArcs: outline.threeActs.act2.characterArcs
+        .map((item) => compactText(item, 180))
+        .filter(Boolean),
     },
     act3: {
       summary: compactText(outline.threeActs.act3.summary, 600),
-      keyEvents: outline.threeActs.act3.keyEvents.map((item) => compactText(item, 180)).filter(Boolean),
-      characterArcs: outline.threeActs.act3.characterArcs.map((item) => compactText(item, 180)).filter(Boolean),
+      keyEvents: outline.threeActs.act3.keyEvents
+        .map((item) => compactText(item, 180))
+        .filter(Boolean),
+      characterArcs: outline.threeActs.act3.characterArcs
+        .map((item) => compactText(item, 180))
+        .filter(Boolean),
     },
   }
 
@@ -174,7 +180,10 @@ function serializeOutline(outline: Outline | undefined): StoryStateSnapshot['out
 function serializeCharacters(characters: Character[]): CharacterSnapshot[] {
   return characters
     .slice()
-    .toSorted((left, right) => left.name.localeCompare(right.name, 'zh-Hans-CN') || left.id.localeCompare(right.id))
+    .toSorted(
+      (left, right) =>
+        left.name.localeCompare(right.name, 'zh-Hans-CN') || left.id.localeCompare(right.id),
+    )
     .map((character) => ({
       id: character.id,
       name: character.name,
@@ -186,7 +195,9 @@ function serializeCharacters(characters: Character[]): CharacterSnapshot[] {
       arc: compactText(character.arc, 240),
       relationships: character.relationships
         .slice()
-        .toSorted((left, right) => left.characterName.localeCompare(right.characterName, 'zh-Hans-CN'))
+        .toSorted((left, right) =>
+          left.characterName.localeCompare(right.characterName, 'zh-Hans-CN'),
+        )
         .map((relationship) => ({
           characterId: relationship.characterId,
           characterName: relationship.characterName,

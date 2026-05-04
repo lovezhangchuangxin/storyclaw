@@ -137,7 +137,6 @@ loadConfig()
 
 <template>
   <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
-
     <!-- Connection Status -->
     <section class="rounded-xl border bg-card shadow-sm p-5 space-y-4">
       <div>
@@ -150,11 +149,16 @@ loadConfig()
 
       <div
         class="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors duration-200"
-        :class="connected
-          ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60'
-          : 'bg-muted/50 border-transparent'"
+        :class="
+          connected
+            ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60'
+            : 'bg-muted/50 border-transparent'
+        "
       >
-        <Server class="size-5 shrink-0" :class="connected ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'" />
+        <Server
+          class="size-5 shrink-0"
+          :class="connected ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'"
+        />
         <div
           class="size-2.5 rounded-full shrink-0 transition-colors duration-300"
           :class="connected ? 'bg-green-500 shadow-sm shadow-green-500/30' : 'bg-muted-foreground'"
@@ -200,19 +204,11 @@ loadConfig()
         <template v-if="connected && !auth.isAuthenticated">
           <div class="space-y-1.5">
             <Label class="text-xs">邮箱</Label>
-            <Input
-              v-model="email"
-              placeholder="your@email.com"
-              class="focus-visible:ring-0"
-            />
+            <Input v-model="email" placeholder="your@email.com" class="focus-visible:ring-0" />
           </div>
           <div class="space-y-1.5">
             <Label class="text-xs">密码</Label>
-            <Input
-              v-model="password"
-              type="password"
-              class="focus-visible:ring-0"
-            />
+            <Input v-model="password" type="password" class="focus-visible:ring-0" />
           </div>
         </template>
 
@@ -238,10 +234,7 @@ loadConfig()
               开启后通过后端转发模型请求，无需在本地配置 API Key
             </p>
           </div>
-          <Switch
-            :checked="proxyEnabled"
-            @update:checked="toggleProxy"
-          />
+          <Switch :checked="proxyEnabled" @update:checked="toggleProxy" />
         </div>
       </div>
 
@@ -264,46 +257,29 @@ loadConfig()
             :disabled="!email || !password || auth.isLoading"
             @click="handleAuth"
           >
-            {{ auth.isLoading ? '请稍候...' : (isLogin ? '登录' : '注册') }}
+            {{ auth.isLoading ? '请稍候...' : isLogin ? '登录' : '注册' }}
           </Button>
-          <Button
-            variant="ghost"
-            class="w-full text-xs"
-            @click="toggleMode"
-          >
+          <Button variant="ghost" class="w-full text-xs" @click="toggleMode">
             {{ isLogin ? '没有账号？点击注册' : '已有账号？点击登录' }}
           </Button>
-          <Button
-            variant="outline"
-            class="w-full"
-            @click="disconnect"
-          >
-            断开连接
-          </Button>
+          <Button variant="outline" class="w-full" @click="disconnect"> 断开连接 </Button>
         </template>
 
         <!-- Connected and authenticated -->
         <template v-else>
-          <Button
-            variant="outline"
-            class="w-full"
-            @click="handleLogout"
-          >
+          <Button variant="outline" class="w-full" @click="handleLogout">
             <LogOut class="size-3.5 mr-2" />
             退出登录
           </Button>
-          <Button
-            variant="ghost"
-            class="w-full text-xs"
-            @click="disconnect"
-          >
-            断开连接
-          </Button>
+          <Button variant="ghost" class="w-full text-xs" @click="disconnect"> 断开连接 </Button>
         </template>
       </div>
 
       <!-- Error Display -->
-      <div v-if="auth.error" class="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/60">
+      <div
+        v-if="auth.error"
+        class="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/60"
+      >
         <p class="text-xs text-red-600 dark:text-red-400">{{ auth.error }}</p>
       </div>
     </section>
@@ -314,6 +290,5 @@ loadConfig()
         也可以不连接后端，直接使用本地模式。所有数据存储在浏览器中。
       </p>
     </div>
-
   </div>
 </template>

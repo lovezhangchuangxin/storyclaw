@@ -32,10 +32,7 @@ export function createUserMessage(content: string): UserMessage {
   }
 }
 
-export function createStatusMessage(
-  kind: StatusMessage['kind'],
-  content: string,
-): StatusMessage {
+export function createStatusMessage(kind: StatusMessage['kind'], content: string): StatusMessage {
   return {
     id: crypto.randomUUID(),
     role: 'status',
@@ -171,14 +168,14 @@ export function getAssistantTextParts(message: AssistantMessage): string[] {
 
 export function getAssistantReasoningParts(message: AssistantMessage): string[] {
   return message.parts
-    .filter((part): part is Extract<AssistantPart, { type: 'reasoning' }> => part.type === 'reasoning')
+    .filter(
+      (part): part is Extract<AssistantPart, { type: 'reasoning' }> => part.type === 'reasoning',
+    )
     .map((part) => part.text)
 }
 
 export function getAssistantToolUses(message: AssistantMessage): AssistantToolUsePart[] {
-  return message.parts.filter(
-    (part): part is AssistantToolUsePart => part.type === 'tool_use',
-  )
+  return message.parts.filter((part): part is AssistantToolUsePart => part.type === 'tool_use')
 }
 
 export function isToolResultError(result: string): boolean {
@@ -194,8 +191,8 @@ export function isMessageIncludedInContext(message: Message): boolean {
   if (message.role === 'status') return false
   if (message.role === 'assistant') {
     return (
-      message.state === 'completed'
-      || getAssistantToolUses(message).some(
+      message.state === 'completed' ||
+      getAssistantToolUses(message).some(
         (toolUse) => toolUse.status !== 'cancelled' && toolUse.result !== null,
       )
     )

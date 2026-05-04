@@ -17,15 +17,10 @@ export async function getPromptsByIds(ids: string[]): Promise<Prompt[]> {
   return prompts.filter((p): p is Prompt => p !== undefined)
 }
 
-export async function isPromptNameDuplicate(
-  name: string,
-  excludeId?: string,
-): Promise<boolean> {
+export async function isPromptNameDuplicate(name: string, excludeId?: string): Promise<boolean> {
   const all = await getAllPrompts()
   const trimmed = name.trim()
-  return all.some(
-    (p) => p.name.trim() === trimmed && p.id !== excludeId,
-  )
+  return all.some((p) => p.name.trim() === trimmed && p.id !== excludeId)
 }
 
 export async function savePrompt(prompt: Prompt): Promise<void> {

@@ -18,9 +18,7 @@ export function useNovelList() {
     if (!searchQuery.value.trim()) return novels.value
     const q = searchQuery.value.toLowerCase()
     return novels.value.filter(
-      (n) =>
-        n.title.toLowerCase().includes(q) ||
-        (n.synopsis || '').toLowerCase().includes(q),
+      (n) => n.title.toLowerCase().includes(q) || (n.synopsis || '').toLowerCase().includes(q),
     )
   })
 

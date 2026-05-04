@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { BookOpen, MessageSquareText, User, Settings, Server, Palette, PanelLeftClose, PanelLeft, Shield } from 'lucide-vue-next'
+import {
+  BookOpen,
+  MessageSquareText,
+  User,
+  Settings,
+  Server,
+  Palette,
+  PanelLeftClose,
+  PanelLeft,
+  Shield,
+} from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { computed } from 'vue'
 
@@ -60,7 +70,8 @@ function navigate(path: string) {
       <span
         v-show="!(collapsed && variant === 'desktop')"
         class="font-semibold text-sm flex-1 truncate"
-      >StoryClaw</span>
+        >StoryClaw</span
+      >
       <button
         v-if="variant === 'desktop'"
         :aria-label="collapsed ? '展开侧边栏' : '折叠侧边栏'"
@@ -78,17 +89,18 @@ function navigate(path: string) {
         v-for="item in visibleItems"
         :key="item.path"
         class="flex items-center w-full rounded-md text-sm transition-colors px-3 py-2"
-        :class="isActive(item.path)
-          ? 'bg-primary/10 text-primary font-medium'
-          : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
+        :class="
+          isActive(item.path)
+            ? 'bg-primary/10 text-primary font-medium'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+        "
         :title="collapsed && variant === 'desktop' ? item.label : ''"
         @click="navigate(item.path)"
       >
         <component :is="item.icon" class="size-5 shrink-0" />
-        <span
-          v-show="!(collapsed && variant === 'desktop')"
-          class="ml-3 truncate"
-        >{{ item.label }}</span>
+        <span v-show="!(collapsed && variant === 'desktop')" class="ml-3 truncate">{{
+          item.label
+        }}</span>
       </button>
     </nav>
   </aside>

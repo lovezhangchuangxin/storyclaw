@@ -36,7 +36,8 @@ export function createStyleTools(context: ToolContext): ToolDefinition[] {
         if ('narrativePerspective' in args)
           novel.styleSettings.narrativePerspective = args.narrativePerspective as string
         if ('tense' in args) novel.styleSettings.tense = args.tense as string
-        if ('languageStyle' in args) novel.styleSettings.languageStyle = args.languageStyle as string
+        if ('languageStyle' in args)
+          novel.styleSettings.languageStyle = args.languageStyle as string
         novel.updatedAt = Date.now()
         await updateNovel(novel)
         return { success: true, style: novel.styleSettings }

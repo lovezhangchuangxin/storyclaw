@@ -13,8 +13,9 @@ pnpm install                  # 安装所有依赖
 pnpm --filter web dev         # 启动前端开发服务器（Vite）
 pnpm --filter web build       # 类型检查 + 构建
 pnpm --filter web preview     # 预览构建产物
-pnpm --filter web lint        # oxlint 代码检查
-pnpm --filter web fmt         # oxfmt 代码格式化
+pnpm lint                     # oxlint 代码检查
+pnpm format                   # oxfmt 代码格式化
+pnpm format:check             # 检查代码格式（不修改）
 pnpm --filter web add <pkg>   # 给前端添加依赖
 pnpm --filter web add -D <pkg>  # 添加开发依赖
 ```

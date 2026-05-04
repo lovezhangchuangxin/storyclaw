@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, toRaw } from 'vue'
 import {
-  ChevronDown, Loader2, CheckCircle2, XCircle, MinusCircle,
-  PenLine, ListOrdered, UserPlus, UserPen,
-
+  ChevronDown,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  MinusCircle,
+  PenLine,
+  ListOrdered,
+  UserPlus,
+  UserPen,
 } from 'lucide-vue-next'
 import { getToolDisplayInfo, getToolDisplayConfig } from '@/agent/tools'
 import JsonTreeViewer from '@/components/json-tree/JsonTreeViewer.vue'
@@ -31,15 +37,18 @@ const config = computed(() => getToolDisplayConfig(props.toolName))
 
 const hasArgConfig = computed(() => {
   const cfg = config.value?.argFields
-  return cfg && cfg.length > 0 && !!props.parsedArguments && Object.keys(props.parsedArguments).length > 0
+  return (
+    cfg &&
+    cfg.length > 0 &&
+    !!props.parsedArguments &&
+    Object.keys(props.parsedArguments).length > 0
+  )
 })
 
 const hasResultConfig = computed(() => {
   const cfg = config.value?.resultFields
   return cfg && cfg.length > 0 && parsedResult.value !== null
 })
-
-
 
 // ── normalizeJsonValue ─────────────────────────────────
 
@@ -116,9 +125,17 @@ const argSummary = computed(() => {
   }
 
   // Streaming fallback for write_chapter / rewrite_chapter
-  if (!args && props.rawArguments && (props.toolName === 'write_chapter' || props.toolName === 'rewrite_chapter')) {
+  if (
+    !args &&
+    props.rawArguments &&
+    (props.toolName === 'write_chapter' || props.toolName === 'rewrite_chapter')
+  ) {
     const preview = extractStreamingToolPreview(props.rawArguments)
-    return [preview.chapter, preview.preview, preview.wordCount > 0 ? `${preview.wordCount} 字` : '']
+    return [
+      preview.chapter,
+      preview.preview,
+      preview.wordCount > 0 ? `${preview.wordCount} 字` : '',
+    ]
       .filter(Boolean)
       .join(' · ')
   }
@@ -130,12 +147,15 @@ const argSummary = computed(() => {
     case 'rewrite_chapter': {
       const idx = args.index as number
       const chapter = typeof idx === 'number' ? `第${idx + 1}章` : ''
-      const preview = typeof args.content === 'string' ? args.content.slice(0, 30).replace(/\n/g, ' ') : ''
+      const preview =
+        typeof args.content === 'string' ? args.content.slice(0, 30).replace(/\n/g, ' ') : ''
       return [chapter, preview].filter(Boolean).join(' · ')
     }
     case 'plan_chapters': {
       const chapters = args.chapters as Array<{ title: string }> | undefined
-      return chapters?.length ? `${chapters.length} 章 · ${chapters.map(c => c.title).join(', ')}` : ''
+      return chapters?.length
+        ? `${chapters.length} 章 · ${chapters.map((c) => c.title).join(', ')}`
+        : ''
     }
     case 'create_character':
     case 'update_character': {
@@ -165,7 +185,9 @@ const resultSummary = computed(() => {
       } else if (typeof config.value.resultPreview === 'string') {
         return { success: true, text: config.value.resultPreview }
       }
-    } catch { /* fall through to legacy */ }
+    } catch {
+      /* fall through to legacy */
+    }
   }
 
   // Legacy fallback
@@ -176,9 +198,17 @@ const resultSummary = computed(() => {
     if (parsed.count !== undefined) parts.push(`${parsed.count} 项`)
     if (parsed.wordCount !== undefined) parts.push(`${parsed.wordCount} 字`)
     if (parsed.title) parts.push(parsed.title)
-    if (parsed.index !== undefined && props.toolName !== 'write_chapter' && props.toolName !== 'rewrite_chapter')
+    if (
+      parsed.index !== undefined &&
+      props.toolName !== 'write_chapter' &&
+      props.toolName !== 'rewrite_chapter'
+    )
       parts.push(`第${parsed.index + 1}章`)
-    if (typeof parsed.name === 'string' && props.toolName !== 'create_character' && props.toolName !== 'update_character')
+    if (
+      typeof parsed.name === 'string' &&
+      props.toolName !== 'create_character' &&
+      props.toolName !== 'update_character'
+    )
       parts.push(parsed.name)
     return { success: true, text: parts.join(' · ') || '操作成功' }
   } catch {
@@ -188,10 +218,11 @@ const resultSummary = computed(() => {
 
 // ── Expand section data ──────────────────────────────
 
-const hasDetail = computed(() =>
-  !!props.rawArguments
-  || (props.parsedArguments && Object.keys(props.parsedArguments).length > 0)
-  || !!props.result,
+const hasDetail = computed(
+  () =>
+    !!props.rawArguments ||
+    (props.parsedArguments && Object.keys(props.parsedArguments).length > 0) ||
+    !!props.result,
 )
 
 const parsedResult = computed<Record<string, unknown> | null>(() => {
@@ -244,30 +275,44 @@ const toolIconComp = computed(() => {
 
 const statusIconComp = computed(() => {
   switch (props.status) {
-    case 'pending': return Loader2
-    case 'completed': return CheckCircle2
-    case 'cancelled': return MinusCircle
-    case 'error': return XCircle
-    default: return XCircle
+    case 'pending':
+      return Loader2
+    case 'completed':
+      return CheckCircle2
+    case 'cancelled':
+      return MinusCircle
+    case 'error':
+      return XCircle
+    default:
+      return XCircle
   }
 })
 
 const statusColor = computed(() => {
   switch (props.status) {
-    case 'pending': return 'text-blue-500'
-    case 'completed': return 'text-emerald-500'
-    case 'cancelled': return 'text-amber-500 dark:text-amber-400'
-    case 'error': return 'text-destructive'
-    default: return ''
+    case 'pending':
+      return 'text-blue-500'
+    case 'completed':
+      return 'text-emerald-500'
+    case 'cancelled':
+      return 'text-amber-500 dark:text-amber-400'
+    case 'error':
+      return 'text-destructive'
+    default:
+      return ''
   }
 })
 
 const statusText = computed(() => {
   switch (props.status) {
-    case 'pending': return '执行中...'
-    case 'cancelled': return '已取消'
-    case 'error': return resultSummary.value?.text || '错误'
-    default: return ''
+    case 'pending':
+      return '执行中...'
+    case 'cancelled':
+      return '已取消'
+    case 'error':
+      return resultSummary.value?.text || '错误'
+    default:
+      return ''
   }
 })
 
@@ -287,36 +332,23 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
 <template>
   <div class="w-full">
     <div
-      class="w-full rounded-lg border bg-card shadow-sm
-        text-xs transition-colors duration-200 overflow-x-auto tool-card-scroll"
+      class="w-full rounded-lg border bg-card shadow-sm text-xs transition-colors duration-200 overflow-x-auto tool-card-scroll"
       :class="cardClass"
     >
       <!-- ── Interactive header (has detail to expand) ── -->
       <button
         v-if="hasDetail"
-        class="w-full flex items-center gap-2 px-3.5 py-2.5
-          hover:bg-muted/20 transition-colors duration-150
-          rounded-lg cursor-pointer select-none"
+        class="w-full flex items-center gap-2 px-3.5 py-2.5 hover:bg-muted/20 transition-colors duration-150 rounded-lg cursor-pointer select-none"
         :class="textClass"
         @click="toggle"
       >
-        <component
-          :is="toolIconComp"
-          v-if="toolIconComp"
-          class="size-3.5 shrink-0"
-        />
+        <component :is="toolIconComp" v-if="toolIconComp" class="size-3.5 shrink-0" />
         <span v-else class="shrink-0 text-xs leading-none">{{ info.icon }}</span>
 
         <span class="font-medium shrink-0">{{ info.displayName }}</span>
 
-        <span
-          v-if="headerSummary"
-          class="truncate opacity-60 min-w-0"
-        >{{ headerSummary }}</span>
-        <span
-          v-else-if="statusText"
-          class="truncate opacity-60 min-w-0"
-        >{{ statusText }}</span>
+        <span v-if="headerSummary" class="truncate opacity-60 min-w-0">{{ headerSummary }}</span>
+        <span v-else-if="statusText" class="truncate opacity-60 min-w-0">{{ statusText }}</span>
 
         <span class="flex-1" />
 
@@ -326,14 +358,10 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
             class="size-3 shrink-0"
             :class="{ 'animate-spin': props.status === 'pending' }"
           />
-          <span
-            v-if="statusText && headerSummary"
-            class="sr-only"
-          >{{ statusText }}</span>
-          <span
-            v-else-if="statusText && !headerSummary"
-            class="hidden sm:inline"
-          >{{ statusText }}</span>
+          <span v-if="statusText && headerSummary" class="sr-only">{{ statusText }}</span>
+          <span v-else-if="statusText && !headerSummary" class="hidden sm:inline">{{
+            statusText
+          }}</span>
         </span>
 
         <ChevronDown
@@ -343,24 +371,13 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
       </button>
 
       <!-- ── Non-interactive header (no detail) ── -->
-      <div
-        v-else
-        class="flex items-center gap-2 px-3.5 py-2.5"
-        :class="textClass"
-      >
-        <component
-          :is="toolIconComp"
-          v-if="toolIconComp"
-          class="size-3.5 shrink-0"
-        />
+      <div v-else class="flex items-center gap-2 px-3.5 py-2.5" :class="textClass">
+        <component :is="toolIconComp" v-if="toolIconComp" class="size-3.5 shrink-0" />
         <span v-else class="shrink-0 text-xs leading-none">{{ info.icon }}</span>
 
         <span class="font-medium shrink-0">{{ info.displayName }}</span>
 
-        <span
-          v-if="headerSummary"
-          class="truncate opacity-60 min-w-0"
-        >{{ headerSummary }}</span>
+        <span v-if="headerSummary" class="truncate opacity-60 min-w-0">{{ headerSummary }}</span>
 
         <span class="flex-1" />
 
@@ -370,10 +387,7 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
             class="size-3 shrink-0"
             :class="{ 'animate-spin': props.status === 'pending' }"
           />
-          <span
-            v-if="statusText && !headerSummary"
-            class="hidden sm:inline"
-          >{{ statusText }}</span>
+          <span v-if="statusText && !headerSummary" class="hidden sm:inline">{{ statusText }}</span>
         </span>
       </div>
 
@@ -381,9 +395,11 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
       <div
         v-show="expanded && hasDetail"
         class="border-t transition-all duration-200 ease-out"
-        :class="expanded && hasDetail
-          ? 'max-h-96 opacity-100 overflow-y-auto tool-detail-scroll'
-          : 'max-h-0 opacity-0 overflow-hidden border-transparent'"
+        :class="
+          expanded && hasDetail
+            ? 'max-h-96 opacity-100 overflow-y-auto tool-detail-scroll'
+            : 'max-h-0 opacity-0 overflow-hidden border-transparent'
+        "
       >
         <div class="px-3.5 py-2.5 space-y-3">
           <!-- ── Arguments ── -->
@@ -392,10 +408,7 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
           <div v-if="hasArgConfig">
             <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">参数</div>
             <div class="bg-muted/40 rounded-lg p-2.5">
-              <ToolFieldRenderer
-                :fields="config!.argFields!"
-                :data="parsedArguments!"
-              />
+              <ToolFieldRenderer :fields="config!.argFields!" :data="parsedArguments!" />
             </div>
           </div>
           <!-- Legacy JSON arguments (no config or no parsed data) -->
@@ -412,7 +425,10 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
           </div>
           <div v-else-if="rawArguments">
             <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">参数</div>
-            <pre class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto">{{ rawArguments }}</pre>
+            <pre
+              class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto"
+              >{{ rawArguments }}</pre
+            >
           </div>
 
           <!-- ── Result ── -->
@@ -421,10 +437,7 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
           <div v-if="hasResultConfig">
             <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
             <div class="bg-muted/40 rounded-lg p-2.5">
-              <ToolFieldRenderer
-                :fields="config!.resultFields!"
-                :data="parsedResult!"
-              />
+              <ToolFieldRenderer :fields="config!.resultFields!" :data="parsedResult!" />
             </div>
           </div>
           <!-- Legacy JSON result (no config) -->
@@ -441,9 +454,11 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
           </div>
           <div v-else-if="result">
             <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
-            <pre class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto">{{ result }}</pre>
+            <pre
+              class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto"
+              >{{ result }}</pre
+            >
           </div>
-
         </div>
       </div>
     </div>

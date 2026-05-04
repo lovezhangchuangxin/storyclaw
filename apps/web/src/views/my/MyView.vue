@@ -7,21 +7,28 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
 
 <template>
   <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
-
     <!-- Stats Section -->
     <section>
-      <h2 class="text-xs sm:text-sm font-semibold text-muted-foreground mb-2 sm:mb-3 px-1">今日统计</h2>
+      <h2 class="text-xs sm:text-sm font-semibold text-muted-foreground mb-2 sm:mb-3 px-1">
+        今日统计
+      </h2>
       <div class="grid grid-cols-3 gap-2 sm:gap-3">
         <!-- Words -->
         <div class="rounded-xl border bg-card shadow-sm p-3 sm:p-4">
           <div class="flex items-center gap-3">
-            <div class="hidden sm:flex size-10 rounded-lg bg-primary/[0.06] items-center justify-center shrink-0">
+            <div
+              class="hidden sm:flex size-10 rounded-lg bg-primary/[0.06] items-center justify-center shrink-0"
+            >
               <PenLine class="size-4 text-primary/40" />
             </div>
             <div class="min-w-0">
               <p class="text-[11px] sm:text-xs text-muted-foreground leading-tight">今日写作</p>
-              <p v-if="loading" class="text-xs sm:text-sm text-muted-foreground/50 mt-0.5">加载中…</p>
-              <p v-else class="text-sm sm:text-lg font-bold tabular-nums leading-tight mt-0.5">{{ todayWordCount.toLocaleString() }}</p>
+              <p v-if="loading" class="text-xs sm:text-sm text-muted-foreground/50 mt-0.5">
+                加载中…
+              </p>
+              <p v-else class="text-sm sm:text-lg font-bold tabular-nums leading-tight mt-0.5">
+                {{ todayWordCount.toLocaleString() }}
+              </p>
             </div>
           </div>
         </div>
@@ -29,13 +36,19 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
         <!-- Tokens -->
         <div class="rounded-xl border bg-card shadow-sm p-3 sm:p-4">
           <div class="flex items-center gap-3">
-            <div class="hidden sm:flex size-10 rounded-lg bg-primary/[0.06] items-center justify-center shrink-0">
+            <div
+              class="hidden sm:flex size-10 rounded-lg bg-primary/[0.06] items-center justify-center shrink-0"
+            >
               <BrainCircuit class="size-4 text-primary/40" />
             </div>
             <div class="min-w-0">
               <p class="text-[11px] sm:text-xs text-muted-foreground leading-tight">Token 用量</p>
-              <p v-if="loading" class="text-xs sm:text-sm text-muted-foreground/50 mt-0.5">加载中…</p>
-              <p v-else class="text-sm sm:text-lg font-bold tabular-nums leading-tight mt-0.5">{{ todayTokens.toLocaleString() }}</p>
+              <p v-if="loading" class="text-xs sm:text-sm text-muted-foreground/50 mt-0.5">
+                加载中…
+              </p>
+              <p v-else class="text-sm sm:text-lg font-bold tabular-nums leading-tight mt-0.5">
+                {{ todayTokens.toLocaleString() }}
+              </p>
             </div>
           </div>
         </div>
@@ -43,13 +56,19 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
         <!-- Usage Time -->
         <div class="rounded-xl border bg-card shadow-sm p-3 sm:p-4">
           <div class="flex items-center gap-3">
-            <div class="hidden sm:flex size-10 rounded-lg bg-primary/[0.06] items-center justify-center shrink-0">
+            <div
+              class="hidden sm:flex size-10 rounded-lg bg-primary/[0.06] items-center justify-center shrink-0"
+            >
               <Clock class="size-4 text-primary/40" />
             </div>
             <div class="min-w-0">
               <p class="text-[11px] sm:text-xs text-muted-foreground leading-tight">今日时长</p>
-              <p v-if="loading" class="text-xs sm:text-sm text-muted-foreground/50 mt-0.5">加载中…</p>
-              <p v-else class="text-xs sm:text-sm font-bold tabular-nums leading-tight mt-0.5">{{ durationText }}</p>
+              <p v-if="loading" class="text-xs sm:text-sm text-muted-foreground/50 mt-0.5">
+                加载中…
+              </p>
+              <p v-else class="text-xs sm:text-sm font-bold tabular-nums leading-tight mt-0.5">
+                {{ durationText }}
+              </p>
             </div>
           </div>
         </div>
@@ -68,6 +87,5 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
         </div>
       </div>
     </section>
-
   </div>
 </template>

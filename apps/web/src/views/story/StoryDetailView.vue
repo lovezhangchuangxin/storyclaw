@@ -17,9 +17,7 @@ const route = useRoute()
 const router = useRouter()
 const storyId = computed(() => route.params.id as string)
 
-const mode = ref<'reader' | 'agent'>(
-  route.query.tab === 'agent' ? 'agent' : 'reader'
-)
+const mode = ref<'reader' | 'agent'>(route.query.tab === 'agent' ? 'agent' : 'reader')
 const showControls = ref(false)
 const dataDrawerOpen = ref(false)
 
@@ -43,27 +41,42 @@ onMounted(() => {
   setTitle?.(tabTitles[mode.value])
   setTopbarExtra?.({
     setup() {
-      return () => h('div', { class: 'flex items-center gap-0.5' }, [
-        h('button', {
-          class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition duration-150 active:scale-90',
-          'aria-label': '查看小说数据',
-          onClick: () => { dataDrawerOpen.value = true },
-        }, [
-          h(Database, { class: 'size-5' }),
-        ]),
-        h('button', {
-          class: 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition duration-150 active:scale-90',
-          onClick: () => { mode.value = mode.value === 'reader' ? 'agent' : 'reader' },
-          'aria-label': mode.value === 'reader' ? '切换到对话' : '切换到阅读',
-        }, [
-          h('span', {
-            key: mode.value,
-            class: 'inline-flex animate-in zoom-in-90 duration-200',
-          }, [
-            h(mode.value === 'reader' ? BookOpen : MessageCircle, { class: 'size-5' }),
-          ]),
-        ]),
-      ])
+      return () =>
+        h('div', { class: 'flex items-center gap-0.5' }, [
+          h(
+            'button',
+            {
+              class:
+                'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition duration-150 active:scale-90',
+              'aria-label': '查看小说数据',
+              onClick: () => {
+                dataDrawerOpen.value = true
+              },
+            },
+            [h(Database, { class: 'size-5' })],
+          ),
+          h(
+            'button',
+            {
+              class:
+                'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition duration-150 active:scale-90',
+              onClick: () => {
+                mode.value = mode.value === 'reader' ? 'agent' : 'reader'
+              },
+              'aria-label': mode.value === 'reader' ? '切换到对话' : '切换到阅读',
+            },
+            [
+              h(
+                'span',
+                {
+                  key: mode.value,
+                  class: 'inline-flex animate-in zoom-in-90 duration-200',
+                },
+                [h(mode.value === 'reader' ? BookOpen : MessageCircle, { class: 'size-5' })],
+              ),
+            ],
+          ),
+        ])
     },
   })
 })
@@ -92,12 +105,16 @@ const chapterIndex = ref(0)
 const currentChapter = computed(() => chapters.value[chapterIndex.value])
 const totalChapters = computed(() => chapters.value.length)
 
-watch(storyId, async (id) => {
-  if (!id) return
-  chapters.value = await getChaptersByNovelId(id)
-  chapters.value.sort((a, b) => a.index - b.index)
-  chapterIndex.value = 0
-}, { immediate: true })
+watch(
+  storyId,
+  async (id) => {
+    if (!id) return
+    chapters.value = await getChaptersByNovelId(id)
+    chapters.value.sort((a, b) => a.index - b.index)
+    chapterIndex.value = 0
+  },
+  { immediate: true },
+)
 
 function prevChapter() {
   if (chapterIndex.value > 0) chapterIndex.value--
@@ -146,10 +163,7 @@ function onJumpToChapter(index: number) {
       :class="mode === 'agent' ? 'tab-panel-active' : 'tab-panel-inactive'"
       :aria-hidden="mode !== 'agent'"
     >
-      <AgentChat
-        :key="`agent:${storyId}`"
-        :novel-id="storyId"
-      />
+      <AgentChat :key="`agent:${storyId}`" :novel-id="storyId" />
     </div>
 
     <!-- Bottom controls sheet -->
@@ -165,14 +179,20 @@ function onJumpToChapter(index: number) {
       />
     </Transition>
 
-    <NovelDataDrawer v-model:open="dataDrawerOpen" :novel-id="storyId" @jump-to-chapter="onJumpToChapter" />
+    <NovelDataDrawer
+      v-model:open="dataDrawerOpen"
+      :novel-id="storyId"
+      @jump-to-chapter="onJumpToChapter"
+    />
   </div>
 </template>
 
 <style scoped>
 .controls-slide-enter-active,
 .controls-slide-leave-active {
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
 }
 .controls-slide-enter-from,
 .controls-slide-leave-to {

@@ -46,18 +46,18 @@
 
 ## 前端技术栈
 
-| 层级 | 技术 | 说明 |
-|------|------|------|
-| 框架 | Vue 3 + Composition API | 单页应用 |
-| 构建 | Vite | 快速开发与构建 |
-| UI 组件 | shadcn-vue | 无头组件库，基于 Radix Vue |
-| 样式 | Tailwind CSS v4 | 原子化 CSS，shadcn-vue 已支持 v4 |
-| PWA | vite-plugin-pwa | Service Worker 生成 |
-| 本地存储 | IndexedDB (via idb) | 小说、章节、配置 |
-| Agent 引擎 | 自实现 (Web Worker) | Agent Loop + Tools + Skills |
-| 模型客户端 | `openai` npm package | OpenAI 兼容接口，内置 streaming、tool calls |
-| 路由 | Vue Router | SPA 路由 |
-| 状态管理 | Pinia | 全局状态 |
+| 层级       | 技术                    | 说明                                        |
+| ---------- | ----------------------- | ------------------------------------------- |
+| 框架       | Vue 3 + Composition API | 单页应用                                    |
+| 构建       | Vite                    | 快速开发与构建                              |
+| UI 组件    | shadcn-vue              | 无头组件库，基于 Radix Vue                  |
+| 样式       | Tailwind CSS v4         | 原子化 CSS，shadcn-vue 已支持 v4            |
+| PWA        | vite-plugin-pwa         | Service Worker 生成                         |
+| 本地存储   | IndexedDB (via idb)     | 小说、章节、配置                            |
+| Agent 引擎 | 自实现 (Web Worker)     | Agent Loop + Tools + Skills                 |
+| 模型客户端 | `openai` npm package    | OpenAI 兼容接口，内置 streaming、tool calls |
+| 路由       | Vue Router              | SPA 路由                                    |
+| 状态管理   | Pinia                   | 全局状态                                    |
 
 ### Monorepo 结构
 
@@ -105,14 +105,14 @@ storyclaw/
 
 ## 后端技术栈
 
-| 层级 | 技术 | 说明 |
-|------|------|------|
-| 框架 | Axum | 异步 HTTP 框架 |
-| ORM | SeaORM / sqlx | 数据库操作 |
-| 数据库 | PostgreSQL | 主数据库 |
-| 缓存 | Redis | Session、速率限制 |
-| 认证 | JWT (access + refresh) | 无状态认证 |
-| LLM 代理 | `async-openai` crate | 转发模型请求，兼容所有 OpenAI 接口提供商 |
+| 层级     | 技术                   | 说明                                     |
+| -------- | ---------------------- | ---------------------------------------- |
+| 框架     | Axum                   | 异步 HTTP 框架                           |
+| ORM      | SeaORM / sqlx          | 数据库操作                               |
+| 数据库   | PostgreSQL             | 主数据库                                 |
+| 缓存     | Redis                  | Session、速率限制                        |
+| 认证     | JWT (access + refresh) | 无状态认证                               |
+| LLM 代理 | `async-openai` crate   | 转发模型请求，兼容所有 OpenAI 接口提供商 |
 
 ### API 设计
 
@@ -148,20 +148,20 @@ GET    /api/admin/stats          — [管理员] 统计数据
 - 在 Web Worker 中直接使用，不需要适配层
 
 ```typescript
-import OpenAI from 'openai';
+import OpenAI from 'openai'
 
 const client = new OpenAI({
-  baseURL: config.apiBase,   // 用户配置的兼容 endpoint
+  baseURL: config.apiBase, // 用户配置的兼容 endpoint
   apiKey: config.apiKey,
   dangerouslyAllowBrowser: true, // 浏览器端使用
-});
+})
 
 const stream = await client.chat.completions.create({
   model: config.model,
   messages,
   tools,
   stream: true,
-});
+})
 ```
 
 Agent 框架通过 `llm-client.ts` 封装 `openai` SDK，提供统一的 chat、stream、tool call 接口和错误重试逻辑。
@@ -208,6 +208,7 @@ let client = Client::with_config(config);
 ```
 
 PWA Manifest 配置：
+
 - `display: standalone` — 独立窗口
 - `theme_color` — 跟随应用主题变化
 - 图标适配各尺寸
@@ -216,11 +217,13 @@ PWA Manifest 配置：
 ## 安全设计
 
 ### 前端安全
+
 - API Key 明文存储在 IndexedDB，不经过后端（直连模式）
 - 敏感数据不写入 localStorage（易被 XSS 读取）
 - CSP 头限制可执行脚本来源
 
 ### 后端安全
+
 - 密码使用 argon2 哈希
 - JWT access token 短期有效（15min），refresh token 长期
 - CORS 白名单
@@ -229,12 +232,12 @@ PWA Manifest 配置：
 
 ## 测试策略
 
-| 层级 | 工具 | 范围 |
-|------|------|------|
-| 单元测试 | Vitest | Tool 执行函数、Context 构建、消息回放与状态迁移 |
+| 层级     | 工具                     | 范围                                               |
+| -------- | ------------------------ | -------------------------------------------------- |
+| 单元测试 | Vitest                   | Tool 执行函数、Context 构建、消息回放与状态迁移    |
 | 组件测试 | Vitest + @vue/test-utils | 阅读器渲染、主题切换、Agent 消息卡片顺序与状态显示 |
-| E2E | Playwright | 完整用户旅程：创建故事 → Agent 创作 → 阅读 |
-| API 测试 | Rust test + reqwest | 后端路由、认证、同步逻辑 |
+| E2E      | Playwright               | 完整用户旅程：创建故事 → Agent 创作 → 阅读         |
+| API 测试 | Rust test + reqwest      | 后端路由、认证、同步逻辑                           |
 
 CI/CD（Phase 2）：GitHub Actions，lint + typecheck + test + build。
 

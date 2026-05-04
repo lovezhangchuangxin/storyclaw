@@ -205,8 +205,13 @@ export async function refreshAuthToken(): Promise<AuthResponse> {
   return data
 }
 
-export async function listNovels(page = 1, perPage = 20): Promise<PaginatedResponse<Record<string, unknown>>> {
-  return fetchApi<PaginatedResponse<Record<string, unknown>>>(`/api/novels?page=${page}&per_page=${perPage}`)
+export async function listNovels(
+  page = 1,
+  perPage = 20,
+): Promise<PaginatedResponse<Record<string, unknown>>> {
+  return fetchApi<PaginatedResponse<Record<string, unknown>>>(
+    `/api/novels?page=${page}&per_page=${perPage}`,
+  )
 }
 
 export async function pushNovel(
@@ -261,7 +266,11 @@ export async function llmChat(requestBody: unknown): Promise<Response> {
 
   if (!resp.ok) {
     let errorData: unknown
-    try { errorData = await resp.json() } catch { errorData = await resp.text() }
+    try {
+      errorData = await resp.json()
+    } catch {
+      errorData = await resp.text()
+    }
     throw new ApiError(`LLM proxy error: ${resp.status}`, resp.status, errorData)
   }
 

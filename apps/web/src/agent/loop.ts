@@ -66,9 +66,7 @@ function buildAssistantApiMessage(
 ): OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam | null {
   const textContent = getAssistantTextParts(message).join('')
   const reasoningContent = getAssistantReasoningParts(message).join('')
-  const toolUses = getAssistantToolUses(message).filter(
-    (toolUse) => toolUse.status !== 'cancelled',
-  )
+  const toolUses = getAssistantToolUses(message).filter((toolUse) => toolUse.status !== 'cancelled')
 
   if (!textContent && toolUses.length === 0) {
     return null
@@ -201,9 +199,9 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
   const emitMessagesUpdated = () => {
     const snapshot = [...turnMessages]
     if (
-      currentAssistantMessage
-      && !turnMessages.includes(currentAssistantMessage)
-      && assistantHasRenderableContent(currentAssistantMessage)
+      currentAssistantMessage &&
+      !turnMessages.includes(currentAssistantMessage) &&
+      assistantHasRenderableContent(currentAssistantMessage)
     ) {
       snapshot.push(currentAssistantMessage)
     }
@@ -357,9 +355,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    const state: AssistantMessage['state'] = signal?.aborted || isAbortError(error)
-      ? 'cancelled'
-      : 'error'
+    const state: AssistantMessage['state'] =
+      signal?.aborted || isAbortError(error) ? 'cancelled' : 'error'
     finalizeInFlightAssistant(turnMessages, currentAssistantMessage, state)
     currentAssistantMessage = null
 

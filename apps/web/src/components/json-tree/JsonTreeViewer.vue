@@ -25,9 +25,12 @@ const props = withDefaults(
 // shallowRef avoids deep Proxy wrapping of WeakSet
 const visited = shallowRef(new WeakSet<object>())
 
-watch(() => props.data, () => {
-  visited.value = new WeakSet<object>()
-})
+watch(
+  () => props.data,
+  () => {
+    visited.value = new WeakSet<object>()
+  },
+)
 </script>
 
 <template>
@@ -49,7 +52,8 @@ watch(() => props.data, () => {
 
 <style scoped>
 .jt-viewer {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   font-size: 12px;
   line-height: 1.6;
   color: var(--jt-key);

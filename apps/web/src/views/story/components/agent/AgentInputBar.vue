@@ -38,9 +38,8 @@ const commandSearch = ref('')
 const filteredCommandList = computed(() => {
   if (!commandSearch.value) return SLASH_COMMANDS
   const q = commandSearch.value.toLowerCase()
-  return SLASH_COMMANDS.filter(cmd =>
-    cmd.label.toLowerCase().includes(q)
-    || cmd.description.toLowerCase().includes(q),
+  return SLASH_COMMANDS.filter(
+    (cmd) => cmd.label.toLowerCase().includes(q) || cmd.description.toLowerCase().includes(q),
   )
 })
 
@@ -59,20 +58,23 @@ function updatePanelPosition() {
   }
 }
 
-watch(() => props.modelValue, (val) => {
-  if (val === '/') {
-    showCommandMenu.value = true
-    commandSearch.value = ''
-    activeIndex.value = 0
-    emit('update:modelValue', '')
-    nextTick(() => {
-      updatePanelPosition()
-    })
-    setTimeout(() => {
-      commandInputRef.value?.focus()
-    })
-  }
-})
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val === '/') {
+      showCommandMenu.value = true
+      commandSearch.value = ''
+      activeIndex.value = 0
+      emit('update:modelValue', '')
+      nextTick(() => {
+        updatePanelPosition()
+      })
+      setTimeout(() => {
+        commandInputRef.value?.focus()
+      })
+    }
+  },
+)
 
 function selectCommand(cmdId: string) {
   showCommandMenu.value = false
@@ -92,17 +94,14 @@ function handleCommandKeydown(e: KeyboardEvent) {
   if (e.key === 'ArrowDown') {
     e.preventDefault()
     activeIndex.value = list.length ? (activeIndex.value + 1) % list.length : 0
-  }
-  else if (e.key === 'ArrowUp') {
+  } else if (e.key === 'ArrowUp') {
     e.preventDefault()
     activeIndex.value = list.length ? (activeIndex.value - 1 + list.length) % list.length : 0
-  }
-  else if (e.key === 'Enter') {
+  } else if (e.key === 'Enter') {
     e.preventDefault()
     const cmd = list[activeIndex.value]
     if (cmd) selectCommand(cmd.id)
-  }
-  else if (e.key === 'Escape') {
+  } else if (e.key === 'Escape') {
     e.preventDefault()
     closeCommandMenu()
   }
@@ -119,8 +118,7 @@ function handleSend() {
   if (pendingCommandId.value) {
     emit('update:modelValue', '')
     emit('command', pendingCommandId.value)
-  }
-  else {
+  } else {
     emit('send')
   }
 }
@@ -139,11 +137,13 @@ function handleSend() {
           leave-from-class="opacity-100 translate-y-0"
           leave-to-class="opacity-0 translate-y-1"
         >
-          <div v-if="showCommandMenu" class="fixed inset-0 z-50" @mousedown="closeCommandMenu" @touchstart="closeCommandMenu">
-            <div
-              :style="panelStyle"
-              @click.stop @mousedown.stop @touchstart.stop
-            >
+          <div
+            v-if="showCommandMenu"
+            class="fixed inset-0 z-50"
+            @mousedown="closeCommandMenu"
+            @touchstart="closeCommandMenu"
+          >
+            <div :style="panelStyle" @click.stop @mousedown.stop @touchstart.stop>
               <div class="rounded-lg border bg-popover shadow-lg overflow-hidden">
                 <div class="flex items-center gap-2 px-3 py-2 border-b">
                   <Search class="size-4 shrink-0 text-muted-foreground" />
@@ -169,7 +169,10 @@ function handleSend() {
                     <span class="text-muted-foreground">—</span>
                     <span class="text-muted-foreground">{{ cmd.description }}</span>
                   </div>
-                  <div v-if="filteredCommandList.length === 0" class="px-2 py-1.5 text-sm text-muted-foreground">
+                  <div
+                    v-if="filteredCommandList.length === 0"
+                    class="px-2 py-1.5 text-sm text-muted-foreground"
+                  >
                     没有匹配的命令
                   </div>
                 </div>
@@ -201,7 +204,9 @@ function handleSend() {
               as="button"
               class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              <span class="flex size-4 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70">
+              <span
+                class="flex size-4 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70"
+              >
                 {{ selectedModelProvider }}
               </span>
               <span class="max-w-[120px] truncate">{{ selectedModelLabel }}</span>
@@ -214,7 +219,9 @@ function handleSend() {
                 class="flex items-center gap-2"
                 @click="emit('update:selectedModelId', model.id)"
               >
-                <span class="flex size-5 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70">
+                <span
+                  class="flex size-5 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70"
+                >
                   {{ model.provider[0]?.toUpperCase() }}
                 </span>
                 <span class="text-xs">{{ model.model }}</span>
@@ -245,12 +252,7 @@ function handleSend() {
               <Send v-else class="size-3.5" />
               {{ pendingCommandId ? '执行' : '发送' }}
             </Button>
-            <Button
-              v-else
-              variant="destructive"
-              size="icon-sm"
-              @click="emit('cancel')"
-            >
+            <Button v-else variant="destructive" size="icon-sm" @click="emit('cancel')">
               <Square class="size-3.5" />
             </Button>
           </div>

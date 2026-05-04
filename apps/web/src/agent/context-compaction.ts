@@ -42,7 +42,9 @@ const compactionLocks = new Map<string, Promise<void>>()
 async function withCompactionLock<T>(novelId: string, fn: () => Promise<T>): Promise<T> {
   const previous = compactionLocks.get(novelId) ?? Promise.resolve()
   let resolve!: () => void
-  const next = new Promise<void>(r => { resolve = r })
+  const next = new Promise<void>((r) => {
+    resolve = r
+  })
   compactionLocks.set(novelId, next)
   try {
     await previous
@@ -131,35 +133,33 @@ function firstSentence(text: string): string {
 function serializeConversationMessages(
   messages: Message[],
 ): SerializableCompactionTranscriptEntry[] {
-  return messages
-    .filter(isMessageIncludedInContext)
-    .map((message) => {
-      if (message.role === 'user') {
-        return {
-          id: message.id,
-          role: 'user' as const,
-          content: trimText(message.content, 2000),
-        }
-      }
-
-      const assistant = message as AssistantMessage
+  return messages.filter(isMessageIncludedInContext).map((message) => {
+    if (message.role === 'user') {
       return {
         id: message.id,
-        role: 'assistant' as const,
-        content: trimText(getAssistantTextParts(assistant).join(''), 4000),
-        reasoning: trimText(getAssistantReasoningParts(assistant).join(''), 4000) || undefined,
-        toolUses: getAssistantToolUses(assistant).map((toolUse) => ({
-          toolCallId: toolUse.toolCallId,
-          toolName: toolUse.toolName,
-          rawArguments: trimText(toolUse.rawArguments, 4000),
-          arguments: toolUse.arguments ? JSON.parse(JSON.stringify(toolUse.arguments)) : null,
-          result: toolUse.result ? trimText(toolUse.result, 4000) : null,
-          status: toolUse.status,
-        })),
-        state: assistant.state,
-        finishReason: assistant.finishReason,
+        role: 'user' as const,
+        content: trimText(message.content, 2000),
       }
-    })
+    }
+
+    const assistant = message as AssistantMessage
+    return {
+      id: message.id,
+      role: 'assistant' as const,
+      content: trimText(getAssistantTextParts(assistant).join(''), 4000),
+      reasoning: trimText(getAssistantReasoningParts(assistant).join(''), 4000) || undefined,
+      toolUses: getAssistantToolUses(assistant).map((toolUse) => ({
+        toolCallId: toolUse.toolCallId,
+        toolName: toolUse.toolName,
+        rawArguments: trimText(toolUse.rawArguments, 4000),
+        arguments: toolUse.arguments ? JSON.parse(JSON.stringify(toolUse.arguments)) : null,
+        result: toolUse.result ? trimText(toolUse.result, 4000) : null,
+        status: toolUse.status,
+      })),
+      state: assistant.state,
+      finishReason: assistant.finishReason,
+    }
+  })
 }
 
 function extractEntriesByKeywords(
@@ -173,7 +173,8 @@ function extractEntriesByKeywords(
     const candidateTexts = [
       message.content,
       message.reasoning ?? '',
-      ...(message.toolUses?.flatMap((toolUse) => [toolUse.rawArguments, toolUse.result ?? '']) ?? []),
+      ...(message.toolUses?.flatMap((toolUse) => [toolUse.rawArguments, toolUse.result ?? '']) ??
+        []),
     ]
 
     for (const candidate of candidateTexts) {
@@ -206,7 +207,9 @@ function normalizeMemoryEntries(entries: MemoryEntry[]): MemoryEntry[] {
       })
       continue
     }
-    existing.sourceMessageIds = [...new Set([...existing.sourceMessageIds, ...entry.sourceMessageIds.filter(Boolean)])]
+    existing.sourceMessageIds = [
+      ...new Set([...existing.sourceMessageIds, ...entry.sourceMessageIds.filter(Boolean)]),
+    ]
   }
   return [...seen.values()]
 }
@@ -225,7 +228,10 @@ function estimateTranscriptEntryTokens(entry: SerializableCompactionTranscriptEn
   return total
 }
 
-function buildHeuristicMemory(messages: SerializableCompactionTranscriptEntry[], manualInstructions?: string) {
+function buildHeuristicMemory(
+  messages: SerializableCompactionTranscriptEntry[],
+  manualInstructions?: string,
+) {
   const userPreferences = normalizeMemoryEntries([
     ...extractEntriesByKeywords(messages, /(喜欢|偏好|希望|更适合|尽量|保持|使用|采用)/),
   ])
@@ -242,7 +248,10 @@ function buildHeuristicMemory(messages: SerializableCompactionTranscriptEntry[],
     ...extractEntriesByKeywords(messages, /(因为|所以|因此|如果|为了|原因|逻辑)/),
   ])
   const storyConstraints = normalizeMemoryEntries([
-    ...extractEntriesByKeywords(messages, /(上下文|缓存|token|模型|窗口|压缩|章节|字数|风格|设定|角色|大纲)/),
+    ...extractEntriesByKeywords(
+      messages,
+      /(上下文|缓存|token|模型|窗口|压缩|章节|字数|风格|设定|角色|大纲)/,
+    ),
   ])
 
   const narrativeSummarySource = messages
@@ -424,8 +433,9 @@ function selectTailMessages(
     const candidate = messages[index]
     const candidateTokens = estimateTranscriptEntryTokens(candidate)
     if (
-      tail.length >= 2
-      && (tail.length >= CONTEXT_RAW_TAIL_MESSAGE_LIMIT || tokenCount + candidateTokens > maxTailTokens)
+      tail.length >= 2 &&
+      (tail.length >= CONTEXT_RAW_TAIL_MESSAGE_LIMIT ||
+        tokenCount + candidateTokens > maxTailTokens)
     ) {
       break
     }
@@ -479,135 +489,139 @@ export async function compactConversationContext(
   options: CompactConversationContextOptions,
 ): Promise<CompactConversationContextResult> {
   return withCompactionLock(options.novelId, async () => {
-  const transcriptMessages = serializeConversationMessages(options.conversation.messages)
-  const latestSnapshot = await getLatestContextSnapshot(options.novelId, CONTEXT_SCOPE_MAIN)
-  const promptBudget = estimateWindowBudget(
-    options.modelConfig.contextWindowTokens,
-    options.modelConfig.outputReserveTokens,
-  )
-  const triggerAt = calculateTriggerThreshold(
-    options.modelConfig.contextWindowTokens,
-    options.modelConfig.outputReserveTokens,
-    options.modelConfig.compactionTriggerRatio,
-  )
-  const targetAt = Math.floor(promptBudget * options.modelConfig.compactionTargetRatio)
+    const transcriptMessages = serializeConversationMessages(options.conversation.messages)
+    const latestSnapshot = await getLatestContextSnapshot(options.novelId, CONTEXT_SCOPE_MAIN)
+    const promptBudget = estimateWindowBudget(
+      options.modelConfig.contextWindowTokens,
+      options.modelConfig.outputReserveTokens,
+    )
+    const triggerAt = calculateTriggerThreshold(
+      options.modelConfig.contextWindowTokens,
+      options.modelConfig.outputReserveTokens,
+      options.modelConfig.compactionTriggerRatio,
+    )
+    const targetAt = Math.floor(promptBudget * options.modelConfig.compactionTargetRatio)
 
-  const tailTokenBudget = Math.max(800, Math.floor(targetAt * 0.35))
-  const retainedTailMessages = selectTailMessages(transcriptMessages, tailTokenBudget)
-  const sourceMessages = transcriptMessages.slice(
-    0,
-    Math.max(0, transcriptMessages.length - retainedTailMessages.length),
-  )
-  const compactedThroughMessageId = sourceMessages.at(-1)?.id ?? null
-  const sourceMessageIds = sourceMessages.map((message) => message.id)
+    const tailTokenBudget = Math.max(800, Math.floor(targetAt * 0.35))
+    const retainedTailMessages = selectTailMessages(transcriptMessages, tailTokenBudget)
+    const sourceMessages = transcriptMessages.slice(
+      0,
+      Math.max(0, transcriptMessages.length - retainedTailMessages.length),
+    )
+    const compactedThroughMessageId = sourceMessages.at(-1)?.id ?? null
+    const sourceMessageIds = sourceMessages.map((message) => message.id)
 
-  if (promptBudget <= 0) {
-    return { compacted: false, estimatedInputTokensBefore: 0, estimatedInputTokensAfter: 0 }
-  }
-
-  const tailTokenEstimate = retainedTailMessages.reduce(
-    (sum, message) => sum + estimateTranscriptEntryTokens(message),
-    0,
-  )
-  const storyStateText = serializeStoryState(options.storyState)
-  const sourceText = JSON.stringify({
-    novelId: options.novelId,
-    reason: options.reason,
-    manualInstructions: trimText(options.manualInstructions ?? '', CONTEXT_MANUAL_PROMPT_LIMIT),
-    storyState: options.storyState,
-    sourceMessages,
-  })
-  const estimatedInputTokensBefore = estimatePromptTokens([
-    storyStateText,
-    sourceText,
-  ])
-
-  if (!options.force && estimatedInputTokensBefore < triggerAt) {
-    return {
-      compacted: false,
-      estimatedInputTokensBefore,
-      estimatedInputTokensAfter: estimatedInputTokensBefore,
+    if (promptBudget <= 0) {
+      return { compacted: false, estimatedInputTokensBefore: 0, estimatedInputTokensAfter: 0 }
     }
-  }
 
-  if (sourceMessages.length === 0) {
-    return {
-      compacted: false,
-      estimatedInputTokensBefore,
-      estimatedInputTokensAfter: estimatedInputTokensBefore,
-    }
-  }
-
-  const summaryModelConfig = await resolveSummaryModelConfig(options.modelConfig)
-  const prompt = buildCompactionPrompt({
-    novelId: options.novelId,
-    reason: options.reason,
-    manualInstructions: options.manualInstructions,
-    sourceMessages,
-    storyState: options.storyState,
-    snapshot: latestSnapshot,
-  })
-
-  const validSourceIds = new Set(sourceMessageIds)
-  let memory = buildHeuristicMemory(sourceMessages, options.manualInstructions)
-
-  try {
-    const rawContent = await summarizeWithModel({
-      modelConfig: summaryModelConfig,
-      prompt,
+    const tailTokenEstimate = retainedTailMessages.reduce(
+      (sum, message) => sum + estimateTranscriptEntryTokens(message),
+      0,
+    )
+    const storyStateText = serializeStoryState(options.storyState)
+    const sourceText = JSON.stringify({
+      novelId: options.novelId,
+      reason: options.reason,
+      manualInstructions: trimText(options.manualInstructions ?? '', CONTEXT_MANUAL_PROMPT_LIMIT),
+      storyState: options.storyState,
+      sourceMessages,
     })
-    if (rawContent) {
+    const estimatedInputTokensBefore = estimatePromptTokens([storyStateText, sourceText])
+
+    if (!options.force && estimatedInputTokensBefore < triggerAt) {
+      return {
+        compacted: false,
+        estimatedInputTokensBefore,
+        estimatedInputTokensAfter: estimatedInputTokensBefore,
+      }
+    }
+
+    if (sourceMessages.length === 0) {
+      return {
+        compacted: false,
+        estimatedInputTokensBefore,
+        estimatedInputTokensAfter: estimatedInputTokensBefore,
+      }
+    }
+
+    const summaryModelConfig = await resolveSummaryModelConfig(options.modelConfig)
+    const prompt = buildCompactionPrompt({
+      novelId: options.novelId,
+      reason: options.reason,
+      manualInstructions: options.manualInstructions,
+      sourceMessages,
+      storyState: options.storyState,
+      snapshot: latestSnapshot,
+    })
+
+    const validSourceIds = new Set(sourceMessageIds)
+    let memory = buildHeuristicMemory(sourceMessages, options.manualInstructions)
+
+    try {
+      const rawContent = await summarizeWithModel({
+        modelConfig: summaryModelConfig,
+        prompt,
+      })
+      if (rawContent) {
+        memory = buildMemoryFromModelOutput(
+          rawContent,
+          validSourceIds,
+          sourceMessages,
+          options.manualInstructions,
+        )
+      }
+    } catch {
       memory = buildMemoryFromModelOutput(
-        rawContent,
+        '',
         validSourceIds,
         sourceMessages,
         options.manualInstructions,
       )
     }
-  } catch {
-    memory = buildMemoryFromModelOutput('', validSourceIds, sourceMessages, options.manualInstructions)
-  }
 
-  const createdAt = Date.now()
-  const snapshotRevision = await getNextContextSnapshotRevision(options.novelId, CONTEXT_SCOPE_MAIN)
-  const snapshotPreview: ContextSnapshot = {
-    id: crypto.randomUUID(),
-    novelId: options.novelId,
-    scopeId: CONTEXT_SCOPE_MAIN,
-    revision: snapshotRevision,
-    kind: options.reason,
-    serializerVersion: CONTEXT_SERIALIZER_VERSION,
-    promptTemplateVersion: CONTEXT_PROMPT_TEMPLATE_VERSION,
-    compactedThroughMessageId,
-    retainedTailMessageIds: retainedTailMessages.map((message) => message.id),
-    sourceMessageIds,
-    memory: validateMemorySourceIds(memory, validSourceIds),
-    estimatedInputTokensBefore,
-    estimatedInputTokensAfter: 0,
-    summaryModelId: summaryModelConfig.id,
-    manualInstructions: options.manualInstructions,
-    createdAt,
-  }
+    const createdAt = Date.now()
+    const snapshotRevision = await getNextContextSnapshotRevision(
+      options.novelId,
+      CONTEXT_SCOPE_MAIN,
+    )
+    const snapshotPreview: ContextSnapshot = {
+      id: crypto.randomUUID(),
+      novelId: options.novelId,
+      scopeId: CONTEXT_SCOPE_MAIN,
+      revision: snapshotRevision,
+      kind: options.reason,
+      serializerVersion: CONTEXT_SERIALIZER_VERSION,
+      promptTemplateVersion: CONTEXT_PROMPT_TEMPLATE_VERSION,
+      compactedThroughMessageId,
+      retainedTailMessageIds: retainedTailMessages.map((message) => message.id),
+      sourceMessageIds,
+      memory: validateMemorySourceIds(memory, validSourceIds),
+      estimatedInputTokensBefore,
+      estimatedInputTokensAfter: 0,
+      summaryModelId: summaryModelConfig.id,
+      manualInstructions: options.manualInstructions,
+      createdAt,
+    }
 
-  const estimatedInputTokensAfter = tailTokenEstimate + estimatePromptTokens([
-    serializeContextSnapshot(snapshotPreview),
-    storyStateText,
-  ])
+    const estimatedInputTokensAfter =
+      tailTokenEstimate +
+      estimatePromptTokens([serializeContextSnapshot(snapshotPreview), storyStateText])
 
-  const snapshot: ContextSnapshot = {
-    ...snapshotPreview,
-    estimatedInputTokensAfter,
-  }
+    const snapshot: ContextSnapshot = {
+      ...snapshotPreview,
+      estimatedInputTokensAfter,
+    }
 
-  await saveContextSnapshot(snapshot)
-  await pruneOldSnapshots(options.novelId, CONTEXT_SCOPE_MAIN)
+    await saveContextSnapshot(snapshot)
+    await pruneOldSnapshots(options.novelId, CONTEXT_SCOPE_MAIN)
 
-  return {
-    snapshot,
-    compacted: true,
-    estimatedInputTokensBefore,
-    estimatedInputTokensAfter: snapshot.estimatedInputTokensAfter,
-  }
+    return {
+      snapshot,
+      compacted: true,
+      estimatedInputTokensBefore,
+      estimatedInputTokensAfter: snapshot.estimatedInputTokensAfter,
+    }
   })
 }
 

@@ -43,12 +43,12 @@ export function estimateMessageTokens(message: Message): number {
       )
       const toolTokens = getAssistantToolUses(assistant).reduce((sum, toolUse) => {
         return (
-          sum
-          + estimateTextTokens(toolUse.toolCallId)
-          + estimateTextTokens(toolUse.toolName)
-          + estimateTextTokens(toolUse.rawArguments)
-          + estimateTextTokens(toolUse.result ?? '')
-          + estimateJsonTokens(toolUse.arguments)
+          sum +
+          estimateTextTokens(toolUse.toolCallId) +
+          estimateTextTokens(toolUse.toolName) +
+          estimateTextTokens(toolUse.rawArguments) +
+          estimateTextTokens(toolUse.result ?? '') +
+          estimateJsonTokens(toolUse.arguments)
         )
       }, 0)
 
@@ -63,9 +63,7 @@ export function estimateMessagesTokens(messages: Message[]): number {
   return messages.reduce((sum, message) => sum + estimateMessageTokens(message), 0)
 }
 
-export function estimateToolDefinitionsTokens(
-  tools: ChatCompletionTool[],
-): number {
+export function estimateToolDefinitionsTokens(tools: ChatCompletionTool[]): number {
   return estimateJsonTokens(tools)
 }
 

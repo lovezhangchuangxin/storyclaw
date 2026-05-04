@@ -1,6 +1,21 @@
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
-import { Sun, Moon, Coffee, Snowflake, Flower2, TreePine, Type, BookOpen, ScrollText, Play, Eye, ImageIcon, Plus, Trash2 } from 'lucide-vue-next'
+import {
+  Sun,
+  Moon,
+  Coffee,
+  Snowflake,
+  Flower2,
+  TreePine,
+  Type,
+  BookOpen,
+  ScrollText,
+  Play,
+  Eye,
+  ImageIcon,
+  Plus,
+  Trash2,
+} from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { saveConfig, getConfig } from '@/db/config'
 import type { AppConfig, AppTheme } from '@/db/types'
@@ -67,12 +82,54 @@ async function handleRemoveImage(id: string) {
 }
 
 const themeCards = [
-  { id: 'light' as AppTheme, name: '浅色', icon: Sun, bg: '#FCFAF7', text: '#1A1A1A', accent: '#6B6B6B' },
-  { id: 'dark' as AppTheme, name: '深色', icon: Moon, bg: '#1A1A1E', text: '#E0E0E0', accent: '#8B8B8B' },
-  { id: 'parchment' as AppTheme, name: '护眼', icon: Coffee, bg: '#F4E4C1', text: '#3E2723', accent: '#8D6E63' },
-  { id: 'frost' as AppTheme, name: '霜华', icon: Snowflake, bg: '#F0F4FA', text: '#3D4A5C', accent: '#5B8DB8' },
-  { id: 'peach' as AppTheme, name: '桃夭', icon: Flower2, bg: '#FBEDE8', text: '#4D332E', accent: '#C47A6B' },
-  { id: 'pine' as AppTheme, name: '松烟', icon: TreePine, bg: '#EAF0E7', text: '#2E3D33', accent: '#5C8A6B' },
+  {
+    id: 'light' as AppTheme,
+    name: '浅色',
+    icon: Sun,
+    bg: '#FCFAF7',
+    text: '#1A1A1A',
+    accent: '#6B6B6B',
+  },
+  {
+    id: 'dark' as AppTheme,
+    name: '深色',
+    icon: Moon,
+    bg: '#1A1A1E',
+    text: '#E0E0E0',
+    accent: '#8B8B8B',
+  },
+  {
+    id: 'parchment' as AppTheme,
+    name: '护眼',
+    icon: Coffee,
+    bg: '#F4E4C1',
+    text: '#3E2723',
+    accent: '#8D6E63',
+  },
+  {
+    id: 'frost' as AppTheme,
+    name: '霜华',
+    icon: Snowflake,
+    bg: '#F0F4FA',
+    text: '#3D4A5C',
+    accent: '#5B8DB8',
+  },
+  {
+    id: 'peach' as AppTheme,
+    name: '桃夭',
+    icon: Flower2,
+    bg: '#FBEDE8',
+    text: '#4D332E',
+    accent: '#C47A6B',
+  },
+  {
+    id: 'pine' as AppTheme,
+    name: '松烟',
+    icon: TreePine,
+    bg: '#EAF0E7',
+    text: '#2E3D33',
+    accent: '#5C8A6B',
+  },
 ]
 
 const appTheme = computed({
@@ -138,9 +195,7 @@ const previewStyle = computed(() => ({
   lineHeight: config.value.readingSettings.lineHeight,
 }))
 
-const currentThemeCard = computed(() =>
-  themeCards.find((t) => t.id === config.value.appTheme),
-)
+const currentThemeCard = computed(() => themeCards.find((t) => t.id === config.value.appTheme))
 
 async function loadConfig() {
   try {
@@ -177,7 +232,6 @@ loadAll()
 
 <template>
   <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
-
     <!-- Theme Section -->
     <section class="rounded-xl border bg-card shadow-sm p-5 space-y-4">
       <div>
@@ -193,9 +247,11 @@ loadAll()
           v-for="t in themeCards"
           :key="t.id"
           class="rounded-xl border-2 p-3 transition-all duration-200 text-left cursor-pointer"
-          :class="appTheme === t.id
-            ? 'border-primary ring-1 ring-primary/20 shadow-md'
-            : 'border-transparent hover:border-border/80 shadow-sm'"
+          :class="
+            appTheme === t.id
+              ? 'border-primary ring-1 ring-primary/20 shadow-md'
+              : 'border-transparent hover:border-border/80 shadow-sm'
+          "
           @click="appTheme = t.id"
         >
           <div
@@ -233,9 +289,11 @@ loadAll()
           v-for="img in images"
           :key="img.id"
           class="group relative aspect-square rounded-lg border-2 overflow-hidden cursor-pointer transition-all duration-200"
-          :class="activeImageId === img.id
-            ? 'border-primary ring-1 ring-primary/20 shadow-md'
-            : 'border-transparent hover:border-border/80 shadow-sm'"
+          :class="
+            activeImageId === img.id
+              ? 'border-primary ring-1 ring-primary/20 shadow-md'
+              : 'border-transparent hover:border-border/80 shadow-sm'
+          "
           @click="handleSelectImage(img.id)"
         >
           <img
@@ -279,7 +337,9 @@ loadAll()
             </div>
             <Slider
               :model-value="bgOpacity"
-              :min="0" :max="100" :step="5"
+              :min="0"
+              :max="100"
+              :step="5"
               @update:model-value="(v?: number[]) => v && (bgOpacity = v)"
             />
           </div>
@@ -291,7 +351,9 @@ loadAll()
             </div>
             <Slider
               :model-value="bgBlur"
-              :min="0" :max="20" :step="1"
+              :min="0"
+              :max="20"
+              :step="1"
               @update:model-value="(v?: number[]) => v && (bgBlur = v)"
             />
           </div>
@@ -314,9 +376,11 @@ loadAll()
           v-for="f in FONT_OPTIONS"
           :key="f.value"
           class="rounded-lg border p-3 transition-all duration-200 cursor-pointer"
-          :class="fontFamily === f.value
-            ? 'border-primary bg-primary/5 shadow-sm'
-            : 'border-transparent hover:border-border/80'"
+          :class="
+            fontFamily === f.value
+              ? 'border-primary bg-primary/5 shadow-sm'
+              : 'border-transparent hover:border-border/80'
+          "
           @click="fontFamily = f.value"
         >
           <div
@@ -337,7 +401,9 @@ loadAll()
           </div>
           <Slider
             :model-value="fontSize"
-            :min="12" :max="28" :step="1"
+            :min="12"
+            :max="28"
+            :step="1"
             @update:model-value="(v?: number[]) => v && (fontSize = v)"
           />
         </div>
@@ -349,7 +415,9 @@ loadAll()
           </div>
           <Slider
             :model-value="lineHeight"
-            :min="1.2" :max="3" :step="0.1"
+            :min="1.2"
+            :max="3"
+            :step="0.1"
             @update:model-value="(v?: number[]) => v && (lineHeight = v)"
           />
         </div>
@@ -361,7 +429,9 @@ loadAll()
           </div>
           <Slider
             :model-value="paragraphSpacing"
-            :min="0" :max="3" :step="0.5"
+            :min="0"
+            :max="3"
+            :step="0.5"
             @update:model-value="(v?: number[]) => v && (paragraphSpacing = v)"
           />
         </div>
@@ -381,12 +451,17 @@ loadAll()
       <div class="grid grid-cols-3 gap-3">
         <button
           class="rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer flex flex-col items-center gap-2 text-center"
-          :class="scrollMode === 'scroll'
-            ? 'border-primary bg-primary/5 shadow-sm'
-            : 'border-transparent hover:border-border/80 shadow-sm'"
+          :class="
+            scrollMode === 'scroll'
+              ? 'border-primary bg-primary/5 shadow-sm'
+              : 'border-transparent hover:border-border/80 shadow-sm'
+          "
           @click="scrollMode = 'scroll'"
         >
-          <ScrollText class="size-5" :class="scrollMode === 'scroll' ? 'text-primary' : 'text-muted-foreground'" />
+          <ScrollText
+            class="size-5"
+            :class="scrollMode === 'scroll' ? 'text-primary' : 'text-muted-foreground'"
+          />
           <div>
             <p class="text-xs font-medium">滚动</p>
             <p class="text-[10px] text-muted-foreground mt-0.5">连续滚动阅读</p>
@@ -395,12 +470,17 @@ loadAll()
 
         <button
           class="rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer flex flex-col items-center gap-2 text-center"
-          :class="scrollMode === 'paged'
-            ? 'border-primary bg-primary/5 shadow-sm'
-            : 'border-transparent hover:border-border/80 shadow-sm'"
+          :class="
+            scrollMode === 'paged'
+              ? 'border-primary bg-primary/5 shadow-sm'
+              : 'border-transparent hover:border-border/80 shadow-sm'
+          "
           @click="scrollMode = 'paged'"
         >
-          <BookOpen class="size-5" :class="scrollMode === 'paged' ? 'text-primary' : 'text-muted-foreground'" />
+          <BookOpen
+            class="size-5"
+            :class="scrollMode === 'paged' ? 'text-primary' : 'text-muted-foreground'"
+          />
           <div>
             <p class="text-xs font-medium">翻页</p>
             <p class="text-[10px] text-muted-foreground mt-0.5">左右翻页浏览</p>
@@ -409,12 +489,17 @@ loadAll()
 
         <button
           class="rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer flex flex-col items-center gap-2 text-center"
-          :class="scrollMode === 'auto'
-            ? 'border-primary bg-primary/5 shadow-sm'
-            : 'border-transparent hover:border-border/80 shadow-sm'"
+          :class="
+            scrollMode === 'auto'
+              ? 'border-primary bg-primary/5 shadow-sm'
+              : 'border-transparent hover:border-border/80 shadow-sm'
+          "
           @click="scrollMode = 'auto'"
         >
-          <Play class="size-5" :class="scrollMode === 'auto' ? 'text-primary' : 'text-muted-foreground'" />
+          <Play
+            class="size-5"
+            :class="scrollMode === 'auto' ? 'text-primary' : 'text-muted-foreground'"
+          />
           <div>
             <p class="text-xs font-medium">自动</p>
             <p class="text-[10px] text-muted-foreground mt-0.5">自动滚动</p>
@@ -429,7 +514,9 @@ loadAll()
         </div>
         <Slider
           :model-value="autoScrollSpeed"
-          :min="10" :max="100" :step="5"
+          :min="10"
+          :max="100"
+          :step="5"
           @update:model-value="(v?: number[]) => v && (autoScrollSpeed = v)"
         />
       </div>
@@ -437,10 +524,7 @@ loadAll()
 
     <!-- Preview Section -->
     <section class="rounded-xl border bg-card shadow-sm overflow-hidden">
-      <div
-        class="h-1"
-        :style="{ backgroundColor: currentThemeCard?.accent ?? '#A67C52' }"
-      />
+      <div class="h-1" :style="{ backgroundColor: currentThemeCard?.accent ?? '#A67C52' }" />
 
       <div class="p-5 space-y-1 border-b">
         <div class="flex items-center gap-2">
@@ -450,10 +534,7 @@ loadAll()
         <p class="text-xs text-muted-foreground">在此预览您的阅读设置效果</p>
       </div>
 
-      <div
-        class="p-6 md:p-8 transition-all duration-200"
-        :style="previewStyle"
-      >
+      <div class="p-6 md:p-8 transition-all duration-200" :style="previewStyle">
         <p>
           天色暗下来的时候，林间的风也停了。她站在桥头，望着远处隐约的灯火，心里想着那些已经说不出口的话。
         </p>
@@ -462,6 +543,5 @@ loadAll()
         </p>
       </div>
     </section>
-
   </div>
 </template>

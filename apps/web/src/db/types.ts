@@ -208,10 +208,7 @@ export interface AssistantToolUsePart {
   status: 'pending' | 'completed' | 'cancelled' | 'error'
 }
 
-export type AssistantPart =
-  | AssistantReasoningPart
-  | AssistantTextPart
-  | AssistantToolUsePart
+export type AssistantPart = AssistantReasoningPart | AssistantTextPart | AssistantToolUsePart
 
 export interface AssistantMessage extends BaseMessage {
   role: 'assistant'
@@ -352,7 +349,8 @@ export const DEFAULT_MODEL_CONFIG: Omit<
 }
 
 export function createDefaultModelConfig(
-  model: Partial<ModelConfig> & Pick<ModelConfig, 'id' | 'provider' | 'apiBase' | 'apiKey' | 'model'>,
+  model: Partial<ModelConfig> &
+    Pick<ModelConfig, 'id' | 'provider' | 'apiBase' | 'apiKey' | 'model'>,
 ): ModelConfig {
   return {
     ...DEFAULT_MODEL_CONFIG,

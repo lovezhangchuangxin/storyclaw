@@ -9,20 +9,20 @@ axum = { version = "0.8", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = [
-    "cors",
-    "compression-gzip",
-    "trace",
-    "timeout",
-    "request-id",
-    "limit",
-    "catch-panic",
+  "cors",
+  "compression-gzip",
+  "trace",
+  "timeout",
+  "request-id",
+  "limit",
+  "catch-panic",
 ] }
 sqlx = { version = "0.8", features = [
-    "runtime-tokio-rustls",
-    "postgres",
-    "uuid",
-    "chrono",
-    "migrate",
+  "runtime-tokio-rustls",
+  "postgres",
+  "uuid",
+  "chrono",
+  "migrate",
 ] }
 redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
 jsonwebtoken = "9"

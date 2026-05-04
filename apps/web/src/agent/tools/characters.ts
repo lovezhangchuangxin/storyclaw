@@ -125,12 +125,14 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         if ('arc' in args) existing.arc = args.arc as string
 
         if (args.relationships) {
-          existing.relationships = (args.relationships as Array<Record<string, unknown>>).map((r) => ({
-            characterId: r.characterId as string,
-            characterName: r.characterName as string,
-            relation: r.relation as string,
-            description: (r.description as string) ?? '',
-          }))
+          existing.relationships = (args.relationships as Array<Record<string, unknown>>).map(
+            (r) => ({
+              characterId: r.characterId as string,
+              characterName: r.characterName as string,
+              relation: r.relation as string,
+              description: (r.description as string) ?? '',
+            }),
+          )
         }
 
         existing.updatedAt = Date.now()

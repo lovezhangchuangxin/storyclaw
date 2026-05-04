@@ -54,27 +54,28 @@ const selectedPrompts = computed(() => {
 const availablePrompts = computed(() => {
   const q = promptSearch.value.toLowerCase()
   return allPrompts.value.filter(
-    (p) =>
-      !selectedPromptIds.value.includes(p.id) &&
-      (!q || p.name.toLowerCase().includes(q)),
+    (p) => !selectedPromptIds.value.includes(p.id) && (!q || p.name.toLowerCase().includes(q)),
   )
 })
 
-watch(() => props.open, (val) => {
-  if (!val) return
-  selectedPromptIds.value = ['builtin-persona']
-  promptSearch.value = ''
-  promptPopoverOpen.value = false
-  getAllPrompts()
-    .then((ps) => {
-      allPrompts.value = ps
-    })
-    .catch((e) => {
-      toast.error('加载提示词失败', {
-        description: e instanceof Error ? e.message : String(e),
+watch(
+  () => props.open,
+  (val) => {
+    if (!val) return
+    selectedPromptIds.value = ['builtin-persona']
+    promptSearch.value = ''
+    promptPopoverOpen.value = false
+    getAllPrompts()
+      .then((ps) => {
+        allPrompts.value = ps
       })
-    })
-})
+      .catch((e) => {
+        toast.error('加载提示词失败', {
+          description: e instanceof Error ? e.message : String(e),
+        })
+      })
+  },
+)
 
 function selectPrompt(id: string) {
   if (!selectedPromptIds.value.includes(id)) {
@@ -114,7 +115,10 @@ function handleCreate() {
             <span class="flex-1 text-left text-muted-foreground truncate">
               {{ promptSearch || '搜索提示词...' }}
             </span>
-            <ChevronDown class="size-4 text-muted-foreground shrink-0 ml-1 transition-transform" :class="promptPopoverOpen ? 'rotate-180' : ''" />
+            <ChevronDown
+              class="size-4 text-muted-foreground shrink-0 ml-1 transition-transform"
+              :class="promptPopoverOpen ? 'rotate-180' : ''"
+            />
           </button>
         </PopoverTrigger>
         <PopoverContent
@@ -131,7 +135,10 @@ function handleCreate() {
               @keydown.escape="promptPopoverOpen = false"
             />
           </div>
-          <div v-if="availablePrompts.length" class="max-h-48 overflow-auto border-t border-border/50 px-1 pt-0.5 pb-1">
+          <div
+            v-if="availablePrompts.length"
+            class="max-h-48 overflow-auto border-t border-border/50 px-1 pt-0.5 pb-1"
+          >
             <button
               v-for="p in availablePrompts"
               :key="p.id"
@@ -147,7 +154,11 @@ function handleCreate() {
         </PopoverContent>
       </Popover>
 
-      <div class="overflow-y-auto min-h-0 -mx-1 px-1" data-sortable-list @pointermove="onPointerMove">
+      <div
+        class="overflow-y-auto min-h-0 -mx-1 px-1"
+        data-sortable-list
+        @pointermove="onPointerMove"
+      >
         <div
           v-for="(prompt, idx) in selectedPrompts"
           :key="prompt.id"
@@ -170,7 +181,11 @@ function handleCreate() {
             @pointercancel="onPointerCancel"
           />
           <span class="text-sm flex-1 truncate">{{ prompt.name }}</span>
-          <Badge v-if="prompt.isBuiltin" variant="secondary" class="text-[10px] px-1.5 py-0 shrink-0">
+          <Badge
+            v-if="prompt.isBuiltin"
+            variant="secondary"
+            class="text-[10px] px-1.5 py-0 shrink-0"
+          >
             内置
           </Badge>
           <div class="flex items-center gap-0.5 shrink-0">

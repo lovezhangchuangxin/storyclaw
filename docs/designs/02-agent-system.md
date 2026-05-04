@@ -60,6 +60,7 @@ loop (max 15 tool-call iterations per turn):
 ```
 
 **安全机制：**
+
 - `maxToolCalls` 默认 15，可在配置中调整
 - 每轮迭代检查 `cancelToken`，支持用户随时中断
 - 达到最大迭代次数时强制结束当前 turn，通知用户
@@ -70,21 +71,23 @@ Agent 通过 Tools 与故事状态交互。每个 Tool 是声明式定义 + 执�
 
 ```typescript
 interface Tool {
-  name: string;
-  description: string;
-  parameters: JSONSchema;
-  execute(args: any, context: ToolContext): Promise<ToolResult>;
+  name: string
+  description: string
+  parameters: JSONSchema
+  execute(args: any, context: ToolContext): Promise<ToolResult>
 }
 ```
 
 ### 核心 Tools
 
 **大纲相关：**
+
 - `create_outline` — 创建故事大纲（标题、梗概、三幕结构）
 - `update_outline` — 修改大纲
 - `get_outline` — 获取当前大纲
 
 **角色相关：**
+
 - `create_character` — 创建角色（姓名、外貌、性格、背景）
 - `update_character` — 修改角色
 - `delete_character` — 删除角色
@@ -92,20 +95,24 @@ interface Tool {
 - `list_characters` — 列出所有角色
 
 **章节相关：**
+
 - `plan_chapters` — 规划章节划分和各章节概要
 - `write_chapter` — 创作指定章节内容（流式，通过 tool_stream_token 推送）
 - `rewrite_chapter` — 根据反馈重写章节（流式，通过 tool_stream_token 推送）
 - `get_chapter` — 获取章节内容
 
 **世界设定：**
+
 - `set_world_building` — 设定世界观（时代、地点、规则等）
 - `get_world_building` — 获取世界观设定
 
 **文风控制：**
+
 - `set_style` — 设定文风偏好（叙事视角、时态、语言风格等）
 - `get_style` — 获取文风设定
 
 **故事管理：**
+
 - `upsert_story` — 创建新故事或更新已有故事信息。如果故事记录已存在则更新标题/简介，不存在则创建
 - `get_story_status` — 获取当前故事整体状态
 - `generate_title` — 根据内容生成标题
@@ -117,22 +124,22 @@ interface Tool {
 
 ```typescript
 interface UserCommand {
-  name: string;
-  description: string;
-  execute(context: CommandContext): Promise<void>;
-  canUndo: boolean;
+  name: string
+  description: string
+  execute(context: CommandContext): Promise<void>
+  canUndo: boolean
 }
 ```
 
 ### 核心命令
 
-| 命令 | 说明 | 可撤销 |
-|------|------|--------|
-| `undo` | 撤销最近一次数据变更（大纲/角色/章节） | — |
-| `redo` | 重做最近一次撤销 | — |
-| `revert_chapter` | 回退某章节到上一个版本 | 是 |
-| `delete_character` | 从故事中移除某个角色 | 是 |
-| `reset_outline` | 清空大纲，重新开始设计 | 是 |
+| 命令               | 说明                                   | 可撤销 |
+| ------------------ | -------------------------------------- | ------ |
+| `undo`             | 撤销最近一次数据变更（大纲/角色/章节） | —      |
+| `redo`             | 重做最近一次撤销                       | —      |
+| `revert_chapter`   | 回退某章节到上一个版本                 | 是     |
+| `delete_character` | 从故事中移除某个角色                   | 是     |
+| `reset_outline`    | 清空大纲，重新开始设计                 | 是     |
 
 **撤销/重做机制：**
 
@@ -140,12 +147,12 @@ interface UserCommand {
 
 ```typescript
 interface OperationRecord {
-  id: string;
-  timestamp: number;
-  store: string;           // IndexedDB store 名
-  key: any;                // 记录 key
-  before: any;             // 变更前的数据快照
-  after: any;              // 变更后的数据
+  id: string
+  timestamp: number
+  store: string // IndexedDB store 名
+  key: any // 记录 key
+  before: any // 变更前的数据快照
+  after: any // 变更后的数据
 }
 ```
 
@@ -159,25 +166,25 @@ Skills 是预定义的 Agent 行为组合，本质是 Prompt 模板 + Tool 组�
 
 ```typescript
 interface Skill {
-  name: string;
-  description: string;
-  systemPrompt: string;
-  allowedTools: string[];
-  constraints: SkillConstraint[];
+  name: string
+  description: string
+  systemPrompt: string
+  allowedTools: string[]
+  constraints: SkillConstraint[]
 }
 ```
 
 ### 预设 Skills
 
-| Skill | 说明 |
-|-------|------|
-| `brainstorm` | 脑暴模式：发散思考，生成多种故事创意供用户选择 |
-| `outline-design` | 大纲设计：深入访谈式地帮助用户构建故事大纲 |
-| `character-create` | 角色创建：访谈式创建角色，确保角色立体丰满 |
-| `chapter-write` | 章节创作：按照大纲和角色设定创作章节 |
-| `chapter-rewrite` | 章节重写：根据用户反馈重写指定章节 |
-| `style-adjust` | 文风调整：分析和调整文风 |
-| `ending-craft` | 结局设计：专门设计结局的不同可能性 |
+| Skill              | 说明                                           |
+| ------------------ | ---------------------------------------------- |
+| `brainstorm`       | 脑暴模式：发散思考，生成多种故事创意供用户选择 |
+| `outline-design`   | 大纲设计：深入访谈式地帮助用户构建故事大纲     |
+| `character-create` | 角色创建：访谈式创建角色，确保角色立体丰满     |
+| `chapter-write`    | 章节创作：按照大纲和角色设定创作章节           |
+| `chapter-rewrite`  | 章节重写：根据用户反馈重写指定章节             |
+| `style-adjust`     | 文风调整：分析和调整文风                       |
+| `ending-craft`     | 结局设计：专门设计结局的不同可能性             |
 
 ## Multi-Agent 系统
 
@@ -196,11 +203,11 @@ Coordinator Agent（主编）
 
 ```typescript
 interface SubAgent {
-  name: string;
-  role: string;
-  systemPrompt: string;
-  tools: string[];
-  model?: string;  // 可指定不同模型
+  name: string
+  role: string
+  systemPrompt: string
+  tools: string[]
+  model?: string // 可指定不同模型
 }
 ```
 
@@ -222,6 +229,7 @@ Fork for Writing Agent:
 ```
 
 Fork 策略：
+
 - **Story State Fork**：子 Agent 总是获得当前最新的 story state（大纲摘要 + 角色列表 + 最近章节摘要）
 - **Conversation Fork**：从主对话中提取与该子 Agent 任务相关的消息子集（例如 Writing Agent 获取最近的章节反馈）
 - 子 Agent 完成后，其 tool calls 产生的状态变更合并回 Main Agent 的 state
@@ -246,13 +254,14 @@ on:error            — 发生错误时
 
 ```typescript
 interface Hook {
-  event: string;
-  handler: (context: HookContext) => Promise<void>;
-  priority: number;
+  event: string
+  handler: (context: HookContext) => Promise<void>
+  priority: number
 }
 ```
 
 Hooks 可以用于：
+
 - 自动保存状态到 IndexedDB
 - 记录操作历史（用于 undo/redo）
 - 触发通知
