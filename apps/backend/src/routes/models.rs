@@ -13,6 +13,7 @@ use crate::models::BackendModel;
 use crate::crypto;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateModelRequest {
     pub name: String,
     pub provider: String,
@@ -25,6 +26,7 @@ pub struct CreateModelRequest {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateModelRequest {
     pub name: Option<String>,
     pub provider: Option<String>,
@@ -37,6 +39,7 @@ pub struct UpdateModelRequest {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BackendModelResponse {
     pub id: Uuid,
     pub name: String,
