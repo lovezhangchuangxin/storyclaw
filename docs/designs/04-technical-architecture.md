@@ -239,7 +239,7 @@ PWA Manifest 配置：
 | E2E      | Playwright               | 完整用户旅程：创建故事 → Agent 创作 → 阅读         |
 | API 测试 | Rust test + reqwest      | 后端路由、认证、同步逻辑                           |
 
-CI/CD（Phase 2）：GitHub Actions，lint + typecheck + test + build。
+CI/CD：GitHub Actions，lint + format:check + build + deploy to Pages。
 
 ## 依赖安装
 

@@ -10,6 +10,9 @@
 - [x] 配置 Tailwind CSS v4（颜色、字体、应用主题系统）
 - [x] 安装 vite-plugin-pwa，配置 Service Worker 缓存策略
 - [x] PWA manifest 与图标
+- [x] 修复 vue-tsc 构建错误（6 个类型错误阻塞生产构建）
+- [x] 配置 pre-commit 钩子（simple-git-hooks + lint-staged，oxlint + oxfmt）
+- [x] CI 流水线增强（lint → format:check → build → deploy）
 
 ### 1.2 IndexedDB 数据层 (`src/db/`)
 
