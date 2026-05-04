@@ -10,6 +10,8 @@ use serde_json::Value;
 use crate::auth::handlers::AppState;
 use crate::auth::middleware::AuthUser;
 use crate::error::AppError;
+use crate::routes::models;
+use crate::crypto;
 
 pub async fn chat_completions(
     State(state): State<AppState>,
@@ -21,10 +23,24 @@ pub async fn chat_completions(
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
 
+    let model_id = body
+        .get("model_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.parse::<uuid::Uuid>().ok());
+
+    let (upstream_url, api_key) = if let Some(id) = model_id {
+        let model = models::get_model_by_id(&state.pool, id).await?;
+        let key = crypto::decrypt(&model.api_key_encrypted, &state.config.model_key)
+            .map_err(|_| AppError::Internal(anyhow::anyhow!("Failed to decrypt API key")))?;
+        (model.api_base, key)
+    } else {
+        return Err(AppError::Validation("model_id is required".into()));
+    };
+
     let resp = state
         .http_client
-        .post(format!("{}/chat/completions", state.llm_api_base))
-        .header("Authorization", format!("Bearer {}", state.llm_api_key))
+        .post(format!("{}/chat/completions", upstream_url))
+        .header("Authorization", format!("Bearer {}", api_key))
         .header("Content-Type", "application/json")
         .json(&body)
         .send()

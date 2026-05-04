@@ -265,6 +265,8 @@ export interface ModelConfig {
   compactionTriggerRatio: number
   compactionTargetRatio: number
   summaryModelId?: string
+  isBackendModel?: boolean
+  backendId?: string
 }
 
 export interface ReadingSettings {
@@ -448,4 +450,37 @@ export interface PushNovelResponse {
 export interface PullNovelResponse {
   data: SyncPayload
   version: number
+}
+
+export interface BackendModelConfig {
+  id: string
+  name: string
+  provider: string
+  model: string
+  maxOutputTokens: number
+  contextWindowTokens: number
+  isPublic: boolean
+  canEdit: boolean
+}
+
+export interface CreateBackendModelRequest {
+  name: string
+  provider: string
+  apiBase: string
+  apiKey: string
+  model: string
+  maxOutputTokens?: number
+  contextWindowTokens?: number
+  isPublic?: boolean
+}
+
+export interface UpdateBackendModelRequest {
+  name?: string
+  provider?: string
+  apiBase?: string
+  apiKey?: string
+  model?: string
+  maxOutputTokens?: number
+  contextWindowTokens?: number
+  isPublic?: boolean
 }

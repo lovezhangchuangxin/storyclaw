@@ -45,8 +45,6 @@ pub struct AppState {
     pub pool: PgPool,
     pub config: Config,
     pub http_client: reqwest::Client,
-    pub llm_api_base: String,
-    pub llm_api_key: String,
 }
 
 pub async fn register(

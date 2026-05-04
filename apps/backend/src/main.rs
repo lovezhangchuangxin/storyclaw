@@ -1,4 +1,5 @@
 mod config;
+mod crypto;
 mod error;
 mod db;
 mod routes;
@@ -38,16 +39,11 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Migrations applied");
 
     let http_client = reqwest::Client::new();
-    let llm_api_base = std::env::var("LLM_API_BASE")
-        .unwrap_or_else(|_| "https://api.openai.com/v1".to_string());
-    let llm_api_key = std::env::var("LLM_API_KEY").unwrap_or_default();
 
     let state = AppState {
         pool: pool.clone(),
         config: config.clone(),
         http_client,
-        llm_api_base,
-        llm_api_key,
     };
 
     let cors_origin = config.cors_origin
@@ -62,6 +58,7 @@ async fn main() -> anyhow::Result<()> {
     let auth_router = routes::auth::auth_routes(state.clone());
     let novels_router = routes::novels::sync_routes(state.clone());
     let llm_router = routes::llm::llm_routes(state.clone());
+    let models_router = routes::models::models_routes(state.clone());
     let admin_router = routes::admin::admin_routes(state);
 
     let app = Router::new()
@@ -69,6 +66,7 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/auth", auth_router)
         .nest("/api/novels", novels_router)
         .nest("/api/llm", llm_router)
+        .nest("/api/models", models_router)
         .nest("/api/admin", admin_router)
         .layer(cors);
 

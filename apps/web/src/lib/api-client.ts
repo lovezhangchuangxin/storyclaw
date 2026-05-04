@@ -12,6 +12,9 @@ import type {
   PushNovelRequest,
   PushNovelResponse,
   PullNovelResponse,
+  BackendModelConfig,
+  CreateBackendModelRequest,
+  UpdateBackendModelRequest,
 } from '@/db/types'
 
 const ACCESS_TOKEN_KEY = 'storyclaw_access_token'
@@ -289,6 +292,33 @@ export async function adminListNovels(
 
 export async function adminGetStats(): Promise<AdminStats> {
   return fetchApi<AdminStats>('/api/admin/stats')
+}
+
+export async function listBackendModels(): Promise<BackendModelConfig[]> {
+  return fetchApi<BackendModelConfig[]>('/api/models')
+}
+
+export async function createBackendModel(
+  req: CreateBackendModelRequest,
+): Promise<BackendModelConfig> {
+  return fetchApi<BackendModelConfig>('/api/models', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
+export async function updateBackendModel(
+  id: string,
+  req: UpdateBackendModelRequest,
+): Promise<BackendModelConfig> {
+  return fetchApi<BackendModelConfig>(`/api/models/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(req),
+  })
+}
+
+export async function deleteBackendModel(id: string): Promise<void> {
+  return fetchApi<void>(`/api/models/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
 loadTokensFromStorage()

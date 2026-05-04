@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Plus, Trash2, Pen, Star, Settings, Bot } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { Plus, Trash2, Pen, Star, Settings, Bot, Server, Shield } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { saveConfig, getConfig } from '@/db/config'
 import type { AppConfig, ModelConfig } from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
 import { modelLabel } from '@/lib/model-utils'
+import { useAuthStore } from '@/stores/auth'
+import { useBackendModelsStore } from '@/stores/backendModels'
 import ModelDialog from './components/ModelDialog.vue'
 
 const config = ref<AppConfig>({ ...DEFAULT_CONFIG })
 const dialogOpen = ref(false)
 const editingModel = ref<ModelConfig | null>(null)
+const auth = useAuthStore()
+const backendModels = useBackendModelsStore()
 
 async function loadConfig() {
   try {
@@ -99,6 +103,11 @@ function providerDotClass(provider: string): string {
 }
 
 loadConfig()
+onMounted(() => {
+  if (auth.isAuthenticated) {
+    backendModels.fetchModels()
+  }
+})
 </script>
 
 <template>
@@ -192,6 +201,73 @@ loadConfig()
       <Plus class="size-4 mr-1.5" />
       添加模型
     </Button>
+
+    <!-- Backend Models Section -->
+    <section
+      v-if="auth.isAuthenticated && (backendModels.models.length > 0 || auth.isAdmin)"
+      class="rounded-xl border bg-card shadow-sm p-5 space-y-4"
+    >
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <Server class="size-4 text-muted-foreground" />
+          <h3 class="text-sm font-medium">后端模型</h3>
+          <span class="text-[11px] px-1.5 py-0.5 rounded-full border text-muted-foreground">后端</span>
+        </div>
+        <p class="text-xs text-muted-foreground">管理员配置的共享模型，所有用户可见</p>
+      </div>
+
+      <div v-if="backendModels.loading" class="text-xs text-muted-foreground py-4 text-center">
+        加载中...
+      </div>
+
+      <div v-else-if="backendModels.models.length === 0" class="text-xs text-muted-foreground py-4 text-center">
+        {{ auth.isAdmin ? '还没有配置后端模型，点击下方按钮添加' : '暂无可用后端模型' }}
+      </div>
+
+      <div v-else class="space-y-2">
+        <div
+          v-for="bm in backendModels.models"
+          :key="bm.id"
+          class="flex items-center gap-3 rounded-lg border px-3.5 py-3 transition-all duration-200 hover:shadow-md"
+        >
+          <div class="size-9 rounded-lg flex items-center justify-center shrink-0 text-xs font-semibold"
+            :class="providerDotClass(bm.provider)">
+            {{ bm.provider.charAt(0).toUpperCase() }}
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-medium truncate">{{ bm.name }}</p>
+              <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                {{ bm.model }}
+              </span>
+            </div>
+            <p class="text-xs text-muted-foreground truncate mt-0.5">{{ bm.provider }} · {{ bm.contextWindowTokens / 1000 }}K</p>
+          </div>
+
+          <div v-if="bm.canEdit" class="flex items-center gap-0.5 shrink-0">
+            <button
+              class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
+              title="编辑"
+            >
+              <Pen class="size-3.5" />
+            </button>
+            <button
+              class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-destructive transition-colors"
+              title="删除"
+            >
+              <Trash2 class="size-3.5" />
+            </button>
+          </div>
+          <Shield v-else class="size-3.5 text-muted-foreground/40 shrink-0" title="仅管理员可编辑" />
+        </div>
+      </div>
+
+      <Button v-if="auth.isAdmin" variant="outline" class="w-full cursor-pointer text-xs" @click="openAdd">
+        <Plus class="size-3.5 mr-1" />
+        添加后端模型
+      </Button>
+    </section>
 
     <ModelDialog
       :open="dialogOpen"

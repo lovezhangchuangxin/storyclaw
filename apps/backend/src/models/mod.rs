@@ -42,3 +42,19 @@ pub struct LlmLog {
     pub completion_tokens: i32,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct BackendModel {
+    pub id: Uuid,
+    pub name: String,
+    pub provider: String,
+    pub api_base: String,
+    pub api_key_encrypted: Vec<u8>,
+    pub model: String,
+    pub max_output_tokens: i32,
+    pub context_window_tokens: i32,
+    pub is_public: bool,
+    pub created_by: Uuid,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}

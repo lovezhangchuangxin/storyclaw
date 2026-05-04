@@ -7,10 +7,19 @@ pub struct Config {
     pub jwt_secret: SecretString,
     pub port: u16,
     pub cors_origin: String,
+    pub model_key: [u8; 32],
 }
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
+        let model_key_hex = std::env::var("MODEL_ENCRYPTION_KEY")
+            .unwrap_or_else(|_| "0000000000000000000000000000000000000000000000000000000000000000".to_string());
+
+        let key_bytes = hex::decode(&model_key_hex)
+            .map_err(|_| anyhow::anyhow!("MODEL_ENCRYPTION_KEY must be 64 hex characters (32 bytes)"))?;
+        let mut model_key = [0u8; 32];
+        model_key.copy_from_slice(&key_bytes);
+
         Ok(Self {
             database_url: std::env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "postgres://localhost:5432/storyclaw".to_string()),
@@ -27,6 +36,7 @@ impl Config {
                 .unwrap_or(3000),
             cors_origin: std::env::var("CORS_ORIGIN")
                 .unwrap_or_else(|_| "http://localhost:5173".to_string()),
+            model_key,
         })
     }
 }
