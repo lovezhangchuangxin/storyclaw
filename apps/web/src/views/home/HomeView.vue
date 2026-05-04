@@ -205,7 +205,12 @@ async function handleCreateStory(selectedPromptIds: string[]) {
         </DialogClose>
         <Button
           class="gap-1.5"
-          @click="noModelDialogOpen = false; router.push('/settings/model')"
+          @click="
+            () => {
+              noModelDialogOpen = false
+              router.push('/settings/model')
+            }
+          "
         >
           <Settings class="size-4" />
           前往配置
