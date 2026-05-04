@@ -66,41 +66,41 @@ storyclaw/
 ├── package.json              (workspace root)
 ├── pnpm-workspace.yaml
 ├── apps/
-│   └── web/                  (Vue3 前端)
-│       ├── package.json
-│       ├── vite.config.ts
-│       ├── index.html
+│   ├── web/                  (Vue3 前端)
+│   │   ├── package.json
+│   │   ├── vite.config.ts
+│   │   ├── index.html
+│   │   └── src/
+│   │       ├── main.ts
+│   │       ├── App.vue
+│   │       ├── router/
+│   │       ├── stores/       (Pinia)
+│   │       ├── db/           (IndexedDB)
+│   │       ├── agent/        (Agent 引擎)
+│   │       │   ├── loop.ts
+│   │       │   ├── context.ts
+│   │       │   ├── tools/
+│   │       │   ├── skills/
+│   │       │   ├── hooks/
+│   │       │   ├── multi-agent/
+│   │       │   └── llm-client.ts
+│   │       ├── components/
+│   │       │   ├── reader/
+│   │       │   ├── creation/
+│   │       │   ├── shelf/
+│   │       │   ├── settings/
+│   │       │   └── ui/       (shadcn-vue)
+│   │       ├── composables/
+│   │       ├── lib/
+│   │       └── assets/
+│   └── backend/              (Rust 后端)
+│       ├── Cargo.toml
 │       └── src/
-│           ├── main.ts
-│           ├── App.vue
-│           ├── router/
-│           ├── stores/       (Pinia)
-│           ├── db/           (IndexedDB)
-│           ├── agent/        (Agent 引擎)
-│           │   ├── loop.ts
-│           │   ├── context.ts
-│           │   ├── tools/
-│           │   ├── skills/
-│           │   ├── hooks/
-│           │   ├── multi-agent/
-│           │   └── llm-client.ts
-│           ├── components/
-│           │   ├── reader/
-│           │   ├── creation/
-│           │   ├── shelf/
-│           │   ├── settings/
-│           │   └── ui/       (shadcn-vue)
-│           ├── composables/
-│           ├── lib/
-│           └── assets/
-└── backend/                   (Rust 后端)
-    ├── Cargo.toml
-    └── src/
-        ├── main.rs
-        ├── routes/
-        ├── models/
-        ├── auth/
-        └── sync/
+│           ├── main.rs
+│           ├── routes/
+│           ├── models/
+│           ├── auth/
+│           └── sync/
 ```
 
 ## 后端技术栈

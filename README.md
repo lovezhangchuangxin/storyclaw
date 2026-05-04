@@ -110,23 +110,35 @@ StoryClaw 把创作权完全交给 Agent，用户只负责 **想象、阅读和�
 
 ```
 storyclaw/
-├── apps/web/src/
-│   ├── agent/              # Agent 引擎
-│   │   ├── loop.ts         # 主循环：上下文构建 → LLM 调用 → 工具执行
-│   │   ├── context.ts      # 四层结构化上下文管理
-│   │   ├── llm-client.ts   # OpenAI SDK 封装（流式输出）
-│   │   ├── tools/          # 7 种工具：大纲、角色、章节、世界观、风格…
-│   │   ├── skills/         # Skill 预设系统
-│   │   ├── hooks/          # Agent 生命周期钩子
-│   │   └── multi-agent/    # 多 Agent 协调（Phase 3）
-│   ├── db/                 # IndexedDB 数据层（11 个 object store）
-│   ├── views/              # 页面：书架、故事详情、阅读器、设置
-│   ├── components/         # 共享组件：布局、阅读器、20+ shadcn-vue 组件
-│   ├── composables/        # 可复用组合式函数
-│   ├── stores/             # Pinia 状态管理
-│   └── router/             # 路由配置
-├── docs/designs/           # 7 份详细设计文档
-└── TODO.md                 # 开发路线图
+├── apps/
+│   ├── web/src/
+│   │   ├── agent/              # Agent 引擎
+│   │   │   ├── loop.ts         # 主循环：上下文构建 → LLM 调用 → 工具执行
+│   │   │   ├── context.ts      # 四层结构化上下文管理
+│   │   │   ├── llm-client.ts   # OpenAI SDK 封装（流式输出）
+│   │   │   ├── tools/          # 7 种工具：大纲、角色、章节、世界观、风格…
+│   │   │   ├── skills/         # Skill 预设系统
+│   │   │   ├── hooks/          # Agent 生命周期钩子
+│   │   │   └── multi-agent/    # 多 Agent 协调（Phase 3）
+│   │   ├── db/                 # IndexedDB 数据层（12 个 object store）
+│   │   ├── views/              # 页面：书架、故事详情、阅读器、设置、管理后台
+│   │   ├── components/         # 共享组件：布局、阅读器、20+ shadcn-vue 组件
+│   │   ├── composables/        # 可复用组合式函数
+│   │   ├── stores/             # Pinia 状态管理
+│   │   ├── lib/                # 工具库：API 客户端、同步逻辑
+│   │   └── router/             # 路由配置
+│   └── backend/                # Rust + Axum 后端
+│       ├── Cargo.toml
+│       └── src/
+│           ├── main.rs
+│           ├── routes/         # 路由：auth, novels, llm, admin
+│           ├── models/         # 数据模型
+│           ├── auth/           # 认证：JWT, 密码哈希, 中间件
+│           ├── sync/           # 小说同步（LWW 策略）
+│           ├── llm/            # LLM 代理（SSE 流式透传）
+│           └── admin/          # 管理端点
+├── docs/designs/               # 8 份详细设计文档
+└── TODO.md                     # 开发路线图
 ```
 
 ---
@@ -139,6 +151,11 @@ storyclaw/
 - pnpm ≥ 8
 - 一个 OpenAI 兼容的 API Key（支持 DeepSeek、Ollama 等）
 
+可选后端：
+- Rust (最新 stable)
+- PostgreSQL ≥ 14
+- Redis（缓存与速率限制）
+
 ### 安装与运行
 
 ```bash
@@ -146,23 +163,34 @@ storyclaw/
 git clone https://github.com/lovezhangchuangxin/storyclaw.git
 cd storyclaw
 
-# 安装依赖
+# 安装前端依赖
 pnpm install
 
-# 启动开发服务器
+# 启动前端开发服务器
 pnpm dev
 ```
 
 浏览器打开 `http://localhost:5173`，进入设置页面配置你的 API Key 和模型端点即可开始使用。
 
+#### 可选：启动后端
+
+```bash
+# 配置环境变量
+cp apps/backend/.env.example apps/backend/.env
+# 编辑 apps/backend/.env 填入数据库连接等信息
+
+# 启动后端
+cd apps/backend && cargo run --bin storyclaw-backend
+```
+
 ### 构建部署
 
 ```bash
-pnpm build      # 类型检查 + 生产构建
-pnpm preview    # 预览构建产物
-```
+pnpm build      # 前端：类型检查 + 生产构建
+pnpm preview    # 预览前端构建产物
 
-构建产物为纯静态文件，可部署到任何静态托管服务（Vercel、Netlify、Cloudflare Pages 等）。
+cd apps/backend && cargo build --release  # 后端：生产构建
+```
 
 ---
 
@@ -187,14 +215,13 @@ pnpm preview    # 预览构建产物
 - [ ] PWA 离线阅读优化
 - [ ] 提示词市场
 
-### Phase 3 — 后端 + 多 Agent
+### Phase 3 — 后端 + 多 Agent ✅
 
-- [ ] Rust + Axum 后端服务
-- [ ] PostgreSQL + Redis
-- [ ] 用户认证 (JWT)
-- [ ] 多设备同步
+- [x] Rust + Axum 后端服务（注册/登录、JWT 认证、LWW 数据同步、LLM 代理）
+- [x] PostgreSQL + Redis 数据层
+- [x] 前端后端集成（登录/注册页面、API 客户端、自动同步）
+- [x] 管理后台（用户管理、小说管理、数据统计）
 - [ ] 多 Agent 协作系统
-- [ ] 管理后台
 
 ---
 

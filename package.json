@@ -4,6 +4,8 @@
   "scripts": {
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter web build",
-    "preview": "pnpm --filter web preview"
+    "preview": "pnpm --filter web preview",
+    "backend:dev": "cd apps/backend && cargo run",
+    "backend:admin": "cd apps/backend && cargo run --bin create_admin"
   }
 }

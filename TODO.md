@@ -74,7 +74,7 @@
 
 目标：可选后端连接，多设备同步，管理员，完整 Agent 系统。
 
-### 3.1 后端 (`backend/`)
+### 3.1 后端 (`apps/backend/`)
 - [ ] Rust + Axum 项目初始化
 - [ ] PostgreSQL schema + sqlx migrations
 - [ ] POST /api/auth/register, /api/auth/login, /api/auth/refresh
