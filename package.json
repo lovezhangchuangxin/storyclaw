@@ -5,7 +5,28 @@
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter web build",
     "preview": "pnpm --filter web preview",
+    "lint": "oxlint",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
     "backend:dev": "cd apps/backend && cargo run",
-    "backend:admin": "cd apps/backend && cargo run --bin create_admin"
+    "backend:admin": "cd apps/backend && cargo run --bin create_admin",
+    "prepare": "simple-git-hooks"
+  },
+  "devDependencies": {
+    "lint-staged": "^16.4.0",
+    "oxfmt": "^0.47.0",
+    "oxlint": "^1.62.0",
+    "simple-git-hooks": "^2.13.1"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*.{ts,vue,tsx,js,jsx}": [
+      "oxlint"
+    ],
+    "*.{ts,vue,tsx,js,jsx,json,css,html,md}": [
+      "oxfmt --check"
+    ]
   }
 }
