@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { BookOpen, MessageSquareText, User, Settings, Server, Palette, PanelLeftClose, PanelLeft } from 'lucide-vue-next'
+import { BookOpen, MessageSquareText, User, Settings, Server, Palette, PanelLeftClose, PanelLeft, Shield } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+import { computed } from 'vue'
 
 const props = defineProps<{
   collapsed: boolean
@@ -14,6 +16,7 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const route = useRoute()
+const auth = useAuthStore()
 
 const items = [
   { path: '/', label: '书架', icon: BookOpen },
@@ -23,6 +26,15 @@ const items = [
   { path: '/settings/appearance', label: '外观', icon: Palette },
   { path: '/my', label: '我的', icon: User },
 ]
+
+const adminItem = { path: '/admin/users', label: '管理后台', icon: Shield }
+
+const visibleItems = computed(() => {
+  if (auth.isAdmin) {
+    return [...items, adminItem]
+  }
+  return items
+})
 
 function isActive(path: string) {
   if (path === '/') return route.path === '/'
@@ -63,7 +75,7 @@ function navigate(path: string) {
     <!-- Nav items -->
     <nav aria-label="主导航" class="flex-1 py-2 px-2">
       <button
-        v-for="item in items"
+        v-for="item in visibleItems"
         :key="item.path"
         class="flex items-center w-full rounded-md text-sm transition-colors px-3 py-2"
         :class="isActive(item.path)

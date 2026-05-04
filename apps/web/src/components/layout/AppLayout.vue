@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { ref, watch, computed, provide, shallowRef, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Menu, ArrowLeft } from 'lucide-vue-next'
+import { Menu, ArrowLeft, Cloud } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import AppSidebar from './AppSidebar.vue'
 import { useBackgroundImage } from '@/composables/useBackgroundImage'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 const collapsed = ref(loadCollapsed())
 const mobileOpen = ref(false)
+
+const syncClass = computed(() => {
+  if (!auth.isAuthenticated) return 'text-muted-foreground/40'
+  return 'text-emerald-500 dark:text-emerald-400'
+})
 
 const { backgroundUrl, bgOpacity, bgBlur, loadAll, cleanup } = useBackgroundImage()
 
@@ -120,6 +127,11 @@ function closeMobile() {
           </button>
           <h1 class="text-sm font-semibold truncate">{{ title }}</h1>
           <div class="flex-1" />
+          <Cloud
+            class="size-4 shrink-0 hidden sm:block"
+            :class="syncClass"
+            :title="auth.isAuthenticated ? '已连接后端' : '未连接后端'"
+          />
           <component :is="topbarExtra" v-if="topbarExtra" />
         </header>
 
