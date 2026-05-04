@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ChevronDown, Loader2, Send, Square, BrainCircuit } from 'lucide-vue-next'
+import { ref, watch, nextTick, computed } from 'vue'
+import { ChevronDown, Send, Square, BrainCircuit, Play } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -7,14 +8,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 import type { ModelConfig } from '@/db/types'
+import { SLASH_COMMANDS, COMMAND_IDS } from '@/agent/commands'
 
-defineProps<{
+const props = defineProps<{
   modelValue: string
   models: ModelConfig[]
   selectedModelId: string
   isGenerating: boolean
-  isCompacting: boolean
   selectedModelLabel: string
   selectedModelProvider: string
 }>()
@@ -23,25 +32,124 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
   send: []
   cancel: []
-  compact: []
   'update:selectedModelId': [id: string]
+  command: [cmdId: string]
 }>()
+
+const showCommandMenu = ref(false)
+const commandRef = ref<InstanceType<typeof Command>>()
+const inputAreaRef = ref<HTMLElement>()
+const panelStyle = ref<Record<string, string>>({})
+
+function updatePanelPosition() {
+  if (!inputAreaRef.value) return
+  const rect = inputAreaRef.value.getBoundingClientRect()
+  panelStyle.value = {
+    position: 'fixed',
+    bottom: `${window.innerHeight - rect.top + 8}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+  }
+}
+
+watch(() => props.modelValue, (val) => {
+  if (val === '/') {
+    showCommandMenu.value = true
+    emit('update:modelValue', '')
+    nextTick(() => {
+      updatePanelPosition()
+      const input = commandRef.value?.$el?.querySelector('input')
+      input?.focus()
+    })
+  }
+})
+
+function selectCommand(cmdId: string) {
+  showCommandMenu.value = false
+  emit('update:modelValue', `/${cmdId} `)
+}
+
+function closeCommandMenu() {
+  showCommandMenu.value = false
+}
+
+const pendingCommandId = computed(() => {
+  const token = props.modelValue.trim().split(' ')[0]
+  if (!token.startsWith('/')) return null
+  const id = token.slice(1)
+  return COMMAND_IDS.has(id) ? id : null
+})
+
+function handleSend() {
+  if (pendingCommandId.value) {
+    emit('update:modelValue', '')
+    emit('command', pendingCommandId.value)
+  }
+  else {
+    emit('send')
+  }
+}
 </script>
 
 <template>
   <div class="shrink-0 bg-background/90 backdrop-blur-sm">
-    <div class="mx-auto max-w-3xl px-4 pb-4 pt-2">
+    <div class="mx-auto max-w-3xl px-4 pb-4 pt-2 relative">
+      <!-- Slash Command Menu -->
+      <Teleport to="body">
+        <Transition
+          enter-active-class="transition duration-150 ease-out"
+          enter-from-class="opacity-0 translate-y-1"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition duration-100 ease-in"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 translate-y-1"
+        >
+          <div v-if="showCommandMenu" class="fixed inset-0 z-50" @mousedown="closeCommandMenu" @touchstart="closeCommandMenu">
+            <div
+              :style="panelStyle"
+              @click.stop @mousedown.stop @touchstart.stop
+            >
+              <div class="rounded-lg border bg-popover p-0 shadow-lg overflow-hidden">
+                <Command ref="commandRef">
+                  <CommandInput placeholder="搜索命令..." @keydown.escape.prevent="closeCommandMenu" />
+                  <CommandList>
+                    <CommandEmpty>没有匹配的命令</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        v-for="cmd in SLASH_COMMANDS"
+                        :key="cmd.id"
+                        :value="cmd.id"
+                        @select="selectCommand(cmd.id)"
+                      >
+                        <component :is="cmd.icon" class="size-4 shrink-0 text-muted-foreground" />
+                        <div class="flex items-center gap-2">
+                          <span class="font-medium">{{ cmd.label }}</span>
+                          <span class="text-muted-foreground">—</span>
+                          <span class="text-muted-foreground">{{ cmd.description }}</span>
+                        </div>
+                      </CommandItem>
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
+
+      <!-- Input Area -->
       <div
+        ref="inputAreaRef"
         class="rounded-lg border bg-card shadow-lg transition-all focus-within:border-ring/50 focus-within:shadow-xl dark:bg-card"
       >
         <textarea
           :value="modelValue"
           @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
-          placeholder="输入你的想法或反馈... (Ctrl+Enter 发送)"
+          placeholder="发送消息，/ 命令"
           rows="1"
           class="field-sizing-content block min-h-0 w-full resize-none bg-transparent px-4 py-3.5 text-base outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           :disabled="isGenerating"
-          @keydown.enter.exact.prevent="emit('send')"
+          @keydown.enter.exact.prevent="handleSend"
         />
 
         <div class="flex items-center gap-2 px-3 pb-3">
@@ -82,28 +190,18 @@ const emit = defineEmits<{
             <span>配置模型</span>
           </router-link>
 
-          <!-- Compact context -->
-          <Button
-            variant="ghost"
-            size="xs"
-            class="text-xs text-muted-foreground hover:text-foreground"
-            :disabled="isGenerating || isCompacting || models.length === 0"
-            @click="emit('compact')"
-          >
-            <Loader2 v-if="isCompacting" class="mr-1 size-3 animate-spin" />
-            <span>整理上下文</span>
-          </Button>
-
           <div class="ml-auto flex items-center gap-1">
             <Button
               v-if="!isGenerating"
-              size="icon-sm"
+              size="sm"
               variant="default"
-              class="bg-primary/90 hover:bg-primary"
+              class="gap-1.5"
               :disabled="!modelValue.trim()"
-              @click="emit('send')"
+              @click="handleSend"
             >
-              <Send class="size-3.5" />
+              <Play v-if="pendingCommandId" class="size-3.5" />
+              <Send v-else class="size-3.5" />
+              {{ pendingCommandId ? '执行' : '发送' }}
             </Button>
             <Button
               v-else

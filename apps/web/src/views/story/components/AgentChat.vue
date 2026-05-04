@@ -342,6 +342,13 @@ function cancel() {
   abortController.value?.abort()
 }
 
+function handleCommand(cmdId: string) {
+  const handlers: Record<string, () => void> = {
+    compact: compactContext,
+  }
+  handlers[cmdId]?.()
+}
+
 async function compactContext() {
   if (isGenerating.value || isCompacting.value) return
   const model = models.value.find((item) => item.id === selectedModelId.value) ?? models.value[0]
@@ -353,14 +360,12 @@ async function compactContext() {
   isCompacting.value = true
   try {
     const conversation = await getConversationByNovelId(props.novelId)
-    const instructions = window.prompt('可选整理指令（留空表示自动整理）', '') ?? ''
     const result = await compactConversationContext({
       novelId: props.novelId,
       modelConfig: model,
       conversation: conversation ?? { novelId: props.novelId, messages: [], updatedAt: Date.now() },
       storyState: await loadStoryState(props.novelId),
       reason: 'manual',
-      manualInstructions: instructions.trim() || undefined,
       force: true,
     })
 
@@ -437,13 +442,13 @@ function onWelcomeFill(prompt: string) {
       :models="models"
       :selected-model-id="selectedModelId"
       :is-generating="isGenerating"
-      :is-compacting="isCompacting"
       :selected-model-label="selectedModelLabel"
       :selected-model-provider="selectedModelProvider"
       @update:model-value="input = $event"
       @send="send"
       @cancel="cancel"
       @compact="compactContext"
+      @command="handleCommand"
       @update:selected-model-id="selectedModelId = $event"
     />
   </div>
