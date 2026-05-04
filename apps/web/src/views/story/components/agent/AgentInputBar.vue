@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue'
-import { ChevronDown, Send, Square, BrainCircuit, Play } from 'lucide-vue-next'
+import { ChevronDown, Send, Square, BrainCircuit, Play, Search } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -8,14 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
 import type { ModelConfig } from '@/db/types'
 import { SLASH_COMMANDS, COMMAND_IDS } from '@/agent/commands'
 
@@ -37,9 +29,24 @@ const emit = defineEmits<{
 }>()
 
 const showCommandMenu = ref(false)
-const commandRef = ref<InstanceType<typeof Command>>()
+const commandInputRef = ref<HTMLInputElement>()
 const inputAreaRef = ref<HTMLElement>()
 const panelStyle = ref<Record<string, string>>({})
+const activeIndex = ref(0)
+const commandSearch = ref('')
+
+const filteredCommandList = computed(() => {
+  if (!commandSearch.value) return SLASH_COMMANDS
+  const q = commandSearch.value.toLowerCase()
+  return SLASH_COMMANDS.filter(cmd =>
+    cmd.label.toLowerCase().includes(q)
+    || cmd.description.toLowerCase().includes(q),
+  )
+})
+
+watch(filteredCommandList, () => {
+  activeIndex.value = 0
+})
 
 function updatePanelPosition() {
   if (!inputAreaRef.value) return
@@ -55,22 +62,50 @@ function updatePanelPosition() {
 watch(() => props.modelValue, (val) => {
   if (val === '/') {
     showCommandMenu.value = true
+    commandSearch.value = ''
+    activeIndex.value = 0
     emit('update:modelValue', '')
     nextTick(() => {
       updatePanelPosition()
-      const input = commandRef.value?.$el?.querySelector('input')
-      input?.focus()
+    })
+    setTimeout(() => {
+      commandInputRef.value?.focus()
     })
   }
 })
 
 function selectCommand(cmdId: string) {
   showCommandMenu.value = false
+  activeIndex.value = 0
+  commandSearch.value = ''
   emit('update:modelValue', `/${cmdId} `)
 }
 
 function closeCommandMenu() {
   showCommandMenu.value = false
+  activeIndex.value = 0
+  commandSearch.value = ''
+}
+
+function handleCommandKeydown(e: KeyboardEvent) {
+  const list = filteredCommandList.value
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    activeIndex.value = list.length ? (activeIndex.value + 1) % list.length : 0
+  }
+  else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    activeIndex.value = list.length ? (activeIndex.value - 1 + list.length) % list.length : 0
+  }
+  else if (e.key === 'Enter') {
+    e.preventDefault()
+    const cmd = list[activeIndex.value]
+    if (cmd) selectCommand(cmd.id)
+  }
+  else if (e.key === 'Escape') {
+    e.preventDefault()
+    closeCommandMenu()
+  }
 }
 
 const pendingCommandId = computed(() => {
@@ -109,28 +144,35 @@ function handleSend() {
               :style="panelStyle"
               @click.stop @mousedown.stop @touchstart.stop
             >
-              <div class="rounded-lg border bg-popover p-0 shadow-lg overflow-hidden">
-                <Command ref="commandRef">
-                  <CommandInput placeholder="搜索命令..." @keydown.escape.prevent="closeCommandMenu" />
-                  <CommandList>
-                    <CommandEmpty>没有匹配的命令</CommandEmpty>
-                    <CommandGroup>
-                      <CommandItem
-                        v-for="cmd in SLASH_COMMANDS"
-                        :key="cmd.id"
-                        :value="cmd.id"
-                        @select="selectCommand(cmd.id)"
-                      >
-                        <component :is="cmd.icon" class="size-4 shrink-0 text-muted-foreground" />
-                        <div class="flex items-center gap-2">
-                          <span class="font-medium">{{ cmd.label }}</span>
-                          <span class="text-muted-foreground">—</span>
-                          <span class="text-muted-foreground">{{ cmd.description }}</span>
-                        </div>
-                      </CommandItem>
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
+              <div class="rounded-lg border bg-popover shadow-lg overflow-hidden">
+                <div class="flex items-center gap-2 px-3 py-2 border-b">
+                  <Search class="size-4 shrink-0 text-muted-foreground" />
+                  <input
+                    ref="commandInputRef"
+                    v-model="commandSearch"
+                    placeholder="搜索命令..."
+                    class="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    @keydown="handleCommandKeydown"
+                  />
+                </div>
+                <div class="p-1">
+                  <div
+                    v-for="(cmd, index) in filteredCommandList"
+                    :key="cmd.id"
+                    class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors"
+                    :class="index === activeIndex ? 'bg-accent text-accent-foreground' : ''"
+                    @click="selectCommand(cmd.id)"
+                    @mouseenter="activeIndex = index"
+                  >
+                    <component :is="cmd.icon" class="size-4 shrink-0 text-muted-foreground" />
+                    <span class="font-medium">{{ cmd.label }}</span>
+                    <span class="text-muted-foreground">—</span>
+                    <span class="text-muted-foreground">{{ cmd.description }}</span>
+                  </div>
+                  <div v-if="filteredCommandList.length === 0" class="px-2 py-1.5 text-sm text-muted-foreground">
+                    没有匹配的命令
+                  </div>
+                </div>
               </div>
             </div>
           </div>

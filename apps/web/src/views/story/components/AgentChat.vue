@@ -348,7 +348,12 @@ function handleCommand(cmdId: string) {
     compact: compactContext,
     new: newConversation,
   }
-  handlers[cmdId]?.()
+  if (handlers[cmdId]) {
+    handlers[cmdId]()
+  }
+  else {
+    toast.error(`未知命令：/${cmdId}`)
+  }
 }
 
 async function newConversation() {
@@ -361,6 +366,7 @@ async function newConversation() {
     localStatusMessages.value = []
     transientMessages.value = []
     toast.success('已创建新会话')
+    pushLocalStatus('info', '已创建新会话，对话记录已清空')
   }
   catch (error) {
     toast.error('创建新会话失败', {
@@ -390,16 +396,18 @@ async function compactContext() {
     })
 
     if (result.snapshot) {
-      toast.success('上下文已整理', {
-        description: `压缩前约 ${result.estimatedInputTokensBefore} token，压缩后约 ${result.estimatedInputTokensAfter} token`,
-      })
+      const msg = `上下文已整理：压缩前约 ${result.estimatedInputTokensBefore} token，压缩后约 ${result.estimatedInputTokensAfter} token`
+      toast.success('上下文已整理')
+      pushLocalStatus('info', msg)
     } else {
       toast.success('没有需要整理的上下文')
+      pushLocalStatus('info', '上下文暂无内容需要整理')
     }
   } catch (error) {
     toast.error('整理失败', {
       description: error instanceof Error ? error.message : String(error),
     })
+    pushLocalStatus('error', `整理失败：${error instanceof Error ? error.message : String(error)}`)
   } finally {
     isCompacting.value = false
   }
@@ -461,13 +469,12 @@ function onWelcomeFill(prompt: string) {
       :model-value="input"
       :models="models"
       :selected-model-id="selectedModelId"
-      :is-generating="isGenerating"
+      :is-generating="isGenerating || isCompacting"
       :selected-model-label="selectedModelLabel"
       :selected-model-provider="selectedModelProvider"
       @update:model-value="input = $event"
       @send="send"
       @cancel="cancel"
-      @compact="compactContext"
       @command="handleCommand"
       @update:selected-model-id="selectedModelId = $event"
     />
