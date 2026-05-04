@@ -38,7 +38,19 @@ function openEdit(model: ModelConfig) {
 }
 
 function openBackendAdd() {
-  editingModel.value = null
+  editingModel.value = {
+    id: crypto.randomUUID(),
+    provider: '',
+    apiBase: '',
+    apiKey: '',
+    model: '',
+    maxOutputTokens: 16384,
+    contextWindowTokens: 128000,
+    outputReserveTokens: 4096,
+    compactionTriggerRatio: 0.7,
+    compactionTargetRatio: 0.2,
+    isBackendModel: true,
+  }
   dialogOpen.value = true
 }
 
@@ -56,7 +68,8 @@ function openBackendEdit(bm: import('@/db/types').BackendModelConfig) {
     compactionTargetRatio: 0.7,
     isBackendModel: true,
     backendId: bm.id,
-  }
+  } as any
+  editingModel.value.backendName = bm.name
   dialogOpen.value = true
 }
 
