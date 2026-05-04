@@ -10,6 +10,7 @@ export interface LLMClientOptions {
   signal?: AbortSignal
   useBackendProxy?: boolean
   backendUrl?: string
+  modelId?: string
 }
 
 export interface LLMUsage {
@@ -27,7 +28,7 @@ function isAbortError(error: unknown): boolean {
 }
 
 export function createLLMClient(options: LLMClientOptions) {
-  const { config, onToken, onToolCallStart, onToolStreamToken, onReasoningToken, signal, useBackendProxy, backendUrl } = options
+  const { config, onToken, onToolCallStart, onToolStreamToken, onReasoningToken, signal, useBackendProxy, backendUrl, modelId } = options
 
   const baseURL = useBackendProxy && backendUrl
     ? `${backendUrl}/api/llm/v1`
@@ -53,6 +54,7 @@ export function createLLMClient(options: LLMClientOptions) {
             temperature: 0.8,
             stream: true,
             stream_options: { include_usage: true },
+            ...(modelId ? { model_id: modelId } as any : {}),
         },
         { signal },
       )
