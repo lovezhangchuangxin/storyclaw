@@ -156,6 +156,7 @@ function onJumpToChapter(index: number) {
     <Transition name="controls-slide">
       <ReaderControls
         v-if="mode === 'reader' && showControls"
+        class="absolute inset-x-0 bottom-0 z-10"
         :settings="settings"
         :chapter-index="chapterIndex"
         :total-chapters="totalChapters"

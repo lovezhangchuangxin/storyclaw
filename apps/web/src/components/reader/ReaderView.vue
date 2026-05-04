@@ -48,9 +48,9 @@ function onScroll() {
   emit('updateProgress', scrollPercent.value)
 }
 
-function onPointerDown(e: PointerEvent) {
-  const yFromBottom = window.innerHeight - e.clientY
-  if (yFromBottom < 60) {
+function onClickContent(e: MouseEvent) {
+  const ratio = e.clientY / window.innerHeight
+  if (ratio > 0.25 && ratio < 0.75) {
     emit('showControls')
   }
 }
@@ -88,7 +88,7 @@ defineExpose({ scrollToPos })
     class="reader h-full overflow-y-auto overscroll-none bg-background/65 text-foreground"
     :style="readerStyle"
     @scroll="onScroll"
-    @pointerdown="onPointerDown"
+    @click="onClickContent"
   >
     <!-- Reading progress bar -->
     <div class="sticky top-0 z-20 h-0.5 bg-muted/30">
@@ -126,7 +126,7 @@ defineExpose({ scrollToPos })
       />
 
       <!-- Chapter navigation -->
-      <nav class="flex items-center justify-between pb-8">
+      <nav class="flex items-center justify-between pb-8" @click.stop>
         <button
           v-if="chapterIndex > 0"
           class="text-sm opacity-50 hover:opacity-100 transition-opacity px-4 py-2.5 rounded-lg hover:bg-foreground/5"

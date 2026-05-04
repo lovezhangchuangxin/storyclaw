@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, provide } from 'vue'
 import { Toaster } from '@/components/ui/sonner'
-import { getConfig } from '@/db/config'
+import { getConfig, saveConfig } from '@/db/config'
 import type { AppTheme } from '@/db/types'
 
 const appTheme = ref<AppTheme>('light')
 
-function applyTheme(theme: AppTheme) {
+async function applyTheme(theme: AppTheme) {
+  appTheme.value = theme
   const el = document.documentElement
   el.classList.remove('dark', 'parchment', 'frost', 'peach', 'pine')
   if (theme === 'dark') el.classList.add('dark')
@@ -15,6 +16,11 @@ function applyTheme(theme: AppTheme) {
   if (theme === 'peach') el.classList.add('peach')
   if (theme === 'pine') el.classList.add('pine')
   try { localStorage.setItem('app-theme', theme) } catch { /* quota exceeded */ }
+  try {
+    const config = await getConfig()
+    config.appTheme = theme
+    await saveConfig(config)
+  } catch { /* ignore */ }
 }
 
 onMounted(async () => {
