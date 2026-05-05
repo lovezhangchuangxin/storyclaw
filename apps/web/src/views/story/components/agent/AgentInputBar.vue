@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { ModelConfig } from '@/db/types'
 import { SLASH_COMMANDS, COMMAND_IDS } from '@/agent/commands'
+import { modelLabel } from '@/lib/model-utils'
 import ContextWindowIndicator from './ContextWindowIndicator.vue'
 
 const props = defineProps<{
@@ -234,7 +235,7 @@ function handleSend() {
                 >
                   {{ model.provider[0]?.toUpperCase() }}
                 </span>
-                <span class="text-xs">{{ model.model }}</span>
+                <span class="text-xs">{{ modelLabel(model) }}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

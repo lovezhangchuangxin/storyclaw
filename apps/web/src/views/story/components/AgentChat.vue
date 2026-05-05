@@ -8,6 +8,7 @@ import { cloneMessages } from '@/agent/message-state'
 import { compactConversationContext } from '@/agent/context-compaction'
 import { loadStoryState } from '@/agent/story-state'
 import { estimateMessagesTokens } from '@/agent/token-estimator'
+import { modelLabel } from '@/lib/model-utils'
 import { getConfig } from '@/db/config'
 import { getAllModels } from '@/composables/useModels'
 import { deleteConversation, getConversationByNovelId } from '@/db/conversations'
@@ -47,7 +48,7 @@ const selectedModelId = ref('')
 
 const selectedModelLabel = computed(() => {
   const model = models.value.find((item) => item.id === selectedModelId.value)
-  return model ? model.model : t('story.agent.selectModel')
+  return model ? modelLabel(model) : t('story.agent.selectModel')
 })
 
 const selectedModelProvider = computed(() => {
