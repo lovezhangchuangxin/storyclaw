@@ -2653,6 +2653,7 @@ dependencies = [
  "async-openai",
  "axum",
  "base64",
+ "bytes",
  "chrono",
  "dotenvy",
  "futures",

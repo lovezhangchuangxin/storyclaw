@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::config::Config;
 use crate::error::{AppError, Result};
 use crate::models::User;
+use crate::rate_limit::RateLimiter;
 
 use super::{jwt, password};
 
@@ -45,6 +46,7 @@ pub struct AppState {
     pub pool: PgPool,
     pub config: Config,
     pub http_client: reqwest::Client,
+    pub rate_limiter: RateLimiter,
 }
 
 pub async fn register(

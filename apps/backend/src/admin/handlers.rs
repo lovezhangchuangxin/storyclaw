@@ -177,3 +177,55 @@ pub async fn get_stats(
 
     Ok(Json(AdminStats { total_users, total_novels, total_llm_calls }))
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UsageQuery {
+    pub days: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UserUsageEntry {
+    pub user_id: Uuid,
+    pub email: String,
+    pub total_requests: i64,
+    pub total_tokens: i64,
+    pub prompt_tokens: i64,
+    pub completion_tokens: i64,
+}
+
+pub async fn get_usage_stats(
+    State(state): State<AppState>,
+    _admin: AdminUser,
+    Query(query): Query<UsageQuery>,
+) -> Result<Json<Vec<UserUsageEntry>>> {
+    let days = query.days.unwrap_or(30).clamp(1, 365);
+
+    let rows = sqlx::query(
+        "SELECT l.user_id, u.email, \
+         COUNT(*) as total_requests, \
+         COALESCE(SUM(l.total_tokens), 0) as total_tokens, \
+         COALESCE(SUM(l.prompt_tokens), 0) as prompt_tokens, \
+         COALESCE(SUM(l.completion_tokens), 0) as completion_tokens \
+         FROM llm_logs l JOIN users u ON l.user_id = u.id \
+         WHERE l.created_at >= NOW() - make_interval(days => $1) \
+         GROUP BY l.user_id, u.email \
+         ORDER BY total_tokens DESC",
+    )
+    .bind(days)
+    .fetch_all(&state.pool)
+    .await?;
+
+    let entries: Vec<UserUsageEntry> = rows
+        .iter()
+        .map(|r| UserUsageEntry {
+            user_id: r.get(0),
+            email: r.get(1),
+            total_requests: r.get(2),
+            total_tokens: r.get(3),
+            prompt_tokens: r.get(4),
+            completion_tokens: r.get(5),
+        })
+        .collect();
+
+    Ok(Json(entries))
+}

@@ -8,6 +8,8 @@ pub struct Config {
     pub port: u16,
     pub cors_origin: String,
     pub model_key: [u8; 32],
+    pub daily_token_limit: i64,
+    pub rate_limit_per_minute: i32,
 }
 
 fn require_env(key: &str) -> String {
@@ -57,6 +59,16 @@ impl Config {
             cors_origin: std::env::var("CORS_ORIGIN")
                 .unwrap_or_else(|_| "http://localhost:5173".to_string()),
             model_key,
+            daily_token_limit: std::env::var("DAILY_TOKEN_LIMIT")
+                .unwrap_or_else(|_| "1000000".to_string())
+                .parse()
+                .unwrap_or(1_000_000)
+                .max(1),
+            rate_limit_per_minute: std::env::var("RATE_LIMIT_RPM")
+                .unwrap_or_else(|_| "20".to_string())
+                .parse()
+                .unwrap_or(20)
+                .max(1),
         })
     }
 }

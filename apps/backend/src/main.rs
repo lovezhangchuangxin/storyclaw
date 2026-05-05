@@ -44,10 +44,16 @@ async fn main() -> anyhow::Result<()> {
         .read_timeout(Duration::from_secs(120))
         .build()?;
 
+    let rate_limiter = rate_limit::RateLimiter::new(config.redis_url.clone());
+    if let Err(e) = rate_limiter.connect().await {
+        tracing::warn!("Redis connection failed, rate limiting disabled: {}", e);
+    }
+
     let state = AppState {
         pool: pool.clone(),
         config: config.clone(),
         http_client,
+        rate_limiter,
     };
 
     let cors_origin = config.cors_origin

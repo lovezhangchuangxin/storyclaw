@@ -40,6 +40,9 @@ pub struct LlmLog {
     pub model: String,
     pub prompt_tokens: i32,
     pub completion_tokens: i32,
+    pub total_tokens: i32,
+    pub is_stream: bool,
+    pub backend_model_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 

@@ -60,6 +60,8 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
       RUST_LOG: ${RUST_LOG:-storyclaw_backend=info,tower_http=warn}
       STORYCLAW_PRODUCTION: "1"
+      DAILY_TOKEN_LIMIT: ${DAILY_TOKEN_LIMIT:-1000000}
+      RATE_LIMIT_RPM: ${RATE_LIMIT_RPM:-20}
 
   web:
     build:

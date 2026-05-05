@@ -9,5 +9,6 @@ pub fn admin_routes(state: AppState) -> Router {
         .route("/users/{id}", get(handlers::get_user))
         .route("/novels", get(handlers::list_novels))
         .route("/stats", get(handlers::get_stats))
+        .route("/usage", get(handlers::get_usage_stats))
         .with_state(state)
 }
