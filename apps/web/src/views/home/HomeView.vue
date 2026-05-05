@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { BookOpen, Plus, Search, Settings } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
@@ -60,19 +60,18 @@ const router = useRouter()
 
 const newStoryDialogOpen = ref(false)
 const noModelDialogOpen = ref(false)
-const hasModels = ref(true)
 
-onMounted(async () => {
-  const allModels = await getAllModels()
-  hasModels.value = allModels.length > 0
-})
-
-function openCreateDialog() {
-  if (!hasModels.value) {
+async function openCreateDialog() {
+  try {
+    const allModels = await getAllModels()
+    if (allModels.length === 0) {
+      noModelDialogOpen.value = true
+      return
+    }
+    newStoryDialogOpen.value = true
+  } catch {
     noModelDialogOpen.value = true
-    return
   }
-  newStoryDialogOpen.value = true
 }
 
 async function handleCreateStory(selectedPromptIds: string[]) {
