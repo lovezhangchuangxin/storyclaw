@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Eye, EyeOff, Loader2, Zap, Globe, X } from 'lucide-vue-next'
+import { Eye, EyeOff, Loader2, Zap, Globe, X, ChevronDown, ChevronRight } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -35,6 +35,7 @@ const compactionTriggerRatio = ref('0.7')
 const compactionTargetRatio = ref('0.2')
 const summaryModelId = ref('')
 const showKey = ref(false)
+const showAdvanced = ref(false)
 const modelsLoading = ref(false)
 const testing = ref(false)
 const fetchedModels = ref<string[]>([])
@@ -84,6 +85,7 @@ watch(
     if (!val) return
     populating = true
     fetchedModels.value = []
+    showAdvanced.value = !!props.model
     const fallback = createDefaultModelConfig({
       id: props.model?.id ?? crypto.randomUUID(),
       provider: props.model?.provider ?? '',
@@ -330,71 +332,89 @@ function handleSave() {
         </div>
 
         <div class="space-y-3 rounded-lg border border-dashed p-3">
-          <div>
+          <button
+            type="button"
+            class="flex items-center gap-1.5 w-full text-left"
+            :aria-expanded="showAdvanced"
+            aria-controls="advanced-section"
+            @click="showAdvanced = !showAdvanced"
+          >
+            <component
+              :is="showAdvanced ? ChevronDown : ChevronRight"
+              class="size-3.5 text-muted-foreground"
+              aria-hidden="true"
+            />
             <p class="text-xs font-medium">{{ $t('settings.modelDialog.compactionSection') }}</p>
-            <p class="text-[11px] text-muted-foreground">
-              {{
-                isBackend
-                  ? $t('settings.modelDialog.compactionHintBackend')
-                  : $t('settings.modelDialog.compactionHintLocal')
-              }}
-            </p>
-          </div>
+          </button>
+          <p class="text-[11px] text-muted-foreground">
+            {{
+              isBackend
+                ? $t('settings.modelDialog.compactionHintBackend')
+                : $t('settings.modelDialog.compactionHintLocal')
+            }}
+          </p>
 
-          <div class="grid grid-cols-2 gap-2">
-            <div class="space-y-1.5">
-              <Label class="text-xs">{{ $t('settings.modelDialog.maxOutputTokens') }}</Label>
-              <Input v-model="maxOutputTokens" type="number" min="1" class="focus-visible:ring-0" />
+          <Transition name="collapse">
+            <div v-if="showAdvanced" id="advanced-section" class="grid grid-cols-2 gap-2">
+              <div class="space-y-1.5">
+                <Label class="text-xs">{{ $t('settings.modelDialog.maxOutputTokens') }}</Label>
+                <Input
+                  v-model="maxOutputTokens"
+                  type="number"
+                  min="1"
+                  class="focus-visible:ring-0"
+                />
+              </div>
+              <div class="space-y-1.5">
+                <Label class="text-xs">{{ $t('settings.modelDialog.contextWindow') }}</Label>
+                <Input
+                  v-model="contextWindowTokens"
+                  type="number"
+                  min="1"
+                  class="focus-visible:ring-0"
+                />
+              </div>
+              <div class="space-y-1.5">
+                <Label class="text-xs">{{ $t('settings.modelDialog.outputReserve') }}</Label>
+                <Input
+                  v-model="outputReserveTokens"
+                  type="number"
+                  min="0"
+                  class="focus-visible:ring-0"
+                />
+              </div>
+              <div class="space-y-1.5">
+                <Label class="text-xs">{{ $t('settings.modelDialog.compactionTrigger') }}</Label>
+                <Input
+                  v-model="compactionTriggerRatio"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  class="focus-visible:ring-0"
+                />
+              </div>
+              <div class="space-y-1.5">
+                <Label class="text-xs">{{ $t('settings.modelDialog.compactionTarget') }}</Label>
+                <Input
+                  v-model="compactionTargetRatio"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  class="focus-visible:ring-0"
+                />
+              </div>
+              <div class="space-y-1.5">
+                <Label class="text-xs">{{ $t('settings.modelDialog.summaryModel') }}</Label>
+                <Input
+                  v-model="summaryModelId"
+                  :placeholder="$t('settings.modelDialog.summaryModelPlaceholder')"
+                  class="focus-visible:ring-0"
+                />
+              </div>
             </div>
-            <div class="space-y-1.5">
-              <Label class="text-xs">{{ $t('settings.modelDialog.contextWindow') }}</Label>
-              <Input
-                v-model="contextWindowTokens"
-                type="number"
-                min="1"
-                class="focus-visible:ring-0"
-              />
-            </div>
-            <div class="space-y-1.5">
-              <Label class="text-xs">{{ $t('settings.modelDialog.outputReserve') }}</Label>
-              <Input
-                v-model="outputReserveTokens"
-                type="number"
-                min="0"
-                class="focus-visible:ring-0"
-              />
-            </div>
-            <div class="space-y-1.5">
-              <Label class="text-xs">{{ $t('settings.modelDialog.compactionTrigger') }}</Label>
-              <Input
-                v-model="compactionTriggerRatio"
-                type="number"
-                min="0"
-                max="1"
-                step="0.05"
-                class="focus-visible:ring-0"
-              />
-            </div>
-            <div class="space-y-1.5">
-              <Label class="text-xs">{{ $t('settings.modelDialog.compactionTarget') }}</Label>
-              <Input
-                v-model="compactionTargetRatio"
-                type="number"
-                min="0"
-                max="1"
-                step="0.05"
-                class="focus-visible:ring-0"
-              />
-            </div>
-            <div class="space-y-1.5">
-              <Label class="text-xs">{{ $t('settings.modelDialog.summaryModel') }}</Label>
-              <Input
-                v-model="summaryModelId"
-                :placeholder="$t('settings.modelDialog.summaryModelPlaceholder')"
-                class="focus-visible:ring-0"
-              />
-            </div>
-          </div>
+          </Transition>
         </div>
       </div>
 
@@ -414,3 +434,25 @@ function handleSave() {
     </DialogContent>
   </Dialog>
 </template>
+
+<style scoped>
+.collapse-enter-active,
+.collapse-leave-active {
+  transition:
+    max-height 0.2s ease,
+    opacity 0.2s ease;
+  overflow: hidden;
+}
+
+.collapse-enter-from,
+.collapse-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.collapse-enter-to,
+.collapse-leave-from {
+  max-height: 500px;
+  opacity: 1;
+}
+</style>
