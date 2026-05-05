@@ -330,7 +330,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     opacity: 30,
     blur: 0,
   },
-  backendUrl: '',
+  backendUrl: '/storyclaw',
   useBackendProxy: false,
   locale: 'zh-CN',
   updatedAt: 0,

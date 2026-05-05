@@ -94,17 +94,17 @@ User message → Context build → Token check → LLM call (stream) → Tool ex
 
 ### Tech Stack
 
-| Layer     | Technology                           |
-| --------- | ------------------------------------ |
-| Framework | Vue 3 + TypeScript + Composition API |
-| Styling   | Tailwind CSS v4 + shadcn-vue         |
-| Build     | Vite + pnpm workspace                |
-| Storage   | IndexedDB (via idb)                  |
+| Layer     | Technology                             |
+| --------- | -------------------------------------- |
+| Framework | Vue 3 + TypeScript + Composition API   |
+| Styling   | Tailwind CSS v4 + shadcn-vue           |
+| Build     | Vite + pnpm workspace                  |
+| Storage   | IndexedDB (via idb)                    |
 | AI        | OpenAI SDK (any OpenAI-compatible API) |
-| State     | Pinia                                |
-| Router    | Vue Router                           |
-| Lint      | oxlint + oxfmt                       |
-| PWA       | vite-plugin-pwa                      |
+| State     | Pinia                                  |
+| Router    | Vue Router                             |
+| Lint      | oxlint + oxfmt                         |
+| PWA       | vite-plugin-pwa                        |
 
 ---
 
@@ -186,7 +186,35 @@ cp apps/backend/.env.example apps/backend/.env
 cd apps/backend && cargo run --bin storyclaw-backend
 ```
 
-### Build & Deploy
+### Docker Deployment
+
+The easiest way to deploy the full stack (frontend + backend + PostgreSQL + Redis):
+
+```bash
+# Configure environment variables
+cp .env.docker.example .env
+# Edit .env — set JWT_SECRET and MODEL_ENCRYPTION_KEY
+# Generate secrets:
+#   openssl rand -base64 48     (for JWT_SECRET)
+#   openssl rand -hex 32        (for MODEL_ENCRYPTION_KEY)
+
+# Start all services
+docker compose up -d
+
+# Create an admin user (interactive)
+docker compose exec -it backend /app/create_admin
+```
+
+Open `http://localhost/storyclaw/` in your browser. Go to Settings → Server Connection and enter `http://localhost/storyclaw` as the backend URL.
+
+| Service | Image | Port |
+|---------|-------|------|
+| Web (nginx) | Custom (node → nginx) | 80 |
+| Backend | Custom (rust → debian-slim) | 3000 (internal) |
+| PostgreSQL | postgres:16-alpine | 5432 (internal) |
+| Redis | redis:7-alpine | 6379 (internal) |
+
+### Build from Source
 
 ```bash
 pnpm build      # Frontend: type check + production build

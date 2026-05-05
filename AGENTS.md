@@ -116,14 +116,26 @@ storyclaw/
 - i18n 实例：`src/i18n.ts`，Pinia store：`src/stores/locale.ts`
 
 **使用方式：**
+
 - **Vue 模板**：直接使用 `{{ $t('key') }}` 或 `:placeholder="$t('key')"` 等（`$t` 全局注册）
 - **`<script setup>`**：`import { useI18n } from 'vue-i18n'` → `const { t } = useI18n()` → `t('key')`
 - **纯 TS 模块**（不在组件内）：`import { i18n } from '@/i18n'` → `i18n.global.t('key')`
 - **带参数**：`$t('key', { param: value })`（翻译文件中使用 `{param}` 占位）
 
 **注意事项：**
+
 - `defineProps()` 中不能引用 `<script setup>` 局部变量（编译器 hoist），需用 `i18n.global.t()`
 - 路由 `meta.title` 已改为 i18n key（如 `'sidebar.bookshelf'`），由 AppLayout 自动翻译
+
+### Docker 部署
+
+- 4 个服务：web (nginx) + backend (Rust) + postgres + redis，通过 `docker-compose.yml` 编排
+- 前端 nginx 同时做静态托管和 `/storyclaw/api/` 反向代理到 backend，避免跨域
+- nginx 配置了 `proxy_buffering off` 支持 LLM SSE 流式传输
+- 密钥通过 `.env` 文件注入，`${VAR:?msg}` 语法确保必要变量已设置
+- `STORYCLAW_PRODUCTION=1` 启用时，`JWT_SECRET` 和 `MODEL_ENCRYPTION_KEY` 必须显式设置
+- 创建管理员：`docker compose exec -it backend /app/create_admin`
+- 部署文件：`.dockerignore`、`docker-compose.yml`、`.env.docker.example`、`apps/web/Dockerfile`、`apps/web/nginx.conf`、`apps/backend/Dockerfile`
 
 ### 开发任务
 
