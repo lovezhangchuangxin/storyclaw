@@ -37,7 +37,12 @@ export function createLLMClient(options: LLMClientOptions) {
   // User proxy toggle is disabled to prevent backend from forwarding user content.
   const shouldProxy = !!config.isBackendModel && !!backendUrl
 
-  const baseURL = shouldProxy ? `${backendUrl}/api/llm/v1` : config.apiBase
+  let baseURL = shouldProxy ? `${backendUrl}/api/llm/v1` : config.apiBase
+  // OpenAI SDK requires absolute URLs; resolve relative paths (e.g. "/storyclaw")
+  if (!baseURL.startsWith('http')) {
+    const origin = globalThis.location?.origin
+    if (origin) baseURL = `${origin}${baseURL.startsWith('/') ? '' : '/'}${baseURL}`
+  }
 
   const client = new OpenAI({
     baseURL,
