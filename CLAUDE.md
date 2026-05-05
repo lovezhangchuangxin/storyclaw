@@ -52,8 +52,10 @@ storyclaw/
 │       │   └── multi-agent/ # 多 Agent 协调
 │       ├── db/              # IndexedDB 数据访问层
 │       ├── stores/          # Pinia stores
+│       ├── locales/         # i18n 翻译文件（zh-CN.json, en-US.json）
 │       ├── composables/     # 可复用组合式函数
 │       ├── router/          # 路由定义
+│       ├── i18n.ts          # vue-i18n 实例配置
 │       └── lib/             # 工具函数
 └── docs/designs/            # 详细设计文档（6 份）
 ```
@@ -103,6 +105,27 @@ storyclaw/
 - 侧边栏收起状态持久化到 localStorage (`storyclaw:sidebar-collapsed`)
 - 页面标题通过路由 `meta.title` 注入，由顶部导航栏渲染
 - 所有页面统一使用 AppLayout + AppSidebar 布局，故事详情页和设置页通过 `meta.back` 显示返回按钮
+
+### 多语言 (i18n)
+
+- 使用 `vue-i18n`（Composition API 模式，`legacy: false`）
+- 支持中文（`zh-CN`）和英文（`en-US`），默认跟随浏览器 `navigator.language`
+- 语言偏好持久化到 `localStorage`（`storyclaw:locale`）和 IndexedDB（`AppConfig.locale`）
+- 切换入口：我的页面（`/my`）的语言 Segmented Control
+- 翻译文件：`src/locales/zh-CN.json`、`src/locales/en-US.json`（~250 个 key）
+- i18n 实例：`src/i18n.ts`，Pinia store：`src/stores/locale.ts`
+
+**使用方式：**
+- **Vue 模板**：直接使用 `{{ $t('key') }}` 或 `:placeholder="$t('key')"` 等（`$t` 全局注册）
+- **`<script setup>`**：`import { useI18n } from 'vue-i18n'` → `const { t } = useI18n()` → `t('key')`
+- **纯 TS 模块**（不在组件内）：`import { i18n } from '@/i18n'` → `i18n.global.t('key')`
+- **带参数**：`$t('key', { param: value })`（翻译文件中使用 `{param}` 占位）
+
+**注意事项：**
+- `defineProps()` 中不能引用 `<script setup>` 局部变量（编译器 hoist），需用 `i18n.global.t()`
+- Agent 内部（Web Worker 上下文）的状态消息目前保持中文，不走 i18n
+- Agent LLM 系统提示词（`persona.ts`、工具描述等）保持中文，不参与 i18n
+- 路由 `meta.title` 已改为 i18n key（如 `'sidebar.bookshelf'`），由 AppLayout 自动翻译
 
 ### 开发任务
 
