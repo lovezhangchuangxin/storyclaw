@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Eye, EyeOff, Loader2, Zap, Globe, X } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
@@ -125,7 +125,9 @@ watch(
       compactionTargetRatio.value = String(fallback.compactionTargetRatio)
       summaryModelId.value = ''
     }
-    populating = false
+    nextTick(() => {
+      populating = false
+    })
   },
 )
 
