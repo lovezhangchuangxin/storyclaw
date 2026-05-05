@@ -11,7 +11,6 @@ export interface LLMClientOptions {
   onToolStreamToken?: (toolCallId: string, toolName: string, token: string) => void
   onReasoningToken?: (token: string) => void
   signal?: AbortSignal
-  useBackendProxy?: boolean
   backendUrl?: string
   modelId?: string
 }
@@ -30,17 +29,20 @@ export function createLLMClient(options: LLMClientOptions) {
     onToolStreamToken,
     onReasoningToken,
     signal,
-    useBackendProxy,
     backendUrl,
     modelId,
   } = options
 
-  const baseURL = useBackendProxy && backendUrl ? `${backendUrl}/api/llm/v1` : config.apiBase
+  // Only backend-hosted models (admin-configured) may use proxy.
+  // User proxy toggle is disabled to prevent backend from forwarding user content.
+  const shouldProxy = !!config.isBackendModel && !!backendUrl
+
+  const baseURL = shouldProxy ? `${backendUrl}/api/llm/v1` : config.apiBase
 
   const client = new OpenAI({
     baseURL,
     apiKey: (() => {
-      if (useBackendProxy && backendUrl) {
+      if (shouldProxy) {
         const token = getAccessToken()
         if (!token) throw new Error(i18n.global.t('agent.needLogin'))
         return token

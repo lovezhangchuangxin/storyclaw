@@ -213,7 +213,6 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
   const client = createLLMClient({
     config: modelConfig,
     signal,
-    useBackendProxy: !!config.useBackendProxy || !!modelConfig.isBackendModel,
     backendUrl: config.backendUrl,
     modelId: modelConfig.backendId,
     onToken(token) {

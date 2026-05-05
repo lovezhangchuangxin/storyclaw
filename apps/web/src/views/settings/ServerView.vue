@@ -6,7 +6,6 @@ import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { saveConfig, getConfig } from '@/db/config'
 import type { AppConfig } from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
@@ -20,7 +19,6 @@ const email = ref('')
 const password = ref('')
 const connected = ref(false)
 const connecting = ref(false)
-const proxyEnabled = ref(false)
 const isLogin = ref(true)
 const { t } = useI18n()
 
@@ -28,7 +26,6 @@ async function loadConfig() {
   try {
     config.value = await getConfig()
     backendUrl.value = config.value.backendUrl ?? ''
-    proxyEnabled.value = config.value.useBackendProxy ?? false
 
     if (config.value.backendUrl) {
       try {
@@ -44,18 +41,6 @@ async function loadConfig() {
     toast.error(t('common.loadConfigFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
-  }
-}
-
-async function toggleProxy(enabled: boolean) {
-  proxyEnabled.value = enabled
-  const snapshot = JSON.parse(JSON.stringify(config.value)) as AppConfig
-  snapshot.useBackendProxy = enabled
-  try {
-    await saveConfig(snapshot)
-    config.value = snapshot
-  } catch (e) {
-    toast.error(t('settings.server.saveSettingsFailed'))
   }
 }
 
@@ -240,7 +225,8 @@ loadConfig()
           </div>
         </template>
 
-        <div v-if="connected" class="flex items-center justify-between px-1 py-2">
+        <!-- Backend proxy temporarily disabled (security concern) -->
+        <!-- <div v-if="connected" class="flex items-center justify-between px-1 py-2">
           <div>
             <Label class="text-xs">{{ $t('settings.server.proxy.label') }}</Label>
             <p class="text-[11px] text-muted-foreground mt-0.5">
@@ -248,7 +234,7 @@ loadConfig()
             </p>
           </div>
           <Switch :checked="proxyEnabled" @update:checked="toggleProxy" />
-        </div>
+        </div> -->
       </div>
 
       <!-- Actions -->
