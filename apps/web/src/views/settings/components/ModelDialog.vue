@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch'
 import Combobox from './Combobox.vue'
 import { createDefaultModelConfig, type ModelConfig } from '@/db/types'
 import { PROVIDER_NAMES, getApiBaseForProvider, fetchModels } from '@/lib/provider-data'
+import { lookupModelSpecs } from '@/lib/model-registry'
 import { testConnection } from '@/lib/test-connection'
 
 const props = defineProps<{
@@ -143,6 +144,20 @@ watch(provider, (p) => {
 
 watch([apiBase, apiKey], () => {
   fetchedModels.value = []
+})
+
+watch(model, (id) => {
+  if (populating) return
+  if (!id) return
+  const specs = lookupModelSpecs(id)
+  if (!specs) return
+  // Only auto-fill if user hasn't customized these values from defaults
+  if (contextWindowTokens.value === '128000') {
+    contextWindowTokens.value = String(specs.contextWindowTokens)
+  }
+  if (maxOutputTokens.value === '16384') {
+    maxOutputTokens.value = String(specs.maxOutputTokens)
+  }
 })
 
 function toNumber(value: string, fallback: number): number {
