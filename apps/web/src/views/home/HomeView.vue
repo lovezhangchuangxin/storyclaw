@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { BookOpen, Plus, Search, Settings } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { uuid } from '@/lib/utils'
 import {
   Dialog,
   DialogClose,
@@ -76,7 +77,7 @@ async function openCreateDialog() {
 
 async function handleCreateStory(selectedPromptIds: string[]) {
   try {
-    const id = crypto.randomUUID()
+    const id = uuid()
     await createNovel({
       id,
       title: t('home.newStory'),

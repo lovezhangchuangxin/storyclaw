@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
+import { uuid } from '@/lib/utils'
 import { getConfig, saveConfig } from '@/db/config'
 import {
   listBackgroundImages,
@@ -122,7 +123,7 @@ export function useBackgroundImage() {
       return
     }
 
-    const id = crypto.randomUUID()
+    const id = uuid()
     const now = Date.now()
 
     const img: BackgroundImage = {

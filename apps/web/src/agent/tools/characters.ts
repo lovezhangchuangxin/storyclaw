@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { uuid } from '@/lib/utils'
 import type { ToolContext, ToolDefinition } from './types'
 import {
   getCharactersByNovelId,
@@ -43,7 +44,7 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
       }),
       async execute(args: Record<string, unknown>) {
         const character: Character = {
-          id: crypto.randomUUID(),
+          id: uuid(),
           novelId: context.novelId,
           name: args.name as string,
           role: args.role as Character['role'],

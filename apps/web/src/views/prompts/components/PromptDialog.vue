@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { isPromptNameDuplicate } from '@/db/prompts'
+import { uuid } from '@/lib/utils'
 import type { Prompt } from '@/db/types'
 
 const props = defineProps<{
@@ -72,7 +73,7 @@ async function handleSave() {
     }
 
     emit('save', {
-      id: props.prompt?.id ?? crypto.randomUUID(),
+      id: props.prompt?.id ?? uuid(),
       name: trimmedName,
       content: trimmedContent,
       isBuiltin: props.prompt?.isBuiltin ?? false,

@@ -9,6 +9,7 @@ import { compactConversationContext } from '@/agent/context-compaction'
 import { loadStoryState } from '@/agent/story-state'
 import { estimateMessagesTokens } from '@/agent/token-estimator'
 import { modelLabel } from '@/lib/model-utils'
+import { uuid } from '@/lib/utils'
 import { getConfig } from '@/db/config'
 import { getAllModels } from '@/composables/useModels'
 import { deleteConversation, getConversationByNovelId } from '@/db/conversations'
@@ -245,7 +246,7 @@ function resetTransientState() {
 
 function pushLocalStatus(kind: StatusMessage['kind'], content: string) {
   localStatusMessages.value.push({
-    id: crypto.randomUUID(),
+    id: uuid(),
     role: 'status',
     kind,
     content,

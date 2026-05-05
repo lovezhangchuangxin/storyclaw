@@ -6,6 +6,7 @@ import type {
   StatusMessage,
   UserMessage,
 } from '@/db/types'
+import { uuid } from '@/lib/utils'
 
 function cloneValue<T>(value: T): T {
   if (Array.isArray(value)) {
@@ -25,7 +26,7 @@ function cloneValue<T>(value: T): T {
 
 export function createUserMessage(content: string): UserMessage {
   return {
-    id: crypto.randomUUID(),
+    id: uuid(),
     role: 'user',
     content,
     timestamp: Date.now(),
@@ -34,7 +35,7 @@ export function createUserMessage(content: string): UserMessage {
 
 export function createStatusMessage(kind: StatusMessage['kind'], content: string): StatusMessage {
   return {
-    id: crypto.randomUUID(),
+    id: uuid(),
     role: 'status',
     kind,
     content,
@@ -44,7 +45,7 @@ export function createStatusMessage(kind: StatusMessage['kind'], content: string
 
 export function createAssistantMessage(): AssistantMessage {
   return {
-    id: crypto.randomUUID(),
+    id: uuid(),
     role: 'assistant',
     parts: [],
     state: 'completed',

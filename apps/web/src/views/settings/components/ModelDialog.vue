@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import Combobox from './Combobox.vue'
 import { createDefaultModelConfig, type ModelConfig } from '@/db/types'
+import { uuid } from '@/lib/utils'
 import { PROVIDER_NAMES, getApiBaseForProvider, fetchModels } from '@/lib/provider-data'
 import { lookupModelSpecs } from '@/lib/model-registry'
 import { testConnection } from '@/lib/test-connection'
@@ -87,7 +88,7 @@ watch(
     fetchedModels.value = []
     showAdvanced.value = !!props.model
     const fallback = createDefaultModelConfig({
-      id: props.model?.id ?? crypto.randomUUID(),
+      id: props.model?.id ?? uuid(),
       provider: props.model?.provider ?? '',
       apiBase: props.model?.apiBase ?? '',
       apiKey: props.model?.apiKey ?? '',
@@ -201,7 +202,7 @@ async function handleTest() {
 
 function handleSave() {
   const saved: ModelConfig = {
-    id: props.model?.id ?? crypto.randomUUID(),
+    id: props.model?.id ?? uuid(),
     provider: provider.value,
     apiBase: apiBase.value,
     apiKey: apiKey.value,

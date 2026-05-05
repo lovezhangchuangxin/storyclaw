@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { uuid } from '@/lib/utils'
 import { z } from 'zod'
 import { getConfig } from '@/db/config'
 import type {
@@ -586,7 +587,7 @@ export async function compactConversationContext(
       CONTEXT_SCOPE_MAIN,
     )
     const snapshotPreview: ContextSnapshot = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       novelId: options.novelId,
       scopeId: CONTEXT_SCOPE_MAIN,
       revision: snapshotRevision,
