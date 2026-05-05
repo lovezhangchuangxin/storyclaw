@@ -144,7 +144,19 @@
       "newSessionCreatedDesc": "已创建新会话，对话记录已清空",
       "noContextToCompact": "上下文暂无内容需要整理",
       "compactionBefore": "压缩前约",
-      "compactionAfter": "压缩后约"
+      "compactionAfter": "压缩后约",
+      "contextInfo": {
+        "label": "上下文窗口",
+        "title": "上下文窗口",
+        "usage": "上下文用量",
+        "used": "已使用",
+        "windowSize": "窗口大小",
+        "outputReserve": "输出预留",
+        "available": "剩余可用",
+        "messages": "消息数",
+        "triggerAt": "自动压缩触发于 {percent}%，阈值",
+        "estimated": "估算"
+      }
     },
     "tool": {
       "executing": "执行中...",

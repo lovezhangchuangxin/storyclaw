@@ -7,6 +7,7 @@ import { runAgentLoop } from '@/agent/loop'
 import { cloneMessages } from '@/agent/message-state'
 import { compactConversationContext } from '@/agent/context-compaction'
 import { loadStoryState } from '@/agent/story-state'
+import { estimateMessagesTokens } from '@/agent/token-estimator'
 import { getConfig } from '@/db/config'
 import { getAllModels } from '@/composables/useModels'
 import { deleteConversation, getConversationByNovelId } from '@/db/conversations'
@@ -53,6 +54,28 @@ const selectedModelProvider = computed(() => {
   const model = models.value.find((item) => item.id === selectedModelId.value)
   return model?.provider?.[0]?.toUpperCase() || '?'
 })
+
+const selectedModel = computed(() => models.value.find((item) => item.id === selectedModelId.value))
+
+const lastPromptTokens = computed(() => {
+  for (let i = timelineMessages.value.length - 1; i >= 0; i--) {
+    const msg = timelineMessages.value[i]
+    if (msg?.role === 'assistant' && (msg as AssistantMessage).promptTokens != null) {
+      return (msg as AssistantMessage).promptTokens!
+    }
+  }
+  return null
+})
+
+const contextUsedTokens = computed(() => {
+  if (lastPromptTokens.value != null) return lastPromptTokens.value
+  if (timelineMessages.value.length === 0) return 0
+  return estimateMessagesTokens(timelineMessages.value)
+})
+
+const contextIsEstimated = computed(
+  () => lastPromptTokens.value == null && timelineMessages.value.length > 0,
+)
 
 const historyMessages = computed(() => [...persistedMessages.value, ...unsavedMessages.value])
 const timelineMessages = computed(() => [
@@ -482,6 +505,12 @@ function onWelcomeFill(prompt: string) {
       :is-generating="isGenerating || isCompacting"
       :selected-model-label="selectedModelLabel"
       :selected-model-provider="selectedModelProvider"
+      :context-used-tokens="contextUsedTokens"
+      :context-window-tokens="selectedModel?.contextWindowTokens ?? 0"
+      :output-reserve-tokens="selectedModel?.outputReserveTokens ?? 0"
+      :compaction-trigger-ratio="selectedModel?.compactionTriggerRatio ?? 0.7"
+      :context-message-count="timelineMessages.length"
+      :context-is-estimated="contextIsEstimated"
       @update:model-value="input = $event"
       @send="send"
       @cancel="cancel"

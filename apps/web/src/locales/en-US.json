@@ -144,7 +144,19 @@
       "newSessionCreatedDesc": "New session created, conversation history cleared",
       "noContextToCompact": "No context to compact yet",
       "compactionBefore": "Before compaction ~",
-      "compactionAfter": "After compaction ~"
+      "compactionAfter": "After compaction ~",
+      "contextInfo": {
+        "label": "Context Window",
+        "title": "Context Window",
+        "usage": "Usage",
+        "used": "Used",
+        "windowSize": "Window Size",
+        "outputReserve": "Output Reserve",
+        "available": "Available",
+        "messages": "Messages",
+        "triggerAt": "Auto-compact at {percent}%, threshold",
+        "estimated": "estimated"
+      }
     },
     "tool": {
       "executing": "Executing...",

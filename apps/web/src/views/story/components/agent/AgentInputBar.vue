@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { ModelConfig } from '@/db/types'
 import { SLASH_COMMANDS, COMMAND_IDS } from '@/agent/commands'
+import ContextWindowIndicator from './ContextWindowIndicator.vue'
 
 const props = defineProps<{
   modelValue: string
@@ -19,6 +20,12 @@ const props = defineProps<{
   isGenerating: boolean
   selectedModelLabel: string
   selectedModelProvider: string
+  contextUsedTokens: number
+  contextWindowTokens: number
+  outputReserveTokens: number
+  compactionTriggerRatio: number
+  contextMessageCount: number
+  contextIsEstimated: boolean
 }>()
 
 const emit = defineEmits<{
@@ -243,6 +250,14 @@ function handleSend() {
           </router-link>
 
           <div class="ml-auto flex items-center gap-1">
+            <ContextWindowIndicator
+              :used-tokens="contextUsedTokens"
+              :context-window-tokens="contextWindowTokens"
+              :output-reserve-tokens="outputReserveTokens"
+              :compaction-trigger-ratio="compactionTriggerRatio"
+              :message-count="contextMessageCount"
+              :is-estimated="contextIsEstimated"
+            />
             <Button
               v-if="!isGenerating"
               size="sm"
