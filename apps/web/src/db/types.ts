@@ -439,6 +439,21 @@ export interface PaginatedResponse<T> {
   perPage: number
 }
 
+export interface UserUsageEntry {
+  userId: string
+  email: string
+  totalRequests: number
+  totalTokens: number
+  promptTokens: number
+  completionTokens: number
+  dailyUsed: number | null
+}
+
+export interface UserUsageResponse {
+  dailyLimit: number
+  entries: UserUsageEntry[]
+}
+
 export interface SyncPayload {
   novel: Novel
   outline?: Outline

@@ -2,6 +2,7 @@ use axum::{
     extract::{Path, Query, State},
     Json,
 };
+use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
@@ -17,6 +18,7 @@ pub struct ListQuery {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AdminUserSummary {
     pub id: Uuid,
     pub email: String,
@@ -27,6 +29,7 @@ pub struct AdminUserSummary {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AdminNovelSummary {
     pub id: Uuid,
     pub title: String,
@@ -38,6 +41,7 @@ pub struct AdminNovelSummary {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AdminStats {
     pub total_users: i64,
     pub total_novels: i64,
@@ -45,6 +49,7 @@ pub struct AdminStats {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PaginatedResponse<T: Serialize> {
     pub data: Vec<T>,
     pub total: i64,
@@ -184,6 +189,14 @@ pub struct UsageQuery {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserUsageResponse {
+    pub daily_limit: i64,
+    pub entries: Vec<UserUsageEntry>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UserUsageEntry {
     pub user_id: Uuid,
     pub email: String,
@@ -191,13 +204,14 @@ pub struct UserUsageEntry {
     pub total_tokens: i64,
     pub prompt_tokens: i64,
     pub completion_tokens: i64,
+    pub daily_used: Option<i64>,
 }
 
 pub async fn get_usage_stats(
     State(state): State<AppState>,
     _admin: AdminUser,
     Query(query): Query<UsageQuery>,
-) -> Result<Json<Vec<UserUsageEntry>>> {
+) -> Result<Json<UserUsageResponse>> {
     let days = query.days.unwrap_or(30).clamp(1, 365);
 
     let rows = sqlx::query(
@@ -211,11 +225,11 @@ pub async fn get_usage_stats(
          GROUP BY l.user_id, u.email \
          ORDER BY total_tokens DESC",
     )
-    .bind(days)
+    .bind(days as i32)
     .fetch_all(&state.pool)
     .await?;
 
-    let entries: Vec<UserUsageEntry> = rows
+    let mut entries: Vec<UserUsageEntry> = rows
         .iter()
         .map(|r| UserUsageEntry {
             user_id: r.get(0),
@@ -224,8 +238,19 @@ pub async fn get_usage_stats(
             total_tokens: r.get(3),
             prompt_tokens: r.get(4),
             completion_tokens: r.get(5),
+            daily_used: None,
         })
         .collect();
 
-    Ok(Json(entries))
+    // Fill in today's Redis usage for each user (concurrent)
+    let daily_futures: Vec<_> = entries.iter().map(|e| state.rate_limiter.get_daily_usage(e.user_id)).collect();
+    let daily_results = join_all(daily_futures).await;
+    for (entry, daily) in entries.iter_mut().zip(daily_results) {
+        entry.daily_used = daily;
+    }
+
+    Ok(Json(UserUsageResponse {
+        daily_limit: state.config.daily_token_limit,
+        entries,
+    }))
 }

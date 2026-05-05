@@ -9,6 +9,7 @@ import type {
   AdminUserSummary,
   AdminNovelSummary,
   PaginatedResponse,
+  UserUsageResponse,
   PushNovelRequest,
   PushNovelResponse,
   PullNovelResponse,
@@ -305,6 +306,10 @@ export async function adminListNovels(
 
 export async function adminGetStats(): Promise<AdminStats> {
   return fetchApi<AdminStats>('/api/admin/stats')
+}
+
+export async function adminGetUsageStats(days = 30): Promise<UserUsageResponse> {
+  return fetchApi<UserUsageResponse>(`/api/admin/usage?days=${days}`)
 }
 
 export async function listBackendModels(): Promise<BackendModelConfig[]> {

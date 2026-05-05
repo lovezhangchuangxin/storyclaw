@@ -446,6 +446,19 @@
     "role": {
       "admin": "Admin",
       "user": "User"
+    },
+    "usage": {
+      "title": "Usage",
+      "days": "Period",
+      "days7": "Last 7 days",
+      "days30": "Last 30 days",
+      "days90": "Last 90 days",
+      "totalTokens": "Total Tokens",
+      "totalRequests": "Requests",
+      "promptTokens": "Prompt Tokens",
+      "completionTokens": "Completion Tokens",
+      "dailyQuota": "Today's Quota",
+      "noData": "No usage data"
     }
   },
 

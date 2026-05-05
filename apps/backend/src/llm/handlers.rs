@@ -97,7 +97,13 @@ pub async fn chat_completions(
     if !resp.status().is_success() {
         let status = resp.status();
         let text = resp.text().await.unwrap_or_default();
-        tracing::error!("Upstream LLM error: {} - {}", status, &text[..text.len().min(500)]);
+        let preview: String = text.chars().take(500).collect();
+        tracing::error!("Upstream LLM error: {} - {}", status, preview);
+        // Roll back pre-reserved quota since the request failed
+        state
+            .rate_limiter
+            .adjust_daily_usage(auth_user.user_id, estimated_tokens, 0)
+            .await;
         return Err(AppError::Internal(anyhow::anyhow!(
             "Upstream LLM request failed (status {})",
             status

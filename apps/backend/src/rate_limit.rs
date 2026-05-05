@@ -215,4 +215,16 @@ impl RateLimiter {
                 .await;
         }
     }
+
+    /// Read current day's token usage for a specific user.
+    pub async fn get_daily_usage(&self, user_id: Uuid) -> Option<i64> {
+        let mut conn = self.get_conn().await?;
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        let key = format!("quota:{user_id}:{today}");
+        redis::cmd("GET")
+            .arg(&key)
+            .query_async(&mut conn)
+            .await
+            .ok()
+    }
 }

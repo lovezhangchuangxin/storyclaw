@@ -2,8 +2,13 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { adminListUsers, adminListNovels, adminGetStats } from '@/lib/api-client'
-import type { AdminStats, AdminUserSummary, AdminNovelSummary } from '@/db/types'
+import {
+  adminListUsers,
+  adminListNovels,
+  adminGetStats,
+  adminGetUsageStats,
+} from '@/lib/api-client'
+import type { AdminStats, AdminUserSummary, AdminNovelSummary, UserUsageEntry } from '@/db/types'
 import { toast } from 'vue-sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -18,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  Zap,
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -45,11 +51,17 @@ const novelsPage = ref(1)
 const novelsLoading = ref(false)
 const novelSearch = ref('')
 
+// Usage tab
+const usageData = ref<UserUsageEntry[]>([])
+const usageDays = ref(30)
+const usageLoading = ref(false)
+const dailyLimit = ref(0)
+
 const perPage = 20
 
 const tabFromQuery = computed(() => {
   const t = route.query.tab as string
-  if (t === 'users' || t === 'novels') return t
+  if (t === 'users' || t === 'novels' || t === 'usage') return t
   return 'overview'
 })
 
@@ -131,11 +143,36 @@ async function loadNovels(p = 1) {
   }
 }
 
+async function loadUsage() {
+  usageLoading.value = true
+  try {
+    const resp = await adminGetUsageStats(usageDays.value)
+    usageData.value = resp.entries
+    dailyLimit.value = resp.dailyLimit
+  } catch {
+    toast.error(t('common.loadFailed'))
+  } finally {
+    usageLoading.value = false
+  }
+}
+
+function onUsageDaysChange(days: number) {
+  usageDays.value = days
+  loadUsage()
+}
+
+function formatTokens(n: number): string {
+  if (n >= 999_500) return (n / 1_000_000).toFixed(1) + 'M'
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K'
+  return n.toString()
+}
+
 watch(
   () => route.query.tab,
   (tab) => {
     if (tab === 'users' && users.value.length === 0) loadUsers()
     if (tab === 'novels' && novels.value.length === 0) loadNovels()
+    if (tab === 'usage' && usageData.value.length === 0) loadUsage()
   },
 )
 
@@ -145,6 +182,7 @@ onMounted(() => {
   loadOverviewNovels()
   loadUsers()
   loadNovels()
+  loadUsage()
 })
 </script>
 
@@ -160,6 +198,7 @@ onMounted(() => {
         <TabsTrigger value="overview">{{ $t('admin.overview') }}</TabsTrigger>
         <TabsTrigger value="users">{{ $t('admin.users') }}</TabsTrigger>
         <TabsTrigger value="novels">{{ $t('admin.novels') }}</TabsTrigger>
+        <TabsTrigger value="usage">{{ $t('admin.usage.title') }}</TabsTrigger>
       </TabsList>
 
       <!-- Overview Tab -->
@@ -518,6 +557,87 @@ onMounted(() => {
               {{ $t('admin.table.nextPage') }}
               <ChevronRight class="size-4" />
             </Button>
+          </div>
+        </div>
+      </TabsContent>
+
+      <!-- Usage Tab -->
+      <TabsContent value="usage" class="space-y-4 pt-3">
+        <!-- Period selector -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-muted-foreground">{{ $t('admin.usage.days') }}</span>
+          <div class="flex gap-1">
+            <Button
+              v-for="d in [7, 30, 90]"
+              :key="d"
+              :variant="usageDays === d ? 'default' : 'outline'"
+              size="sm"
+              @click="onUsageDaysChange(d)"
+            >
+              {{ $t(`admin.usage.days${d}`) }}
+            </Button>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div v-if="usageLoading" class="space-y-3">
+          <div v-for="i in 3" :key="i" class="h-12 rounded-lg bg-muted animate-pulse" />
+        </div>
+
+        <!-- Table -->
+        <div v-else class="rounded-xl border bg-card shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b bg-muted/50">
+                  <th class="text-left p-3 font-medium">{{ $t('admin.table.email') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.usage.dailyQuota') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.usage.totalRequests') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.usage.totalTokens') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.usage.promptTokens') }}</th>
+                  <th class="text-right p-3 font-medium">
+                    {{ $t('admin.usage.completionTokens') }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="entry in usageData"
+                  :key="entry.userId"
+                  class="border-b hover:bg-muted/30 transition-colors"
+                >
+                  <td class="p-3">{{ entry.email }}</td>
+                  <td class="p-3 text-right">
+                    <template v-if="entry.dailyUsed !== null">
+                      <span
+                        :class="entry.dailyUsed >= dailyLimit ? 'text-red-500 font-medium' : ''"
+                      >
+                        {{ formatTokens(entry.dailyUsed) }}
+                      </span>
+                      <span class="text-muted-foreground"> / {{ formatTokens(dailyLimit) }}</span>
+                    </template>
+                    <span v-else class="text-muted-foreground">--</span>
+                  </td>
+                  <td class="p-3 text-right">{{ entry.totalRequests.toLocaleString() }}</td>
+                  <td class="p-3 text-right font-medium">{{ formatTokens(entry.totalTokens) }}</td>
+                  <td class="p-3 text-right text-muted-foreground">
+                    {{ formatTokens(entry.promptTokens) }}
+                  </td>
+                  <td class="p-3 text-right text-muted-foreground">
+                    {{ formatTokens(entry.completionTokens) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty -->
+          <div
+            v-if="usageData.length === 0"
+            class="p-12 flex flex-col items-center justify-center text-center"
+          >
+            <Zap class="size-8 mb-3 text-muted-foreground/30" />
+            <p class="text-sm text-muted-foreground">{{ $t('admin.usage.noData') }}</p>
           </div>
         </div>
       </TabsContent>

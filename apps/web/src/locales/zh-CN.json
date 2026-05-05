@@ -446,6 +446,19 @@
     "role": {
       "admin": "管理员",
       "user": "用户"
+    },
+    "usage": {
+      "title": "用量统计",
+      "days": "统计周期",
+      "days7": "近 7 天",
+      "days30": "近 30 天",
+      "days90": "近 90 天",
+      "totalTokens": "总 Tokens",
+      "totalRequests": "请求数",
+      "promptTokens": "输入 Tokens",
+      "completionTokens": "输出 Tokens",
+      "dailyQuota": "今日额度",
+      "noData": "暂无用量数据"
     }
   },
 
