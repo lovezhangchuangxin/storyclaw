@@ -193,10 +193,11 @@ cd apps/backend && cargo run --bin storyclaw-backend
 ```bash
 # 配置环境变量
 cp .env.docker.example .env
-# 编辑 .env — 设置 JWT_SECRET 和 MODEL_ENCRYPTION_KEY
+# 编辑 .env — 设置 DOMAIN、JWT_SECRET、MODEL_ENCRYPTION_KEY 和 CORS_ORIGIN
 # 生成密钥：
 #   openssl rand -base64 48     （用于 JWT_SECRET）
 #   openssl rand -hex 32        （用于 MODEL_ENCRYPTION_KEY）
+# CORS_ORIGIN 设为 https://你的域名.com
 
 # 启动所有服务
 docker compose up -d
@@ -205,14 +206,17 @@ docker compose up -d
 docker compose exec -it backend /app/create_admin
 ```
 
-浏览器打开 `http://localhost/storyclaw/`，进入设置 → 服务器连接，填入 `http://localhost/storyclaw` 作为后端地址。
+浏览器打开 `https://你的域名.com/storyclaw/`，进入设置 → 服务器连接，填入 `https://你的域名.com/storyclaw` 作为后端地址。
 
-| 服务 | 镜像 | 端口 |
-|------|------|------|
-| Web (nginx) | 自定义 (node → nginx) | 80 |
-| Backend | 自定义 (rust → debian-slim) | 3000（内部） |
-| PostgreSQL | postgres:16-alpine | 5432（内部） |
-| Redis | redis:7-alpine | 6379（内部） |
+Caddy 自动通过 Let's Encrypt 申请和续期 HTTPS 证书。
+
+| 服务        | 镜像                        | 端口           |
+| ----------- | --------------------------- | -------------- |
+| Caddy       | caddy:2-alpine              | 80, 443        |
+| Web (nginx) | 自定义 (node → nginx)       | 内部           |
+| Backend     | 自定义 (rust → debian-slim) | 3000（内部）   |
+| PostgreSQL  | postgres:16-alpine          | 5432（内部）   |
+| Redis       | redis:7-alpine              | 6379（内部）   |
 
 ### 源码构建
 

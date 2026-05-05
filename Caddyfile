@@ -1,0 +1,8 @@
+{$DOMAIN} {
+	reverse_proxy web:80 {
+		flush_interval -1
+		transport http {
+			read_timeout 300s
+		}
+	}
+}

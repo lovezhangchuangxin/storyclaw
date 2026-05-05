@@ -193,10 +193,11 @@ The easiest way to deploy the full stack (frontend + backend + PostgreSQL + Redi
 ```bash
 # Configure environment variables
 cp .env.docker.example .env
-# Edit .env — set JWT_SECRET and MODEL_ENCRYPTION_KEY
+# Edit .env — set DOMAIN, JWT_SECRET, MODEL_ENCRYPTION_KEY, and CORS_ORIGIN
 # Generate secrets:
 #   openssl rand -base64 48     (for JWT_SECRET)
 #   openssl rand -hex 32        (for MODEL_ENCRYPTION_KEY)
+# Set CORS_ORIGIN to https://your-domain.com
 
 # Start all services
 docker compose up -d
@@ -205,14 +206,17 @@ docker compose up -d
 docker compose exec -it backend /app/create_admin
 ```
 
-Open `http://localhost/storyclaw/` in your browser. Go to Settings → Server Connection and enter `http://localhost/storyclaw` as the backend URL.
+Open `https://your-domain.com/storyclaw/` in your browser. Go to Settings → Server Connection and enter `https://your-domain.com/storyclaw` as the backend URL.
 
-| Service | Image | Port |
-|---------|-------|------|
-| Web (nginx) | Custom (node → nginx) | 80 |
-| Backend | Custom (rust → debian-slim) | 3000 (internal) |
-| PostgreSQL | postgres:16-alpine | 5432 (internal) |
-| Redis | redis:7-alpine | 6379 (internal) |
+Caddy automatically provisions and renews HTTPS certificates via Let's Encrypt.
+
+| Service     | Image                       | Port            |
+| ----------- | --------------------------- | --------------- |
+| Caddy       | caddy:2-alpine              | 80, 443         |
+| Web (nginx) | Custom (node → nginx)       | internal        |
+| Backend     | Custom (rust → debian-slim) | 3000 (internal) |
+| PostgreSQL  | postgres:16-alpine          | 5432 (internal) |
+| Redis       | redis:7-alpine              | 6379 (internal) |
 
 ### Build from Source
 
