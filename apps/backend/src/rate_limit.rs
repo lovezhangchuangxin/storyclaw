@@ -60,12 +60,34 @@ impl RateLimiter {
         limit: i32,
         window_secs: i64,
     ) -> RateLimitResult {
+        self.check_key_rate_limit(&format!("rl:{user_id}"), limit, window_secs)
+            .await
+    }
+
+    /// IP-based sliding-window rate limit.
+    /// Key: `rl:ip:{ip_addr}`
+    pub async fn check_ip_rate_limit(
+        &self,
+        ip: &str,
+        limit: i32,
+        window_secs: i64,
+    ) -> RateLimitResult {
+        self.check_key_rate_limit(&format!("rl:ip:{ip}"), limit, window_secs)
+            .await
+    }
+
+    async fn check_key_rate_limit(
+        &self,
+        key: &str,
+        limit: i32,
+        window_secs: i64,
+    ) -> RateLimitResult {
         let mut conn = match self.get_conn().await {
             Some(c) => c,
-            None => return RateLimitResult::Allowed, // degraded mode
+            None => return RateLimitResult::Allowed,
         };
 
-        let key = format!("rl:{user_id}");
+        let key = key.to_string();
         let now = Utc::now().timestamp_millis();
         let window_start = now - (window_secs * 1000);
         let member = format!("{}:{}", now, Uuid::new_v4());

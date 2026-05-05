@@ -1,6 +1,9 @@
+use axum::extract::ConnectInfo;
+use axum::http::HeaderMap;
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
+use std::net::SocketAddr;
 use uuid::Uuid;
 
 use crate::config::Config;
@@ -10,10 +13,26 @@ use crate::rate_limit::RateLimiter;
 
 use super::{jwt, password};
 
+fn extract_client_ip(headers: &HeaderMap, addr: &SocketAddr) -> String {
+    headers
+        .get("x-real-ip")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+        .or_else(|| {
+            headers
+                .get("x-forwarded-for")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.split(',').next())
+                .map(|s| s.trim().to_string())
+        })
+        .unwrap_or_else(|| addr.ip().to_string())
+}
+
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
     pub email: String,
     pub password: String,
+    pub fingerprint: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -51,6 +70,8 @@ pub struct AppState {
 
 pub async fn register(
     State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(req): Json<RegisterRequest>,
 ) -> Result<Json<AuthResponse>> {
     if req.email.is_empty() || !req.email.contains('@') {
@@ -60,9 +81,54 @@ pub async fn register(
         return Err(AppError::Validation("Password must be at least 6 characters".into()));
     }
 
+    let ip = extract_client_ip(&headers, &addr);
+
+    // Validate fingerprint format
+    let valid_fp = req.fingerprint.as_ref().and_then(|fp| {
+        if !fp.is_empty() && fp.len() <= 64 && fp.chars().all(|c| c.is_ascii_hexdigit()) {
+            Some(fp.as_str())
+        } else {
+            None
+        }
+    });
+
+    // IP rate limit check
+    let window_secs = state.config.register_ip_window_hours * 3600;
+    match state.rate_limiter.check_ip_rate_limit(&ip, state.config.register_ip_limit, window_secs).await {
+        crate::rate_limit::RateLimitResult::Denied { .. } => {
+            return Err(AppError::TooManyRegistrations);
+        }
+        crate::rate_limit::RateLimitResult::Allowed => {}
+    }
+
+    // Transaction: fingerprint check + user creation + fingerprint record
+    let mut tx = state.pool.begin().await?;
+
+    // Fingerprint check with advisory lock to prevent race conditions
+    if let Some(fp) = valid_fp {
+        let fp_hash: i64 = fp.bytes().fold(0i64, |acc, b| {
+            acc.wrapping_mul(31).wrapping_add(b as i64)
+        });
+        sqlx::query("SELECT pg_advisory_xact_lock($1)")
+            .bind(fp_hash)
+            .execute(&mut *tx)
+            .await?;
+
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(DISTINCT user_id) FROM device_fingerprints WHERE fingerprint = $1",
+        )
+        .bind(fp)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        if count >= state.config.register_fingerprint_limit as i64 {
+            return Err(AppError::SuspiciousRegistration);
+        }
+    }
+
     let existing = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM users WHERE email = $1")
         .bind(&req.email)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
     if existing > 0 {
@@ -77,8 +143,22 @@ pub async fn register(
     )
     .bind(&req.email)
     .bind(&password_hash)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await?;
+
+    // Record device fingerprint
+    if let Some(fp) = valid_fp {
+        sqlx::query(
+            "INSERT INTO device_fingerprints (fingerprint, user_id, ip_address) VALUES ($1, $2, $3)",
+        )
+        .bind(fp)
+        .bind(user.id)
+        .bind(&ip)
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    tx.commit().await?;
 
     let access_token = jwt::create_access_token(user.id, &user.email, &user.role, &state.config)
         .map_err(|e| AppError::Internal(anyhow::anyhow!(e.to_string())))?;

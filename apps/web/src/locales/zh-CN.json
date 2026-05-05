@@ -318,6 +318,8 @@
       "loginFailed": "登录失败",
       "registerFailed": "注册失败",
       "checkCredentials": "请检查邮箱和密码",
+      "tooManyRegistrations": "该 IP 注册次数过多，请稍后再试",
+      "suspiciousRegistration": "该设备注册次数过多，请稍后再试",
       "noAccount": "没有账号？点击注册",
       "hasAccount": "已有账号？点击登录",
       "loggedIn": "已登录，可使用同步和管理功能",
@@ -463,26 +465,65 @@
   },
 
   "tools": {
-    "create_outline": { "displayName": "创建大纲", "description": "创建故事大纲，包含标题、梗概和三幕结构。在首次设计大纲时调用。" },
-    "update_outline": { "displayName": "更新大纲", "description": "修改已有的大纲内容，可以更新某一幕或整体前提。" },
+    "create_outline": {
+      "displayName": "创建大纲",
+      "description": "创建故事大纲，包含标题、梗概和三幕结构。在首次设计大纲时调用。"
+    },
+    "update_outline": {
+      "displayName": "更新大纲",
+      "description": "修改已有的大纲内容，可以更新某一幕或整体前提。"
+    },
     "get_outline": { "displayName": "获取大纲", "description": "获取当前故事的大纲。" },
-    "create_character": { "displayName": "创建角色", "description": "创建新角色。调用此工具来添加角色到故事中。" },
+    "create_character": {
+      "displayName": "创建角色",
+      "description": "创建新角色。调用此工具来添加角色到故事中。"
+    },
     "update_character": { "displayName": "更新角色", "description": "修改已有角色的信息。" },
     "delete_character": { "displayName": "删除角色", "description": "从故事中删除角色。" },
     "get_character": { "displayName": "获取角色", "description": "获取指定角色的详细信息。" },
     "list_characters": { "displayName": "列出角色", "description": "列出当前故事的所有角色。" },
-    "plan_chapters": { "displayName": "规划章节", "description": "根据大纲规划章节划分和各章节概要。在大纲确定后调用。" },
-    "write_chapter": { "displayName": "创作章节", "description": "创作指定章节的内容。这是流式输出，用户将看到内容逐步生成。" },
+    "plan_chapters": {
+      "displayName": "规划章节",
+      "description": "根据大纲规划章节划分和各章节概要。在大纲确定后调用。"
+    },
+    "write_chapter": {
+      "displayName": "创作章节",
+      "description": "创作指定章节的内容。这是流式输出，用户将看到内容逐步生成。"
+    },
     "rewrite_chapter": { "displayName": "重写章节", "description": "根据用户反馈重写指定章节。" },
     "get_chapter": { "displayName": "获取章节", "description": "获取指定章节的完整内容。" },
-    "set_world_building": { "displayName": "设定世界观", "description": "设定故事的世界观，包括时代背景、地点、规则、文化等。" },
-    "get_world_building": { "displayName": "获取世界观", "description": "获取当前故事的世界观设定。" },
-    "set_style": { "displayName": "设定文风", "description": "设定文风偏好，包括叙事视角、时态、语言风格等。" },
-    "get_style": { "displayName": "获取文风", "description": "获取当前故事的文风设定，包括叙事视角、时态、语言风格等。" },
-    "upsert_story": { "displayName": "创建或更新故事", "description": "创建新故事或更新已有故事信息。如果当前故事记录已存在，则更新标题和简介；如果不存在则新建。创建完成后可以使用 generate_title 和 generate_synopsis 来完善信息。" },
-    "get_story_status": { "displayName": "获取故事状态", "description": "获取当前故事的整体状态，包括进度、章节完成情况、角色数量等。" },
-    "generate_title": { "displayName": "生成标题", "description": "根据故事内容生成标题，并更新小说标题。" },
-    "generate_synopsis": { "displayName": "生成简介", "description": "根据故事内容生成简介，并更新小说简介。" }
+    "set_world_building": {
+      "displayName": "设定世界观",
+      "description": "设定故事的世界观，包括时代背景、地点、规则、文化等。"
+    },
+    "get_world_building": {
+      "displayName": "获取世界观",
+      "description": "获取当前故事的世界观设定。"
+    },
+    "set_style": {
+      "displayName": "设定文风",
+      "description": "设定文风偏好，包括叙事视角、时态、语言风格等。"
+    },
+    "get_style": {
+      "displayName": "获取文风",
+      "description": "获取当前故事的文风设定，包括叙事视角、时态、语言风格等。"
+    },
+    "upsert_story": {
+      "displayName": "创建或更新故事",
+      "description": "创建新故事或更新已有故事信息。如果当前故事记录已存在，则更新标题和简介；如果不存在则新建。创建完成后可以使用 generate_title 和 generate_synopsis 来完善信息。"
+    },
+    "get_story_status": {
+      "displayName": "获取故事状态",
+      "description": "获取当前故事的整体状态，包括进度、章节完成情况、角色数量等。"
+    },
+    "generate_title": {
+      "displayName": "生成标题",
+      "description": "根据故事内容生成标题，并更新小说标题。"
+    },
+    "generate_synopsis": {
+      "displayName": "生成简介",
+      "description": "根据故事内容生成简介，并更新小说简介。"
+    }
   },
 
   "toolLabels": {

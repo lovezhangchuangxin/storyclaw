@@ -318,6 +318,8 @@
       "loginFailed": "Login failed",
       "registerFailed": "Registration failed",
       "checkCredentials": "Please check your email and password",
+      "tooManyRegistrations": "Too many registrations from this IP, please try again later",
+      "suspiciousRegistration": "Too many registrations from this device, please try again later",
       "noAccount": "No account? Register",
       "hasAccount": "Already have an account? Log In",
       "loggedIn": "Logged in, sync and admin features available",
@@ -463,26 +465,86 @@
   },
 
   "tools": {
-    "create_outline": { "displayName": "Create Outline", "description": "Create a story outline with premise and three-act structure. Call this when designing the outline for the first time." },
-    "update_outline": { "displayName": "Update Outline", "description": "Modify the existing outline content, you can update a specific act or the overall premise." },
-    "get_outline": { "displayName": "Get Outline", "description": "Get the outline of the current story." },
-    "create_character": { "displayName": "Create Character", "description": "Create a new character. Call this tool to add a character to the story." },
-    "update_character": { "displayName": "Update Character", "description": "Modify an existing character's information." },
-    "delete_character": { "displayName": "Delete Character", "description": "Remove a character from the story." },
-    "get_character": { "displayName": "Get Character", "description": "Get detailed information about a specified character." },
-    "list_characters": { "displayName": "List Characters", "description": "List all characters in the current story." },
-    "plan_chapters": { "displayName": "Plan Chapters", "description": "Plan chapter divisions and summaries based on the outline. Call this after the outline is confirmed." },
-    "write_chapter": { "displayName": "Write Chapter", "description": "Write the content of a specified chapter. This is streaming output, users will see the content generated progressively." },
-    "rewrite_chapter": { "displayName": "Rewrite Chapter", "description": "Rewrite a specified chapter based on user feedback." },
-    "get_chapter": { "displayName": "Get Chapter", "description": "Get the full content of a specified chapter." },
-    "set_world_building": { "displayName": "Set Worldbuilding", "description": "Set the worldbuilding for the story, including era, location, rules, culture, etc." },
-    "get_world_building": { "displayName": "Get Worldbuilding", "description": "Get the worldbuilding settings of the current story." },
-    "set_style": { "displayName": "Set Style", "description": "Set writing style preferences, including narrative perspective, tense, language style, etc." },
-    "get_style": { "displayName": "Get Style", "description": "Get the writing style settings of the current story, including narrative perspective, tense, language style, etc." },
-    "upsert_story": { "displayName": "Create or Update Story", "description": "Create a new story or update existing story information. If the story record already exists, update the title and synopsis; if not, create a new one." },
-    "get_story_status": { "displayName": "Get Story Status", "description": "Get the overall status of the current story, including progress, chapter completion, character count, etc." },
-    "generate_title": { "displayName": "Generate Title", "description": "Generate a title based on the story content and update the novel title." },
-    "generate_synopsis": { "displayName": "Generate Synopsis", "description": "Generate a synopsis based on the story content and update the novel synopsis." }
+    "create_outline": {
+      "displayName": "Create Outline",
+      "description": "Create a story outline with premise and three-act structure. Call this when designing the outline for the first time."
+    },
+    "update_outline": {
+      "displayName": "Update Outline",
+      "description": "Modify the existing outline content, you can update a specific act or the overall premise."
+    },
+    "get_outline": {
+      "displayName": "Get Outline",
+      "description": "Get the outline of the current story."
+    },
+    "create_character": {
+      "displayName": "Create Character",
+      "description": "Create a new character. Call this tool to add a character to the story."
+    },
+    "update_character": {
+      "displayName": "Update Character",
+      "description": "Modify an existing character's information."
+    },
+    "delete_character": {
+      "displayName": "Delete Character",
+      "description": "Remove a character from the story."
+    },
+    "get_character": {
+      "displayName": "Get Character",
+      "description": "Get detailed information about a specified character."
+    },
+    "list_characters": {
+      "displayName": "List Characters",
+      "description": "List all characters in the current story."
+    },
+    "plan_chapters": {
+      "displayName": "Plan Chapters",
+      "description": "Plan chapter divisions and summaries based on the outline. Call this after the outline is confirmed."
+    },
+    "write_chapter": {
+      "displayName": "Write Chapter",
+      "description": "Write the content of a specified chapter. This is streaming output, users will see the content generated progressively."
+    },
+    "rewrite_chapter": {
+      "displayName": "Rewrite Chapter",
+      "description": "Rewrite a specified chapter based on user feedback."
+    },
+    "get_chapter": {
+      "displayName": "Get Chapter",
+      "description": "Get the full content of a specified chapter."
+    },
+    "set_world_building": {
+      "displayName": "Set Worldbuilding",
+      "description": "Set the worldbuilding for the story, including era, location, rules, culture, etc."
+    },
+    "get_world_building": {
+      "displayName": "Get Worldbuilding",
+      "description": "Get the worldbuilding settings of the current story."
+    },
+    "set_style": {
+      "displayName": "Set Style",
+      "description": "Set writing style preferences, including narrative perspective, tense, language style, etc."
+    },
+    "get_style": {
+      "displayName": "Get Style",
+      "description": "Get the writing style settings of the current story, including narrative perspective, tense, language style, etc."
+    },
+    "upsert_story": {
+      "displayName": "Create or Update Story",
+      "description": "Create a new story or update existing story information. If the story record already exists, update the title and synopsis; if not, create a new one."
+    },
+    "get_story_status": {
+      "displayName": "Get Story Status",
+      "description": "Get the overall status of the current story, including progress, chapter completion, character count, etc."
+    },
+    "generate_title": {
+      "displayName": "Generate Title",
+      "description": "Generate a title based on the story content and update the novel title."
+    },
+    "generate_synopsis": {
+      "displayName": "Generate Synopsis",
+      "description": "Generate a synopsis based on the story content and update the novel synopsis."
+    }
   },
 
   "toolLabels": {

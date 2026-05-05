@@ -10,6 +10,10 @@ pub struct Config {
     pub model_key: [u8; 32],
     pub daily_token_limit: i64,
     pub rate_limit_per_minute: i32,
+    pub register_ip_limit: i32,
+    pub register_ip_window_hours: i64,
+    pub register_fingerprint_limit: i32,
+    pub fingerprint_retention_days: i64,
 }
 
 fn require_env(key: &str) -> String {
@@ -68,6 +72,26 @@ impl Config {
                 .unwrap_or_else(|_| "20".to_string())
                 .parse()
                 .unwrap_or(20)
+                .max(1),
+            register_ip_limit: std::env::var("REGISTER_IP_LIMIT")
+                .unwrap_or_else(|_| "3".to_string())
+                .parse()
+                .unwrap_or(3)
+                .max(1),
+            register_ip_window_hours: std::env::var("REGISTER_IP_WINDOW_HOURS")
+                .unwrap_or_else(|_| "24".to_string())
+                .parse()
+                .unwrap_or(24)
+                .max(1),
+            register_fingerprint_limit: std::env::var("REGISTER_FINGERPRINT_LIMIT")
+                .unwrap_or_else(|_| "3".to_string())
+                .parse()
+                .unwrap_or(3)
+                .max(1),
+            fingerprint_retention_days: std::env::var("FINGERPRINT_RETENTION_DAYS")
+                .unwrap_or_else(|_| "30".to_string())
+                .parse()
+                .unwrap_or(30)
                 .max(1),
         })
     }

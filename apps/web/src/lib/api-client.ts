@@ -163,12 +163,16 @@ export async function getHealth(): Promise<HealthResponse> {
   return fetchApi<HealthResponse>('/api/health', {}, false)
 }
 
-export async function register(email: string, password: string): Promise<AuthResponse> {
+export async function register(
+  email: string,
+  password: string,
+  fingerprint?: string,
+): Promise<AuthResponse> {
   const data = await fetchApi<AuthResponse>(
     '/api/auth/register',
     {
       method: 'POST',
-      body: JSON.stringify({ email, password } as RegisterRequest),
+      body: JSON.stringify({ email, password, fingerprint } as RegisterRequest),
     },
     false,
   )

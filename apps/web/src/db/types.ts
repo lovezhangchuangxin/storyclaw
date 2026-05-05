@@ -391,6 +391,7 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string
   password: string
+  fingerprint?: string
 }
 
 export interface RefreshRequest {

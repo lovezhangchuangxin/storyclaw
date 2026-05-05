@@ -6,7 +6,10 @@ import {
   refreshAuthToken,
   clearTokens,
   loadTokensFromStorage,
+  ApiError,
 } from '@/lib/api-client'
+import { getDeviceFingerprint } from '@/lib/fingerprint'
+import { i18n } from '@/i18n'
 import type { AuthResponse, UserInfo } from '@/db/types'
 
 const USER_KEY = 'storyclaw_user'
@@ -69,12 +72,27 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = true
     error.value = null
     try {
-      const data: AuthResponse = await apiRegister(email, password)
+      const fp = await getDeviceFingerprint()
+      const data: AuthResponse = await apiRegister(email, password, fp)
       user.value = data.user
       saveUser(data.user)
       return true
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Registration failed'
+      if (e instanceof ApiError) {
+        const errType = (e.data as { error?: string })?.error
+        const errKeyMap: Record<string, string> = {
+          too_many_registrations: 'tooManyRegistrations',
+          suspicious_registration: 'suspiciousRegistration',
+        }
+        const i18nKey = errType ? errKeyMap[errType] : undefined
+        if (i18nKey) {
+          error.value = i18n.global.t(`settings.server.${i18nKey}`)
+        } else {
+          error.value = e.message
+        }
+      } else {
+        error.value = e instanceof Error ? e.message : 'Registration failed'
+      }
       return false
     } finally {
       isLoading.value = false

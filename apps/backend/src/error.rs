@@ -26,6 +26,12 @@ pub enum AppError {
     #[error("Too many requests")]
     RateLimited,
 
+    #[error("Too many registrations from this IP")]
+    TooManyRegistrations,
+
+    #[error("Too many registrations from this device")]
+    SuspiciousRegistration,
+
     #[error("Token quota exceeded: used {used}/{limit}")]
     QuotaExceeded { limit: i64, used: i64 },
 
@@ -51,6 +57,8 @@ impl IntoResponse for AppError {
             AppError::Forbidden => (StatusCode::FORBIDDEN, "forbidden"),
             AppError::Conflict(_) => (StatusCode::CONFLICT, "conflict"),
             AppError::RateLimited => (StatusCode::TOO_MANY_REQUESTS, "rate_limited"),
+            AppError::TooManyRegistrations => (StatusCode::TOO_MANY_REQUESTS, "too_many_registrations"),
+            AppError::SuspiciousRegistration => (StatusCode::TOO_MANY_REQUESTS, "suspicious_registration"),
             AppError::QuotaExceeded { .. } => (StatusCode::TOO_MANY_REQUESTS, "quota_exceeded"),
             AppError::Internal(_) | AppError::Database(_) => {
                 tracing::error!(error = ?self, "Internal server error");

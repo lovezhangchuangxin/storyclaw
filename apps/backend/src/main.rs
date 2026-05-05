@@ -56,6 +56,32 @@ async fn main() -> anyhow::Result<()> {
         rate_limiter,
     };
 
+    // Background task: periodically clean up old device fingerprints
+    {
+        let pool = pool.clone();
+        let retention_days = config.fingerprint_retention_days;
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(6 * 3600));
+            loop {
+                interval.tick().await;
+                match sqlx::query(
+                    "DELETE FROM device_fingerprints WHERE created_at < NOW() - make_interval(days => $1::int)",
+                )
+                .bind(retention_days)
+                .execute(&pool)
+                .await
+                {
+                    Ok(result) => {
+                        if result.rows_affected() > 0 {
+                            tracing::info!("Cleaned up {} old fingerprint records", result.rows_affected());
+                        }
+                    }
+                    Err(e) => tracing::warn!("Fingerprint cleanup failed: {}", e),
+                }
+            }
+        });
+    }
+
     let cors_origin = config.cors_origin
         .parse::<axum::http::HeaderValue>()
         .unwrap_or_else(|_| "http://localhost:5173".parse().unwrap());
@@ -83,7 +109,7 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("Listening on {}", addr);
 
-    axum::serve(listener, app)
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
         .with_graceful_shutdown(shutdown_signal())
         .await?;
 
