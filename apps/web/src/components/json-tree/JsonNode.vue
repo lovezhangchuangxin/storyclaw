@@ -1,19 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Copy, Check } from 'lucide-vue-next'
 import { getJsonType, isExpandable, stringifyValue } from './utils'
 import type { JsonNodeProps } from './types'
 
 const props = defineProps<JsonNodeProps>()
 
+const { t } = useI18n()
+
 function initialExpanded(): boolean {
   if (props.depth >= props.maxDepth) return false
-  const t = getJsonType(props.value)
-  if (!isExpandable(t)) return false
-  if (t === 'object') {
+  const jsonType = getJsonType(props.value)
+  if (!isExpandable(jsonType)) return false
+  if (jsonType === 'object') {
     return Object.keys(props.value as Record<string, unknown>).length <= props.collapsedNodeLength
   }
-  if (t === 'array') {
+  if (jsonType === 'array') {
     return (props.value as unknown[]).length <= props.collapsedNodeLength
   }
   return true
@@ -236,7 +239,7 @@ const indentStyle = computed(() => {
           displayValue
         }}</span>
         <button v-if="isLongString" class="jt-string-toggle" @click="toggleString">
-          {{ stringExpanded ? '收起' : '展开' }}
+          {{ stringExpanded ? t('story.drawer.collapse') : t('story.drawer.expandAll') }}
         </button>
         <button
           v-if="showCopy"

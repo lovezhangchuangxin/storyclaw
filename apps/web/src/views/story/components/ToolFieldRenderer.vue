@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FieldDisplay } from '@/agent/tools/display-config'
 import { getField } from '@/agent/tools/display-config'
 import { ChevronDown, ChevronUp } from 'lucide-vue-next'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   fields: FieldDisplay[]
@@ -91,7 +94,11 @@ function isLongText(text: string): boolean {
               class="expand-toggle"
               @click="toggleMultiline(field.key)"
             >
-              {{ expandedFields.has(field.key) ? '收起' : '展开全部' }}
+              {{
+                expandedFields.has(field.key)
+                  ? t('story.drawer.collapse')
+                  : t('story.drawer.expandAll')
+              }}
               <component
                 :is="expandedFields.has(field.key) ? ChevronUp : ChevronDown"
                 class="size-3"
@@ -141,7 +148,7 @@ function isLongText(text: string): boolean {
       "
       class="field-empty"
     >
-      （无数据）
+      {{ t('common.noFieldData') }}
     </div>
   </div>
 </template>

@@ -50,7 +50,7 @@ export async function executeToolCall(
   } catch (err) {
     if (err instanceof z.ZodError) {
       return JSON.stringify({
-        error: `参数验证失败: ${String(err)}`,
+        error: `Parameter validation failed: ${String(err)}`,
       })
     }
     return JSON.stringify({ error: String(err) })

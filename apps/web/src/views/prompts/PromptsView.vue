@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Plus, Trash2, Search } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,8 @@ import { getAllPrompts, deletePrompt, savePrompt } from '@/db/prompts'
 import type { Prompt } from '@/db/types'
 import { toast } from 'vue-sonner'
 import PromptDialog from './components/PromptDialog.vue'
+
+const { t } = useI18n()
 
 const prompts = ref<Prompt[]>([])
 const loading = ref(true)
@@ -82,7 +85,7 @@ async function confirmDelete() {
     await deletePrompt(prompt.id)
     prompts.value = prompts.value.filter((p) => p.id !== prompt.id)
   } catch (e) {
-    toast.error('删除失败', {
+    toast.error(t('common.deleteFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   } finally {
@@ -108,13 +111,13 @@ async function confirmDelete() {
       <section
         class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
       >
-        <h3 class="text-sm font-medium mb-1">加载失败</h3>
-        <p class="text-xs text-muted-foreground mb-4">请检查后重试</p>
+        <h3 class="text-sm font-medium mb-1">{{ $t('common.loadFailed') }}</h3>
+        <p class="text-xs text-muted-foreground mb-4">{{ $t('common.loadFailedHint') }}</p>
         <button
           class="text-sm text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer"
           @click="loadPrompts"
         >
-          重试
+          {{ $t('common.retry') }}
         </button>
       </section>
     </template>
@@ -127,11 +130,15 @@ async function confirmDelete() {
           <Search
             class="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
           />
-          <Input v-model="searchQuery" placeholder="搜索提示词..." class="pl-8" />
+          <Input
+            v-model="searchQuery"
+            :placeholder="$t('prompts.searchPlaceholder')"
+            class="pl-8"
+          />
         </div>
         <Button size="sm" class="shrink-0 gap-1.5" @click="openCreate">
           <Plus class="size-4" />
-          新建
+          {{ $t('prompts.newButton') }}
         </Button>
       </div>
 
@@ -141,7 +148,7 @@ async function confirmDelete() {
           class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
         >
           <Search class="size-8 mb-3 text-muted-foreground/30" />
-          <p class="text-sm text-muted-foreground">没有找到匹配的提示词</p>
+          <p class="text-sm text-muted-foreground">{{ $t('prompts.noResults') }}</p>
         </section>
       </template>
 
@@ -167,13 +174,13 @@ async function confirmDelete() {
                   variant="secondary"
                   class="shrink-0 text-[10px] px-1.5 py-0"
                 >
-                  内置
+                  {{ $t('common.builtin') }}
                 </Badge>
               </div>
               <button
                 v-if="!prompt.isBuiltin"
                 class="size-7 shrink-0 flex items-center justify-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
-                title="删除"
+                :title="$t('common.delete')"
                 @click.stop="handleDelete(prompt)"
               >
                 <Trash2 class="size-3.5" />
@@ -202,16 +209,16 @@ async function confirmDelete() {
   <Dialog v-model:open="deleteDialogOpen">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>确认删除</DialogTitle>
+        <DialogTitle>{{ $t('common.confirmDelete') }}</DialogTitle>
         <DialogDescription>
-          确定要删除提示词「{{ promptToDelete?.name }}」吗？此操作不可撤销。
+          {{ $t('prompts.deleteConfirm', { name: promptToDelete?.name }) }}
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
         <DialogClose as-child>
-          <Button variant="outline">取消</Button>
+          <Button variant="outline">{{ $t('common.cancel') }}</Button>
         </DialogClose>
-        <Button variant="destructive" @click="confirmDelete">删除</Button>
+        <Button variant="destructive" @click="confirmDelete">{{ $t('common.delete') }}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

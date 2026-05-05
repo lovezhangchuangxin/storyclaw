@@ -237,6 +237,8 @@ export interface BackgroundImage {
   updatedAt: number
 }
 
+export type SupportedLocale = 'zh-CN' | 'en-US'
+
 export interface AppConfig {
   id: 'app-config'
   models: ModelConfig[]
@@ -247,6 +249,7 @@ export interface AppConfig {
   backgroundSettings: BackgroundSettings
   backendUrl?: string
   useBackendProxy: boolean
+  locale: SupportedLocale
   updatedAt: number
 }
 
@@ -329,6 +332,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   backendUrl: '',
   useBackendProxy: false,
+  locale: 'zh-CN',
   updatedAt: 0,
 }
 

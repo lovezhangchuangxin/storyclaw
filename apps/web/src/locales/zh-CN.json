@@ -1,0 +1,472 @@
+{
+  "common": {
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "edit": "编辑",
+    "save": "保存",
+    "retry": "重试",
+    "back": "返回",
+    "create": "创建",
+    "new": "新建",
+    "search": "搜索…",
+    "loading": "加载中…",
+    "noData": "暂无数据",
+    "noFieldData": "（无数据）",
+    "loadFailed": "加载失败",
+    "loadFailedHint": "请检查后重试",
+    "confirmDelete": "确认删除",
+    "confirmDeleteDesc": "此操作不可撤销",
+    "deleteFailed": "删除失败",
+    "saveFailed": "保存失败",
+    "loadConfigFailed": "加载配置失败",
+    "none": "无",
+    "builtin": "内置",
+    "default": "默认",
+    "unknown": "未知"
+  },
+
+  "sidebar": {
+    "bookshelf": "书架",
+    "prompts": "提示词",
+    "modelConfig": "模型配置",
+    "serverConnection": "后端连接",
+    "appearance": "外观",
+    "my": "我的",
+    "admin": "管理后台",
+    "mainNav": "主导航",
+    "expandSidebar": "展开侧边栏",
+    "collapseSidebar": "折叠侧边栏",
+    "openNavMenu": "打开导航菜单"
+  },
+
+  "layout": {
+    "connected": "已连接后端",
+    "disconnected": "未连接后端"
+  },
+
+  "home": {
+    "title": "书架",
+    "searchPlaceholder": "搜索小说标题或简介...",
+    "createButton": "创建",
+    "empty": {
+      "title": "还没有故事",
+      "description": "创建一个新故事，开始你的创作之旅",
+      "button": "开始第一个故事"
+    },
+    "noResults": "没有找到匹配的小说",
+    "newStory": "新故事",
+    "noModel": {
+      "title": "还没有配置模型",
+      "description": "创建故事前需要至少配置一个 AI 模型，用于驱动 Agent 创作引擎。",
+      "goConfig": "前往配置"
+    },
+    "deleteConfirm": {
+      "description": "确定要删除《{title}》吗？此操作不可撤销。"
+    },
+    "card": {
+      "untitled": "未命名故事",
+      "noSynopsis": "暂无简介",
+      "words": "{count} 字",
+      "status": {
+        "draft": "草稿",
+        "writing": "创作中",
+        "completed": "已完成",
+        "paused": "已暂停"
+      }
+    },
+    "newStoryDialog": {
+      "title": "开始新故事",
+      "description": "选择要使用的提示词，它们将影响故事的风格与方向。",
+      "searchPrompts": "搜索提示词...",
+      "startWriting": "开始创作",
+      "loadPromptsFailed": "加载提示词失败",
+      "noMorePrompts": "没有更多提示词"
+    }
+  },
+
+  "my": {
+    "title": "我的",
+    "todayStats": "今日统计",
+    "todayWriting": "今日写作",
+    "tokenUsage": "Token 用量",
+    "todayDuration": "今日时长",
+    "appName": "StoryClaw",
+    "localMode": "本地模式 · 数据存储在浏览器中",
+    "locale": {
+      "label": "语言",
+      "zhCN": "中文",
+      "enUS": "English",
+      "description": "选择界面显示语言"
+    }
+  },
+
+  "story": {
+    "reader": "阅读",
+    "agentTab": "对话",
+    "switchToAgent": "切换到对话",
+    "switchToReader": "切换到阅读",
+    "viewNovelData": "查看小说数据",
+    "noContent": "暂无内容",
+    "untitled": "无标题",
+    "previousChapter": "← 上一章",
+    "nextChapter": "下一章 →",
+    "agent": {
+      "welcome": {
+        "greeting": "开始创作你的故事",
+        "hint": "告诉我你的想法，我会帮你将灵感变为文字",
+        "suggestion1": "告诉我你想要什么样的故事...",
+        "suggestion2": "帮我设计角色和世界观",
+        "suggestion3": "写一个章节让我看看",
+        "suggestion1Prompt": "告诉我你想要什么样的故事，我来帮你创作。",
+        "suggestion2Prompt": "帮我设计一个故事的角色和世界观。",
+        "suggestion3Prompt": "写一个章节让我看看你的写作能力。"
+      },
+      "inputPlaceholder": "发送消息，/ 命令",
+      "searchCommands": "搜索命令...",
+      "noMatchingCommand": "没有匹配的命令",
+      "configureModel": "配置模型",
+      "send": "发送",
+      "execute": "执行",
+      "selectModel": "选择模型",
+      "pleaseConfigureModel": "请先配置模型",
+      "sessionCreated": "已创建新会话",
+      "contextCompacted": "上下文已整理",
+      "copyFailed": "复制失败",
+      "generationFailed": "生成失败",
+      "saveFailed": "保存失败",
+      "unknownCommand": "未知命令",
+      "unknownCommandHint": "请使用 /help 查看可用命令",
+      "newConversationFailed": "创建新会话失败",
+      "compactionFailed": "整理失败",
+      "noCompactionNeeded": "没有需要整理的上下文",
+      "conversationNotSaved": "对话未保存",
+      "newSessionCreatedDesc": "已创建新会话，对话记录已清空",
+      "noContextToCompact": "上下文暂无内容需要整理",
+      "compactionBefore": "压缩前约",
+      "compactionAfter": "压缩后约"
+    },
+    "tool": {
+      "executing": "执行中...",
+      "cancelled": "已取消",
+      "error": "错误",
+      "success": "操作成功",
+      "chapterFormat": "第{index}章",
+      "words": "{count} 字",
+      "items": "{count} 项",
+      "chapters": "{count} 章",
+      "parameters": "参数",
+      "result": "结果"
+    },
+    "thinking": {
+      "process": "思考过程",
+      "chars": "{count} 字"
+    },
+    "drawer": {
+      "basicInfo": "基本信息",
+      "styleSettings": "风格设定",
+      "outline": "大纲",
+      "premise": "前提",
+      "status": {
+        "drafting": "构思中",
+        "writing": "创作中",
+        "completed": "已完成",
+        "paused": "已暂停"
+      },
+      "role": {
+        "protagonist": "主角",
+        "antagonist": "反派",
+        "supporting": "配角",
+        "minor": "次要"
+      },
+      "collapse": "收起",
+      "expandAll": "展开全部",
+      "title": "小说数据",
+      "dataLoadFailed": "数据加载失败",
+      "notExist": "小说数据不存在",
+      "noOtherData": "暂无其他数据",
+      "noSynopsis": "暂无简介",
+      "notSet": "未设定",
+      "unnamed": "未命名",
+      "chapterStatus": {
+        "planned": "规划中",
+        "draft": "草稿"
+      },
+      "worldBuilding": "世界观",
+      "character": {
+        "characters": "角色",
+        "personality": "性格",
+        "appearance": "外貌",
+        "background": "背景",
+        "motivation": "动机",
+        "arc": "人物弧光",
+        "relationships": "关系"
+      },
+      "labels": {
+        "genre": "类型",
+        "wordCount": "字数",
+        "perspective": "视角",
+        "tense": "时态",
+        "languageStyle": "语言风格",
+        "customPrompt": "自定义提示",
+        "synopsis": "简介",
+        "keyEvents": "关键事件",
+        "chapterPlan": "章节规划",
+        "tableTitle": "标题",
+        "tableStatus": "状态",
+        "era": "时代",
+        "location": "地点",
+        "rules": "规则",
+        "culture": "文化",
+        "notes": "备注",
+        "factions": "势力",
+        "act1": "第一幕",
+        "act2": "第二幕",
+        "act3": "第三幕"
+      }
+    }
+  },
+
+  "prompts": {
+    "title": "提示词",
+    "searchPlaceholder": "搜索提示词...",
+    "newButton": "新建",
+    "noResults": "没有找到匹配的提示词",
+    "deleteConfirm": "确定要删除提示词「{name}」吗？此操作不可撤销。",
+    "dialog": {
+      "viewTitle": "查看提示词",
+      "editTitle": "编辑提示词",
+      "newTitle": "新建提示词",
+      "nameLabel": "名称",
+      "contentLabel": "内容",
+      "namePlaceholder": "提示词名称",
+      "contentPlaceholder": "请输入提示词内容...",
+      "nameRequired": "名称不能为空",
+      "contentRequired": "内容不能为空",
+      "nameDuplicate": "提示词名称已存在"
+    }
+  },
+
+  "settings": {
+    "modelConfig": {
+      "title": "模型配置",
+      "description": "管理 AI 模型接入信息",
+      "addModel": "添加模型",
+      "empty": {
+        "title": "还没有配置模型",
+        "description": "添加一个 AI 模型来开始故事创作"
+      },
+      "modelUpdated": "模型已更新",
+      "modelAdded": "模型已添加",
+      "setDefault": "设为默认",
+      "backendModels": {
+        "title": "后端模型",
+        "label": "后端",
+        "description": "管理员配置的共享模型，所有用户可见",
+        "addButton": "添加后端模型",
+        "addTitle": "添加后端模型",
+        "noModels": "还没有配置后端模型，点击下方按钮添加",
+        "noModelsUser": "暂无可用后端模型",
+        "modelDeleted": "后端模型已删除",
+        "modelAdded": "后端模型已添加",
+        "modelUpdated": "后端模型已更新",
+        "apiKeyRequired": "请输入 API Key",
+        "operationFailed": "操作失败",
+        "checkConnection": "请检查后端连接",
+        "adminOnly": "仅管理员可编辑"
+      }
+    },
+    "server": {
+      "title": "后端连接",
+      "description": "连接后端以跨设备同步数据和使用后端代理调用 LLM",
+      "connectionStatus": "连接状态",
+      "connectionStatusDesc": "后端服务的当前连接情况",
+      "connected": "已连接",
+      "disconnected": "未连接",
+      "serverAddress": "服务器地址",
+      "email": "邮箱",
+      "password": "密码",
+      "connect": "连接",
+      "connecting": "连接中…",
+      "connectSuccess": "连接成功",
+      "connectFailed": "连接失败",
+      "connectFailedHint": "无法连接到后端，请检查地址是否正确",
+      "backendAbnormal": "后端响应异常",
+      "backendVersion": "后端版本: {version}",
+      "disconnect": "断开连接",
+      "pleaseWait": "请稍候…",
+      "login": "登录",
+      "register": "注册",
+      "loginSuccess": "登录成功",
+      "registerSuccess": "注册成功",
+      "loginFailed": "登录失败",
+      "registerFailed": "注册失败",
+      "checkCredentials": "请检查邮箱和密码",
+      "noAccount": "没有账号？点击注册",
+      "hasAccount": "已有账号？点击登录",
+      "loggedIn": "已登录，可使用同步和管理功能",
+      "logout": "退出登录",
+      "loggedOut": "已退出登录",
+      "proxy": {
+        "label": "使用后端代理调用 LLM",
+        "description": "开启后通过后端转发模型请求，无需在本地配置 API Key"
+      },
+      "localModeHint": "也可以不连接后端，直接使用本地模式。所有数据存储在浏览器中。",
+      "saveSettingsFailed": "保存设置失败",
+      "admin": "管理员"
+    },
+    "appearance": {
+      "title": "外观",
+      "theme": {
+        "label": "应用主题",
+        "description": "选择应用的整体外观配色",
+        "light": "浅色",
+        "dark": "深色",
+        "parchment": "护眼",
+        "frost": "霜华",
+        "peach": "桃夭",
+        "pine": "松烟"
+      },
+      "background": {
+        "label": "背景图片",
+        "description": "上传图片作为应用背景，支持多张切换选择",
+        "uploadHint": "上传图片",
+        "deleteImage": "删除图片",
+        "opacity": "透明度",
+        "blur": "模糊度"
+      },
+      "typography": {
+        "label": "字体与排版",
+        "description": "调整阅读文字的外观与间距",
+        "fontSize": "字号",
+        "lineHeight": "行高",
+        "paragraphSpacing": "段间距"
+      },
+      "scrollMode": {
+        "label": "翻页模式",
+        "description": "选择适合的阅读翻页方式",
+        "scroll": "滚动",
+        "scrollDesc": "连续滚动阅读",
+        "paged": "翻页",
+        "pagedDesc": "左右翻页浏览",
+        "auto": "自动",
+        "autoDesc": "自动滚动",
+        "autoSpeed": "自动滚动速度"
+      },
+      "preview": {
+        "label": "实时预览",
+        "description": "在此预览您的阅读设置效果",
+        "content1": "天色暗下来的时候，林间的风也停了。她站在桥头，望着远处隐约的灯火，心里想着那些已经说不出口的话。",
+        "content2": "\"你还在等什么？\"身后传来一个声音，不大，却在寂静中格外清晰。"
+      },
+      "fontOptions": {
+        "notoSans": "思源黑体",
+        "notoSerif": "思源宋体",
+        "system": "系统默认"
+      }
+    },
+    "modelDialog": {
+      "editTitle": "编辑模型",
+      "addBackendTitle": "添加后端模型",
+      "modelName": "模型名称",
+      "provider": "提供商",
+      "apiBase": "API 地址",
+      "modelId": "模型 ID",
+      "apiKey": "API Key",
+      "maxOutputTokens": "最大输出 Token",
+      "contextWindow": "上下文窗口",
+      "outputReserve": "输出预留",
+      "compactionTrigger": "压缩触发比例",
+      "compactionTarget": "压缩目标比例",
+      "summaryModel": "摘要模型",
+      "test": "测试",
+      "modelNamePlaceholder": "选填，默认为 提供商 - 模型ID",
+      "apiBaseHint": "留空则保留已配置的 API 地址。仅在你需要更改时填写。",
+      "clearApiKey": "清空 API Key",
+      "apiKeyHint": "留空则保留已配置的 API Key。填写新值则更新，点击 × 按钮清空。",
+      "modelIdPlaceholder": "选择或输入模型名",
+      "publicModel": "公开模型",
+      "publicModelHint": "开启后所有用户可见和使用",
+      "compactionSection": "上下文管理",
+      "compactionHintBackend": "后端模型的上下文压缩在前端执行，可自定义配置。",
+      "compactionHintLocal": "控制窗口预算、自动压缩阈值和摘要模型。",
+      "summaryModelPlaceholder": "留空则复用当前模型",
+      "configured": "已配置",
+      "configuredUpdate": "已配置，填写则更新",
+      "compactionDescription": "当上下文 Token 占用达到窗口的 {trigger}% 时自动触发压缩，压缩至窗口的 {target}%"
+    },
+    "combobox": {
+      "placeholder": "请选择或输入"
+    }
+  },
+
+  "admin": {
+    "title": "管理后台",
+    "overview": "概览",
+    "users": "用户",
+    "novels": "小说",
+    "stats": {
+      "totalUsers": "总用户",
+      "totalNovels": "总小说",
+      "totalLlmCalls": "LLM 调用",
+      "dailyActiveUsers": "日活用户",
+      "novelsPerUser": "人均小说"
+    },
+    "table": {
+      "email": "邮箱",
+      "role": "角色",
+      "novelCount": "小说数",
+      "registeredAt": "注册时间",
+      "title": "标题",
+      "author": "作者",
+      "wordCount": "字数",
+      "status": "状态",
+      "updatedAt": "更新时间",
+      "previousPage": "上一页",
+      "nextPage": "下一页"
+    },
+    "role": {
+      "admin": "管理员",
+      "user": "用户"
+    }
+  },
+
+  "agent": {
+    "cancelled": "已取消生成",
+    "incomplete": "回复未完整结束",
+    "maxIterations": "已达到最大工具调用次数",
+    "noModel": "没有配置模型",
+    "modelNotFound": "找不到模型（{modelId}），可能已被删除",
+    "needLogin": "使用后端模型需要登录，请先登录或刷新页面。",
+    "compaction": {
+      "command": "整理上下文，压缩对话历史，减少 Token 消耗"
+    },
+    "newSession": {
+      "command": "新建会话，清除当前对话记录"
+    }
+  },
+
+  "error": {
+    "paramValidation": "参数验证失败",
+    "fileTypeUnsupported": "仅支持 JPEG、PNG、WebP 格式",
+    "fileSizeExceeded": "图片大小不能超过 10MB",
+    "loadBackgroundFailed": "加载背景图片失败",
+    "builtinPromptDelete": "内置提示词不可删除"
+  },
+
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "{n}分钟前",
+    "hoursAgo": "{n}小时前",
+    "daysAgo": "{n}天前",
+    "monthsAgo": "{n}个月前",
+    "yearsAgo": "{n}年前",
+    "hours": "{h} 小时",
+    "minutes": "{m} 分钟",
+    "hoursMinutes": "{h} 小时 {m} 分钟"
+  },
+
+  "db": {
+    "defaultStyle": "StoryClaw 默认风格"
+  }
+}

@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { inject, type Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Slider } from '@/components/ui/slider'
 import type { ReaderSettings } from './types'
 import type { AppTheme } from '@/db/types'
 
+const { t } = useI18n()
+
 const themes: { id: AppTheme; name: string; bg: string }[] = [
-  { id: 'light', name: '浅色', bg: '#FCFAF7' },
-  { id: 'dark', name: '深色', bg: '#1A1A1E' },
-  { id: 'parchment', name: '护眼', bg: '#F4E4C1' },
-  { id: 'frost', name: '霜华', bg: '#F0F4FA' },
-  { id: 'peach', name: '桃夭', bg: '#FBEDE8' },
-  { id: 'pine', name: '松烟', bg: '#EAF0E7' },
+  { id: 'light', name: t('settings.appearance.theme.light'), bg: '#FCFAF7' },
+  { id: 'dark', name: t('settings.appearance.theme.dark'), bg: '#1A1A1E' },
+  { id: 'parchment', name: t('settings.appearance.theme.parchment'), bg: '#F4E4C1' },
+  { id: 'frost', name: t('settings.appearance.theme.frost'), bg: '#F0F4FA' },
+  { id: 'peach', name: t('settings.appearance.theme.peach'), bg: '#FBEDE8' },
+  { id: 'pine', name: t('settings.appearance.theme.pine'), bg: '#EAF0E7' },
 ]
 
 const props = defineProps<{
@@ -45,7 +48,9 @@ function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSett
     <div class="px-5 pb-5 space-y-5">
       <!-- Theme -->
       <div>
-        <p class="text-xs font-medium text-muted-foreground mb-2.5">主题</p>
+        <p class="text-xs font-medium text-muted-foreground mb-2.5">
+          {{ $t('settings.appearance.theme.label') }}
+        </p>
         <div class="flex items-center gap-4 overflow-x-auto scrollbar-none">
           <button
             v-for="t in themes"
@@ -83,7 +88,9 @@ function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSett
       <!-- Font size -->
       <div>
         <div class="flex items-center justify-between mb-2.5">
-          <p class="text-xs font-medium text-muted-foreground">字号</p>
+          <p class="text-xs font-medium text-muted-foreground">
+            {{ $t('settings.appearance.typography.fontSize') }}
+          </p>
           <span class="text-xs tabular-nums text-muted-foreground">
             {{ settings.fontSize }}px
           </span>
@@ -104,7 +111,9 @@ function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSett
       <!-- Line height -->
       <div>
         <div class="flex items-center justify-between mb-2.5">
-          <p class="text-xs font-medium text-muted-foreground">行距</p>
+          <p class="text-xs font-medium text-muted-foreground">
+            {{ $t('settings.appearance.typography.lineHeight') }}
+          </p>
           <span class="text-xs tabular-nums text-muted-foreground">
             {{ settings.lineHeight }}
           </span>
@@ -125,7 +134,9 @@ function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSett
       <!-- Paragraph spacing -->
       <div>
         <div class="flex items-center justify-between mb-2.5">
-          <p class="text-xs font-medium text-muted-foreground">段距</p>
+          <p class="text-xs font-medium text-muted-foreground">
+            {{ $t('settings.appearance.typography.paragraphSpacing') }}
+          </p>
           <span class="text-xs tabular-nums text-muted-foreground">
             {{ settings.paragraphSpacing }}em
           </span>

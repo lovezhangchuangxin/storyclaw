@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   AccordionContent,
   AccordionHeader,
@@ -31,6 +32,8 @@ const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
   (e: 'jumpToChapter', index: number): void
 }>()
+
+const { t } = useI18n()
 
 const novel = ref<Novel | null>(null)
 const outline = ref<Outline | null>(null)
@@ -79,25 +82,25 @@ watch(
   },
 )
 
-const statusLabels: Record<string, string> = {
-  drafting: '构思中',
-  writing: '创作中',
-  completed: '已完成',
-  paused: '已暂停',
+const statusLabels: Record<string, () => string> = {
+  drafting: () => t('story.drawer.status.drafting'),
+  writing: () => t('story.drawer.status.writing'),
+  completed: () => t('story.drawer.status.completed'),
+  paused: () => t('story.drawer.status.paused'),
 }
 
-const chapterStatusLabels: Record<string, string> = {
-  planned: '规划中',
-  writing: '创作中',
-  draft: '草稿',
-  completed: '已完成',
+const chapterStatusLabels: Record<string, () => string> = {
+  planned: () => t('story.drawer.chapterStatus.planned'),
+  writing: () => t('story.drawer.status.writing'),
+  draft: () => t('story.drawer.chapterStatus.draft'),
+  completed: () => t('story.drawer.status.completed'),
 }
 
-const roleLabels: Record<string, string> = {
-  protagonist: '主角',
-  antagonist: '反派',
-  supporting: '配角',
-  minor: '次要',
+const roleLabels: Record<string, () => string> = {
+  protagonist: () => t('story.drawer.role.protagonist'),
+  antagonist: () => t('story.drawer.role.antagonist'),
+  supporting: () => t('story.drawer.role.supporting'),
+  minor: () => t('story.drawer.role.minor'),
 }
 
 function badgeClass(status: string): string {
@@ -123,7 +126,7 @@ function badgeClass(status: string): string {
     <SheetContent side="right" class="sm:max-w-md w-full gap-0">
       <template v-if="loading">
         <div class="flex items-center justify-center h-32 text-muted-foreground text-sm">
-          加载中...
+          {{ t('common.loading') }}
         </div>
       </template>
 
@@ -132,13 +135,13 @@ function badgeClass(status: string): string {
           class="flex flex-col items-center justify-center gap-3 h-32 text-muted-foreground text-sm"
         >
           <AlertTriangle class="size-6 text-amber-500" />
-          <span>数据加载失败</span>
+          <span>{{ t('story.drawer.dataLoadFailed') }}</span>
         </div>
       </template>
 
       <template v-else-if="novel">
         <SheetHeader class="shrink-0">
-          <SheetTitle>小说数据</SheetTitle>
+          <SheetTitle>{{ t('story.drawer.title') }}</SheetTitle>
           <SheetDescription>{{ novel.title }}</SheetDescription>
         </SheetHeader>
 
@@ -155,9 +158,9 @@ function badgeClass(status: string): string {
                   class="flex flex-1 items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer group-data-[state=open]:bg-muted/30"
                 >
                   <span class="flex items-center gap-2">
-                    基本信息
+                    {{ t('story.drawer.basicInfo') }}
                     <Badge :class="badgeClass(novel.status)" variant="outline" class="text-[10px]">
-                      {{ statusLabels[novel.status] || novel.status }}
+                      {{ statusLabels[novel.status]?.() || novel.status }}
                     </Badge>
                   </span>
                   <ChevronDown
@@ -170,25 +173,30 @@ function badgeClass(status: string): string {
               >
                 <div class="px-4 pb-3 space-y-2 text-sm">
                   <p class="text-muted-foreground leading-relaxed">
-                    {{ novel.synopsis || '暂无简介' }}
+                    {{ novel.synopsis || t('story.drawer.noSynopsis') }}
                   </p>
                   <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <div>
-                      <span class="text-foreground/70">类型：</span>{{ novel.genre || '未设定' }}
+                      <span class="text-foreground/70">{{ t('story.drawer.labels.genre') }}：</span
+                      >{{ novel.genre || t('story.drawer.notSet') }}
                     </div>
                     <div>
-                      <span class="text-foreground/70">字数：</span>
+                      <span class="text-foreground/70"
+                        >{{ t('story.drawer.labels.wordCount') }}：</span
+                      >
                       {{ novel.currentWordCount.toLocaleString() }}
                       <template v-if="novel.targetWordCount"
                         >/ {{ novel.targetWordCount.toLocaleString() }}</template
                       >
                     </div>
                     <div v-if="novel.styleSettings.narrativePerspective">
-                      <span class="text-foreground/70">视角：</span
+                      <span class="text-foreground/70"
+                        >{{ t('story.drawer.labels.perspective') }}：</span
                       >{{ novel.styleSettings.narrativePerspective }}
                     </div>
                     <div v-if="novel.styleSettings.tense">
-                      <span class="text-foreground/70">时态：</span>{{ novel.styleSettings.tense }}
+                      <span class="text-foreground/70">{{ t('story.drawer.labels.tense') }}：</span
+                      >{{ novel.styleSettings.tense }}
                     </div>
                   </div>
                 </div>
@@ -205,7 +213,7 @@ function badgeClass(status: string): string {
                 <AccordionTrigger
                   class="flex flex-1 items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer group-data-[state=open]:bg-muted/30"
                 >
-                  风格设定
+                  {{ t('story.drawer.styleSettings') }}
                   <ChevronDown
                     class="size-4 text-muted-foreground shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
                   />
@@ -216,11 +224,14 @@ function badgeClass(status: string): string {
               >
                 <div class="px-4 pb-3 space-y-2 text-xs text-muted-foreground">
                   <div v-if="novel.styleSettings.languageStyle">
-                    <span class="text-foreground/70 font-medium">语言风格：</span
+                    <span class="text-foreground/70 font-medium">
+                      {{ t('story.drawer.labels.languageStyle') }}：</span
                     >{{ novel.styleSettings.languageStyle }}
                   </div>
                   <div v-if="novel.styleSettings.customPrompt">
-                    <span class="text-foreground/70 font-medium">自定义提示：</span>
+                    <span class="text-foreground/70 font-medium">
+                      {{ t('story.drawer.labels.customPrompt') }}：</span
+                    >
                     <p class="mt-1 leading-relaxed whitespace-pre-wrap">
                       {{ novel.styleSettings.customPrompt }}
                     </p>
@@ -235,7 +246,7 @@ function badgeClass(status: string): string {
                 <AccordionTrigger
                   class="flex flex-1 items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer group-data-[state=open]:bg-muted/30"
                 >
-                  大纲
+                  {{ t('story.drawer.outline') }}
                   <ChevronDown
                     class="size-4 text-muted-foreground shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
                   />
@@ -246,7 +257,9 @@ function badgeClass(status: string): string {
               >
                 <div class="px-4 pb-3 space-y-3 text-xs">
                   <div v-if="outline.premise">
-                    <span class="text-foreground/70 font-medium">前提：</span>
+                    <span class="text-foreground/70 font-medium">
+                      {{ t('story.drawer.premise') }}：</span
+                    >
                     <p class="mt-0.5 leading-relaxed text-muted-foreground">
                       {{ outline.premise }}
                     </p>
@@ -254,9 +267,17 @@ function badgeClass(status: string): string {
                   <div class="space-y-2">
                     <div
                       v-for="act in [
-                        { key: 'act1', label: '第一幕', color: 'bg-amber-400' },
-                        { key: 'act2', label: '第二幕', color: 'bg-blue-400' },
-                        { key: 'act3', label: '第三幕', color: 'bg-emerald-400' },
+                        {
+                          key: 'act1',
+                          label: t('story.drawer.labels.act1'),
+                          color: 'bg-amber-400',
+                        },
+                        { key: 'act2', label: t('story.drawer.labels.act2'), color: 'bg-blue-400' },
+                        {
+                          key: 'act3',
+                          label: t('story.drawer.labels.act3'),
+                          color: 'bg-emerald-400',
+                        },
                       ]"
                       :key="act.key"
                       class="rounded-md bg-muted/40 p-2.5"
@@ -268,7 +289,7 @@ function badgeClass(status: string): string {
                       <p class="text-muted-foreground leading-relaxed mb-1.5">
                         {{
                           outline.threeActs[act.key as keyof typeof outline.threeActs]?.summary ||
-                          '暂无'
+                          t('common.none')
                         }}
                       </p>
                       <div
@@ -277,7 +298,9 @@ function badgeClass(status: string): string {
                             ?.length
                         "
                       >
-                        <span class="text-foreground/60">关键事件：</span>
+                        <span class="text-foreground/60">
+                          {{ t('story.drawer.labels.keyEvents') }}：</span
+                        >
                         <ul class="mt-0.5 space-y-0.5">
                           <li
                             v-for="(e, i) in outline.threeActs[
@@ -303,7 +326,9 @@ function badgeClass(status: string): string {
                 <AccordionTrigger
                   class="flex flex-1 items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer group-data-[state=open]:bg-muted/30"
                 >
-                  <span>角色（{{ characters.length }}）</span>
+                  <span
+                    >{{ t('story.drawer.character.characters') }}（{{ characters.length }}）</span
+                  >
                   <ChevronDown
                     class="size-4 text-muted-foreground shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
                   />
@@ -321,33 +346,41 @@ function badgeClass(status: string): string {
                     <div class="flex items-center gap-2">
                       <span class="text-sm font-medium">{{ char.name }}</span>
                       <Badge variant="outline" class="text-xs">{{
-                        roleLabels[char.role] || char.role
+                        roleLabels[char.role]?.() || char.role
                       }}</Badge>
                     </div>
                     <div v-if="char.personality" class="text-xs text-muted-foreground">
-                      <span class="text-foreground/70 font-medium">性格：</span
+                      <span class="text-foreground/70 font-medium"
+                        >{{ t('story.drawer.character.personality') }}：</span
                       >{{ char.personality }}
                     </div>
                     <div v-if="char.appearance" class="text-xs text-muted-foreground">
-                      <span class="text-foreground/70 font-medium">外貌：</span
+                      <span class="text-foreground/70 font-medium"
+                        >{{ t('story.drawer.character.appearance') }}：</span
                       >{{ char.appearance }}
                     </div>
                     <div v-if="char.background" class="text-xs text-muted-foreground">
-                      <span class="text-foreground/70 font-medium">背景：</span
+                      <span class="text-foreground/70 font-medium"
+                        >{{ t('story.drawer.character.background') }}：</span
                       >{{ char.background }}
                     </div>
                     <div v-if="char.motivation" class="text-xs text-muted-foreground">
-                      <span class="text-foreground/70 font-medium">动机：</span
+                      <span class="text-foreground/70 font-medium"
+                        >{{ t('story.drawer.character.motivation') }}：</span
                       >{{ char.motivation }}
                     </div>
                     <div v-if="char.arc" class="text-xs text-muted-foreground">
-                      <span class="text-foreground/70 font-medium">人物弧光：</span>{{ char.arc }}
+                      <span class="text-foreground/70 font-medium"
+                        >{{ t('story.drawer.character.arc') }}：</span
+                      >{{ char.arc }}
                     </div>
                     <div
                       v-if="char.relationships.length"
                       class="mt-1 pt-1.5 border-t border-border/50"
                     >
-                      <span class="text-xs text-foreground/70 font-medium">关系：</span>
+                      <span class="text-xs text-foreground/70 font-medium"
+                        >{{ t('story.drawer.character.relationships') }}：</span
+                      >
                       <div class="mt-0.5 flex flex-wrap gap-1">
                         <span
                           v-for="rel in char.relationships"
@@ -369,7 +402,7 @@ function badgeClass(status: string): string {
                 <AccordionTrigger
                   class="flex flex-1 items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer group-data-[state=open]:bg-muted/30"
                 >
-                  世界观
+                  {{ t('story.drawer.worldBuilding') }}
                   <ChevronDown
                     class="size-4 text-muted-foreground shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
                   />
@@ -380,33 +413,43 @@ function badgeClass(status: string): string {
               >
                 <div class="px-4 pb-3 space-y-2 text-xs">
                   <div v-if="worldBuilding.era" class="text-muted-foreground">
-                    <span class="text-foreground/70 font-medium">时代：</span
+                    <span class="text-foreground/70 font-medium">
+                      {{ t('story.drawer.labels.era') }}：</span
                     >{{ worldBuilding.era }}
                   </div>
                   <div v-if="worldBuilding.location" class="text-muted-foreground">
-                    <span class="text-foreground/70 font-medium">地点：</span
+                    <span class="text-foreground/70 font-medium">
+                      {{ t('story.drawer.labels.location') }}：</span
                     >{{ worldBuilding.location }}
                   </div>
                   <div v-if="worldBuilding.rules" class="text-muted-foreground">
-                    <span class="text-foreground/70 font-medium">规则：</span>
+                    <span class="text-foreground/70 font-medium">
+                      {{ t('story.drawer.labels.rules') }}：</span
+                    >
                     <p class="mt-0.5 leading-relaxed whitespace-pre-wrap">
                       {{ worldBuilding.rules }}
                     </p>
                   </div>
                   <div v-if="worldBuilding.culture" class="text-muted-foreground">
-                    <span class="text-foreground/70 font-medium">文化：</span>
+                    <span class="text-foreground/70 font-medium">
+                      {{ t('story.drawer.labels.culture') }}：</span
+                    >
                     <p class="mt-0.5 leading-relaxed whitespace-pre-wrap">
                       {{ worldBuilding.culture }}
                     </p>
                   </div>
                   <div v-if="worldBuilding.notes" class="text-muted-foreground">
-                    <span class="text-foreground/70 font-medium">备注：</span>
+                    <span class="text-foreground/70 font-medium">
+                      {{ t('story.drawer.labels.notes') }}：</span
+                    >
                     <p class="mt-0.5 leading-relaxed whitespace-pre-wrap">
                       {{ worldBuilding.notes }}
                     </p>
                   </div>
                   <div v-if="worldBuilding.factions.length" class="space-y-1.5">
-                    <span class="text-foreground/70 font-medium">势力：</span>
+                    <span class="text-foreground/70 font-medium">
+                      {{ t('story.drawer.labels.factions') }}：</span
+                    >
                     <div
                       v-for="f in worldBuilding.factions"
                       :key="f.name"
@@ -431,7 +474,11 @@ function badgeClass(status: string): string {
                 <AccordionTrigger
                   class="flex flex-1 items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer group-data-[state=open]:bg-muted/30"
                 >
-                  <span>章节规划（{{ outline.chapterPlan.length }}）</span>
+                  <span
+                    >{{ t('story.drawer.labels.chapterPlan') }}（{{
+                      outline.chapterPlan.length
+                    }}）</span
+                  >
                   <ChevronDown
                     class="size-4 text-muted-foreground shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
                   />
@@ -450,13 +497,13 @@ function badgeClass(status: string): string {
                               #
                             </th>
                             <th class="text-left px-3 py-2 font-medium text-muted-foreground">
-                              标题
+                              {{ t('story.drawer.labels.tableTitle') }}
                             </th>
                             <th class="text-left px-3 py-2 font-medium text-muted-foreground w-16">
-                              状态
+                              {{ t('story.drawer.labels.tableStatus') }}
                             </th>
                             <th class="text-right px-3 py-2 font-medium text-muted-foreground w-16">
-                              字数
+                              {{ t('story.drawer.labels.wordCount') }}
                             </th>
                           </tr>
                         </thead>
@@ -477,7 +524,7 @@ function badgeClass(status: string): string {
                             </td>
                             <td class="px-3 py-2">
                               <div class="font-medium truncate max-w-[180px]">
-                                {{ cp.title || '未命名' }}
+                                {{ cp.title || t('story.drawer.unnamed') }}
                               </div>
                               <div
                                 v-if="cp.summary"
@@ -492,7 +539,7 @@ function badgeClass(status: string): string {
                                 variant="outline"
                                 class="text-[10px]"
                               >
-                                {{ chapterStatusLabels[cp.status] || cp.status }}
+                                {{ chapterStatusLabels[cp.status]?.() || cp.status }}
                               </Badge>
                             </td>
                             <td class="px-3 py-2 text-right tabular-nums text-muted-foreground">
@@ -518,7 +565,7 @@ function badgeClass(status: string): string {
                   class="flex flex-1 items-center justify-center px-4 py-8 text-sm text-muted-foreground cursor-default"
                   disabled
                 >
-                  暂无其他数据
+                  {{ t('story.drawer.noOtherData') }}
                 </AccordionTrigger>
               </AccordionHeader>
             </AccordionItem>
@@ -528,10 +575,10 @@ function badgeClass(status: string): string {
 
       <template v-else>
         <SheetHeader class="shrink-0">
-          <SheetTitle>小说数据</SheetTitle>
+          <SheetTitle>{{ t('story.drawer.title') }}</SheetTitle>
         </SheetHeader>
         <div class="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-          小说数据不存在
+          {{ t('story.drawer.notExist') }}
         </div>
       </template>
     </SheetContent>

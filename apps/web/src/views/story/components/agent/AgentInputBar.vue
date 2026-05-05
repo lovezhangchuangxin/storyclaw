@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ChevronDown, Send, Square, BrainCircuit, Play, Search } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import {
@@ -27,6 +28,8 @@ const emit = defineEmits<{
   'update:selectedModelId': [id: string]
   command: [cmdId: string]
 }>()
+
+const { t } = useI18n()
 
 const showCommandMenu = ref(false)
 const commandInputRef = ref<HTMLInputElement>()
@@ -150,7 +153,7 @@ function handleSend() {
                   <input
                     ref="commandInputRef"
                     v-model="commandSearch"
-                    placeholder="搜索命令..."
+                    :placeholder="t('story.agent.searchCommands')"
                     class="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                     @keydown="handleCommandKeydown"
                   />
@@ -173,7 +176,7 @@ function handleSend() {
                     v-if="filteredCommandList.length === 0"
                     class="px-2 py-1.5 text-sm text-muted-foreground"
                   >
-                    没有匹配的命令
+                    {{ t('story.agent.noMatchingCommand') }}
                   </div>
                 </div>
               </div>
@@ -190,7 +193,7 @@ function handleSend() {
         <textarea
           :value="modelValue"
           @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
-          placeholder="发送消息，/ 命令"
+          :placeholder="t('story.agent.inputPlaceholder')"
           rows="1"
           class="field-sizing-content block min-h-0 w-full resize-none bg-transparent px-4 py-3.5 text-base outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           :disabled="isGenerating"
@@ -236,7 +239,7 @@ function handleSend() {
             class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <BrainCircuit class="size-3.5" />
-            <span>配置模型</span>
+            <span>{{ t('story.agent.configureModel') }}</span>
           </router-link>
 
           <div class="ml-auto flex items-center gap-1">
@@ -250,7 +253,7 @@ function handleSend() {
             >
               <Play v-if="pendingCommandId" class="size-3.5" />
               <Send v-else class="size-3.5" />
-              {{ pendingCommandId ? '执行' : '发送' }}
+              {{ pendingCommandId ? t('story.agent.execute') : t('story.agent.send') }}
             </Button>
             <Button v-else variant="destructive" size="icon-sm" @click="emit('cancel')">
               <Square class="size-3.5" />

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, toRaw } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   ChevronDown,
   Loader2,
@@ -14,6 +15,8 @@ import {
 import { getToolDisplayInfo, getToolDisplayConfig } from '@/agent/tools'
 import JsonTreeViewer from '@/components/json-tree/JsonTreeViewer.vue'
 import ToolFieldRenderer from './ToolFieldRenderer.vue'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   toolName: string
@@ -105,7 +108,7 @@ function extractStreamingToolPreview(raw: string): {
   }
 
   return {
-    chapter: index !== undefined ? `第${index + 1}章` : undefined,
+    chapter: index !== undefined ? t('story.tool.chapterFormat', { index: index + 1 }) : undefined,
     preview: preview || undefined,
     wordCount,
   }
@@ -134,7 +137,7 @@ const argSummary = computed(() => {
     return [
       preview.chapter,
       preview.preview,
-      preview.wordCount > 0 ? `${preview.wordCount} 字` : '',
+      preview.wordCount > 0 ? t('story.tool.words', { count: preview.wordCount }) : '',
     ]
       .filter(Boolean)
       .join(' · ')
@@ -146,7 +149,8 @@ const argSummary = computed(() => {
     case 'write_chapter':
     case 'rewrite_chapter': {
       const idx = args.index as number
-      const chapter = typeof idx === 'number' ? `第${idx + 1}章` : ''
+      const chapter =
+        typeof idx === 'number' ? t('story.tool.chapterFormat', { index: idx + 1 }) : ''
       const preview =
         typeof args.content === 'string' ? args.content.slice(0, 30).replace(/\n/g, ' ') : ''
       return [chapter, preview].filter(Boolean).join(' · ')
@@ -154,14 +158,14 @@ const argSummary = computed(() => {
     case 'plan_chapters': {
       const chapters = args.chapters as Array<{ title: string }> | undefined
       return chapters?.length
-        ? `${chapters.length} 章 · ${chapters.map((c) => c.title).join(', ')}`
+        ? `${t('story.tool.chapters', { count: chapters.length })} · ${chapters.map((c) => c.title).join(', ')}`
         : ''
     }
     case 'create_character':
     case 'update_character': {
       const charName = args.name as string | undefined
       const role = args.role as string | undefined
-      return `${charName || '未命名'}${role ? ` (${role})` : ''}`
+      return `${charName || t('story.drawer.unnamed')}${role ? ` (${role})` : ''}`
     }
     default: {
       const keys = Object.keys(args).slice(0, 3)
@@ -171,7 +175,7 @@ const argSummary = computed(() => {
 })
 
 const resultSummary = computed(() => {
-  if (props.status === 'cancelled') return { success: false, text: '已取消' }
+  if (props.status === 'cancelled') return { success: false, text: t('story.tool.cancelled') }
   if (!props.result) return null
 
   // Try config resultPreview first
@@ -195,22 +199,23 @@ const resultSummary = computed(() => {
     const parsed = JSON.parse(props.result)
     if (parsed.error) return { success: false, text: parsed.error }
     const parts: string[] = []
-    if (parsed.count !== undefined) parts.push(`${parsed.count} 项`)
-    if (parsed.wordCount !== undefined) parts.push(`${parsed.wordCount} 字`)
+    if (parsed.count !== undefined) parts.push(t('story.tool.items', { count: parsed.count }))
+    if (parsed.wordCount !== undefined)
+      parts.push(t('story.tool.words', { count: parsed.wordCount }))
     if (parsed.title) parts.push(parsed.title)
     if (
       parsed.index !== undefined &&
       props.toolName !== 'write_chapter' &&
       props.toolName !== 'rewrite_chapter'
     )
-      parts.push(`第${parsed.index + 1}章`)
+      parts.push(t('story.tool.chapterFormat', { index: parsed.index + 1 }))
     if (
       typeof parsed.name === 'string' &&
       props.toolName !== 'create_character' &&
       props.toolName !== 'update_character'
     )
       parts.push(parsed.name)
-    return { success: true, text: parts.join(' · ') || '操作成功' }
+    return { success: true, text: parts.join(' · ') || t('story.tool.success') }
   } catch {
     return null
   }
@@ -306,11 +311,11 @@ const statusColor = computed(() => {
 const statusText = computed(() => {
   switch (props.status) {
     case 'pending':
-      return '执行中...'
+      return t('story.tool.executing')
     case 'cancelled':
-      return '已取消'
+      return t('story.tool.cancelled')
     case 'error':
-      return resultSummary.value?.text || '错误'
+      return resultSummary.value?.text || t('story.tool.error')
     default:
       return ''
   }
@@ -406,14 +411,18 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
 
           <!-- Human-readable arguments (from config) -->
           <div v-if="hasArgConfig">
-            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">参数</div>
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">
+              {{ t('story.tool.parameters') }}
+            </div>
             <div class="bg-muted/40 rounded-lg p-2.5">
               <ToolFieldRenderer :fields="config!.argFields!" :data="parsedArguments!" />
             </div>
           </div>
           <!-- Legacy JSON arguments (no config or no parsed data) -->
           <div v-else-if="parsedArguments && Object.keys(parsedArguments).length > 0">
-            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">参数</div>
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">
+              {{ t('story.tool.parameters') }}
+            </div>
             <div class="bg-muted/40 rounded-lg p-2.5">
               <JsonTreeViewer
                 :data="parsedArguments"
@@ -424,7 +433,9 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
             </div>
           </div>
           <div v-else-if="rawArguments">
-            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">参数</div>
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">
+              {{ t('story.tool.parameters') }}
+            </div>
             <pre
               class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto"
               >{{ rawArguments }}</pre
@@ -435,14 +446,18 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
 
           <!-- Human-readable result (from config) -->
           <div v-if="hasResultConfig">
-            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">
+              {{ t('story.tool.result') }}
+            </div>
             <div class="bg-muted/40 rounded-lg p-2.5">
               <ToolFieldRenderer :fields="config!.resultFields!" :data="parsedResult!" />
             </div>
           </div>
           <!-- Legacy JSON result (no config) -->
           <div v-else-if="parsedResult !== null">
-            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">
+              {{ t('story.tool.result') }}
+            </div>
             <div class="bg-muted/40 rounded-lg p-2.5">
               <JsonTreeViewer
                 :data="parsedResult"
@@ -453,7 +468,9 @@ defineExpose({ safeStringify: (v: unknown) => JSON.stringify(normalizeJsonValue(
             </div>
           </div>
           <div v-else-if="result">
-            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">结果</div>
+            <div class="text-muted-foreground/40 mb-1.5 font-medium text-xs">
+              {{ t('story.tool.result') }}
+            </div>
             <pre
               class="bg-muted/40 rounded-lg p-2.5 font-mono text-muted-foreground/70 whitespace-pre-wrap break-all overflow-x-auto"
               >{{ result }}</pre

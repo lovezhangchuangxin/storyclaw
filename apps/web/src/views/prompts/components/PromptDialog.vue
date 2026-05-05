@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -19,11 +20,13 @@ const emit = defineEmits<{
   save: [prompt: Prompt]
 }>()
 
+const { t } = useI18n()
+
 const readonly = computed(() => props.prompt?.isBuiltin ?? false)
 const isEdit = computed(() => !!props.prompt)
 const title = computed(() => {
-  if (readonly.value) return '查看提示词'
-  return isEdit.value ? '编辑提示词' : '新建提示词'
+  if (readonly.value) return t('prompts.dialog.viewTitle')
+  return isEdit.value ? t('prompts.dialog.editTitle') : t('prompts.dialog.newTitle')
 })
 
 const name = ref('')
@@ -51,11 +54,11 @@ async function handleSave() {
   const trimmedContent = content.value.trim()
 
   if (!trimmedName) {
-    nameError.value = '名称不能为空'
+    nameError.value = t('prompts.dialog.nameRequired')
     return
   }
   if (!trimmedContent) {
-    toast.error('内容不能为空')
+    toast.error(t('prompts.dialog.contentRequired'))
     return
   }
 
@@ -63,7 +66,7 @@ async function handleSave() {
   try {
     const dup = await isPromptNameDuplicate(trimmedName, props.prompt?.id)
     if (dup) {
-      nameError.value = '提示词名称已存在'
+      nameError.value = t('prompts.dialog.nameDuplicate')
       saving.value = false
       return
     }
@@ -78,7 +81,7 @@ async function handleSave() {
     })
     emit('update:open', false)
   } catch (e) {
-    toast.error('保存失败', {
+    toast.error(t('common.saveFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   } finally {
@@ -96,10 +99,10 @@ async function handleSave() {
 
       <div class="space-y-4 mt-2">
         <div class="space-y-1.5">
-          <Label>名称</Label>
+          <Label>{{ $t('prompts.dialog.nameLabel') }}</Label>
           <Input
             v-model="name"
-            placeholder="输入提示词名称"
+            :placeholder="readonly ? '' : $t('prompts.dialog.namePlaceholder')"
             :disabled="readonly"
             :class="nameError ? 'border-destructive' : ''"
             @input="nameError = ''"
@@ -108,10 +111,10 @@ async function handleSave() {
         </div>
 
         <div class="space-y-1.5">
-          <Label>内容</Label>
+          <Label>{{ $t('prompts.dialog.contentLabel') }}</Label>
           <Textarea
             v-model="content"
-            placeholder="输入提示词内容，将作为系统提示词发送给模型"
+            :placeholder="readonly ? '' : $t('prompts.dialog.contentPlaceholder')"
             :disabled="readonly"
             class="min-h-[200px] max-h-[50vh] resize-none"
           />
@@ -120,10 +123,10 @@ async function handleSave() {
 
       <div class="flex justify-end gap-2 mt-4">
         <Button variant="outline" @click="emit('update:open', false)">
-          {{ readonly ? '关闭' : '取消' }}
+          {{ $t('common.cancel') }}
         </Button>
         <Button v-if="!readonly" :disabled="saving" @click="handleSave">
-          {{ isEdit ? '保存' : '创建' }}
+          {{ isEdit ? $t('common.save') : $t('common.create') }}
         </Button>
       </div>
     </DialogContent>

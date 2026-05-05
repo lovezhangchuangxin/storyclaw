@@ -1,3 +1,5 @@
+import { i18n } from '@/i18n'
+
 export interface ReaderSettings {
   fontFamily: string
   fontSize: number
@@ -8,8 +10,23 @@ export interface ReaderSettings {
 }
 
 export const FONT_OPTIONS = [
-  { label: '思源宋体', value: '"Noto Serif SC", Georgia, serif' },
-  { label: '思源黑体', value: '"Noto Sans SC", Inter, system-ui, sans-serif' },
+  {
+    get label() {
+      return i18n.global.t('settings.appearance.fontOptions.notoSerif')
+    },
+    value: '"Noto Serif SC", Georgia, serif',
+  },
+  {
+    get label() {
+      return i18n.global.t('settings.appearance.fontOptions.notoSans')
+    },
+    value: '"Noto Sans SC", Inter, system-ui, sans-serif',
+  },
   { label: 'Inter', value: '"Inter", system-ui, sans-serif' },
-  { label: '系统默认', value: 'system-ui, sans-serif' },
+  {
+    get label() {
+      return i18n.global.t('settings.appearance.fontOptions.system')
+    },
+    value: 'system-ui, sans-serif',
+  },
 ]

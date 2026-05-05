@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ChevronDown, Brain } from 'lucide-vue-next'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   content: string
@@ -30,14 +33,18 @@ const preview = computed(() => {
 
       <!-- Collapsed: label + preview -->
       <template v-if="!expanded">
-        <span class="font-medium text-muted-foreground/50 shrink-0">思考过程</span>
+        <span class="font-medium text-muted-foreground/50 shrink-0">{{
+          t('story.thinking.process')
+        }}</span>
         <span class="text-muted-foreground/35 truncate min-w-0">{{ preview }}</span>
       </template>
 
       <!-- Expanded: label + word count + chevron -->
       <template v-else>
-        <span class="font-medium text-muted-foreground/70">思考过程</span>
-        <span class="text-muted-foreground/35 tabular-nums">{{ content.length }} 字</span>
+        <span class="font-medium text-muted-foreground/70">{{ t('story.thinking.process') }}</span>
+        <span class="text-muted-foreground/35 tabular-nums">{{
+          t('story.thinking.chars', { count: content.length })
+        }}</span>
         <ChevronDown
           class="size-3 shrink-0 ml-auto text-muted-foreground/35 transition-transform duration-200 rotate-180"
         />

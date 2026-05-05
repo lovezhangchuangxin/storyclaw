@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Sun,
   Moon,
@@ -27,6 +28,7 @@ import { useBackgroundImage } from '@/composables/useBackgroundImage'
 const config = ref<AppConfig>({ ...DEFAULT_CONFIG })
 
 const applyTheme = inject<(theme: AppTheme) => void>('applyTheme', () => {})
+const { t } = useI18n()
 
 const {
   images,
@@ -84,7 +86,7 @@ async function handleRemoveImage(id: string) {
 const themeCards = [
   {
     id: 'light' as AppTheme,
-    name: '浅色',
+    name: 'settings.appearance.theme.light',
     icon: Sun,
     bg: '#FCFAF7',
     text: '#1A1A1A',
@@ -92,7 +94,7 @@ const themeCards = [
   },
   {
     id: 'dark' as AppTheme,
-    name: '深色',
+    name: 'settings.appearance.theme.dark',
     icon: Moon,
     bg: '#1A1A1E',
     text: '#E0E0E0',
@@ -100,7 +102,7 @@ const themeCards = [
   },
   {
     id: 'parchment' as AppTheme,
-    name: '护眼',
+    name: 'settings.appearance.theme.parchment',
     icon: Coffee,
     bg: '#F4E4C1',
     text: '#3E2723',
@@ -108,7 +110,7 @@ const themeCards = [
   },
   {
     id: 'frost' as AppTheme,
-    name: '霜华',
+    name: 'settings.appearance.theme.frost',
     icon: Snowflake,
     bg: '#F0F4FA',
     text: '#3D4A5C',
@@ -116,7 +118,7 @@ const themeCards = [
   },
   {
     id: 'peach' as AppTheme,
-    name: '桃夭',
+    name: 'settings.appearance.theme.peach',
     icon: Flower2,
     bg: '#FBEDE8',
     text: '#4D332E',
@@ -124,7 +126,7 @@ const themeCards = [
   },
   {
     id: 'pine' as AppTheme,
-    name: '松烟',
+    name: 'settings.appearance.theme.pine',
     icon: TreePine,
     bg: '#EAF0E7',
     text: '#2E3D33',
@@ -201,7 +203,7 @@ async function loadConfig() {
   try {
     config.value = await getConfig()
   } catch (e) {
-    toast.error('加载配置失败', {
+    toast.error(t('common.loadConfigFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -215,7 +217,7 @@ async function save() {
     await saveConfig(snapshot)
     config.value = snapshot
   } catch (e) {
-    toast.error('保存失败', {
+    toast.error(t('common.saveFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -237,9 +239,11 @@ loadAll()
       <div>
         <div class="flex items-center gap-2 mb-1">
           <Sun class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">应用主题</h3>
+          <h3 class="text-sm font-medium">{{ $t('settings.appearance.theme.label') }}</h3>
         </div>
-        <p class="text-xs text-muted-foreground">选择应用的整体外观配色</p>
+        <p class="text-xs text-muted-foreground">
+          {{ $t('settings.appearance.theme.description') }}
+        </p>
       </div>
 
       <div class="grid grid-cols-3 gap-3">
@@ -267,7 +271,7 @@ loadAll()
           </div>
           <div class="flex items-center justify-center gap-1.5">
             <component :is="t.icon" class="size-3.5" />
-            <p class="text-xs font-medium">{{ t.name }}</p>
+            <p class="text-xs font-medium">{{ $t(t.name) }}</p>
           </div>
         </button>
       </div>
@@ -278,9 +282,11 @@ loadAll()
       <div>
         <div class="flex items-center gap-2 mb-1">
           <ImageIcon class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">背景图片</h3>
+          <h3 class="text-sm font-medium">{{ $t('settings.appearance.background.label') }}</h3>
         </div>
-        <p class="text-xs text-muted-foreground">上传图片作为应用背景，支持多张切换选择</p>
+        <p class="text-xs text-muted-foreground">
+          {{ $t('settings.appearance.background.description') }}
+        </p>
       </div>
 
       <div class="grid grid-cols-4 gap-3">
@@ -303,7 +309,7 @@ loadAll()
           />
           <button
             class="absolute top-1 right-1 size-5 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-            aria-label="删除图片"
+            :aria-label="$t('settings.appearance.background.deleteImage')"
             @click.stop="handleRemoveImage(img.id)"
           >
             <Trash2 class="size-3 text-white" />
@@ -316,7 +322,9 @@ loadAll()
           @click="triggerUpload"
         >
           <Plus class="size-5 text-muted-foreground" />
-          <span class="text-[10px] text-muted-foreground">上传图片</span>
+          <span class="text-[10px] text-muted-foreground">{{
+            $t('settings.appearance.background.uploadHint')
+          }}</span>
         </button>
       </div>
 
@@ -332,7 +340,7 @@ loadAll()
         <div class="space-y-4 pt-1">
           <div class="space-y-1.5">
             <div class="flex justify-between text-xs text-muted-foreground">
-              <span>透明度</span>
+              <span>{{ $t('settings.appearance.background.opacity') }}</span>
               <span>{{ bgOpacityRef }}%</span>
             </div>
             <Slider
@@ -346,7 +354,7 @@ loadAll()
 
           <div class="space-y-1.5">
             <div class="flex justify-between text-xs text-muted-foreground">
-              <span>模糊度</span>
+              <span>{{ $t('settings.appearance.background.blur') }}</span>
               <span>{{ bgBlurRef }}px</span>
             </div>
             <Slider
@@ -366,9 +374,11 @@ loadAll()
       <div>
         <div class="flex items-center gap-2 mb-1">
           <Type class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">字体与排版</h3>
+          <h3 class="text-sm font-medium">{{ $t('settings.appearance.typography.label') }}</h3>
         </div>
-        <p class="text-xs text-muted-foreground">调整阅读文字的外观与间距</p>
+        <p class="text-xs text-muted-foreground">
+          {{ $t('settings.appearance.typography.description') }}
+        </p>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
@@ -396,7 +406,7 @@ loadAll()
       <div class="space-y-4 pt-1">
         <div class="space-y-1.5">
           <div class="flex justify-between text-xs text-muted-foreground">
-            <span>字号</span>
+            <span>{{ $t('settings.appearance.typography.fontSize') }}</span>
             <span>{{ config.readingSettings.fontSize }}px</span>
           </div>
           <Slider
@@ -410,7 +420,7 @@ loadAll()
 
         <div class="space-y-1.5">
           <div class="flex justify-between text-xs text-muted-foreground">
-            <span>行高</span>
+            <span>{{ $t('settings.appearance.typography.lineHeight') }}</span>
             <span>{{ config.readingSettings.lineHeight.toFixed(1) }}</span>
           </div>
           <Slider
@@ -424,7 +434,7 @@ loadAll()
 
         <div class="space-y-1.5">
           <div class="flex justify-between text-xs text-muted-foreground">
-            <span>段间距</span>
+            <span>{{ $t('settings.appearance.typography.paragraphSpacing') }}</span>
             <span>{{ config.readingSettings.paragraphSpacing.toFixed(1) }}</span>
           </div>
           <Slider
@@ -443,9 +453,11 @@ loadAll()
       <div>
         <div class="flex items-center gap-2 mb-1">
           <BookOpen class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">翻页模式</h3>
+          <h3 class="text-sm font-medium">{{ $t('settings.appearance.scrollMode.label') }}</h3>
         </div>
-        <p class="text-xs text-muted-foreground">选择适合的阅读翻页方式</p>
+        <p class="text-xs text-muted-foreground">
+          {{ $t('settings.appearance.scrollMode.description') }}
+        </p>
       </div>
 
       <div class="grid grid-cols-3 gap-3">
@@ -463,8 +475,10 @@ loadAll()
             :class="scrollMode === 'scroll' ? 'text-primary' : 'text-muted-foreground'"
           />
           <div>
-            <p class="text-xs font-medium">滚动</p>
-            <p class="text-[10px] text-muted-foreground mt-0.5">连续滚动阅读</p>
+            <p class="text-xs font-medium">{{ $t('settings.appearance.scrollMode.scroll') }}</p>
+            <p class="text-[10px] text-muted-foreground mt-0.5">
+              {{ $t('settings.appearance.scrollMode.scrollDesc') }}
+            </p>
           </div>
         </button>
 
@@ -482,8 +496,10 @@ loadAll()
             :class="scrollMode === 'paged' ? 'text-primary' : 'text-muted-foreground'"
           />
           <div>
-            <p class="text-xs font-medium">翻页</p>
-            <p class="text-[10px] text-muted-foreground mt-0.5">左右翻页浏览</p>
+            <p class="text-xs font-medium">{{ $t('settings.appearance.scrollMode.paged') }}</p>
+            <p class="text-[10px] text-muted-foreground mt-0.5">
+              {{ $t('settings.appearance.scrollMode.pagedDesc') }}
+            </p>
           </div>
         </button>
 
@@ -501,15 +517,17 @@ loadAll()
             :class="scrollMode === 'auto' ? 'text-primary' : 'text-muted-foreground'"
           />
           <div>
-            <p class="text-xs font-medium">自动</p>
-            <p class="text-[10px] text-muted-foreground mt-0.5">自动滚动</p>
+            <p class="text-xs font-medium">{{ $t('settings.appearance.scrollMode.auto') }}</p>
+            <p class="text-[10px] text-muted-foreground mt-0.5">
+              {{ $t('settings.appearance.scrollMode.autoDesc') }}
+            </p>
           </div>
         </button>
       </div>
 
       <div v-if="scrollMode === 'auto'" class="pt-4 border-t space-y-1.5">
         <div class="flex justify-between text-xs text-muted-foreground">
-          <span>自动滚动速度</span>
+          <span>{{ $t('settings.appearance.scrollMode.autoSpeed') }}</span>
           <span>{{ config.readingSettings.autoScrollSpeed }}</span>
         </div>
         <Slider
@@ -529,17 +547,19 @@ loadAll()
       <div class="p-5 space-y-1 border-b">
         <div class="flex items-center gap-2">
           <Eye class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">实时预览</h3>
+          <h3 class="text-sm font-medium">{{ $t('settings.appearance.preview.label') }}</h3>
         </div>
-        <p class="text-xs text-muted-foreground">在此预览您的阅读设置效果</p>
+        <p class="text-xs text-muted-foreground">
+          {{ $t('settings.appearance.preview.description') }}
+        </p>
       </div>
 
       <div class="p-6 md:p-8 transition-all duration-200" :style="previewStyle">
         <p>
-          天色暗下来的时候，林间的风也停了。她站在桥头，望着远处隐约的灯火，心里想着那些已经说不出口的话。
+          {{ $t('settings.appearance.preview.content1') }}
         </p>
         <p :style="{ marginTop: `${config.readingSettings.paragraphSpacing}em` }">
-          "你还在等什么？"身后传来一个声音，不大，却在寂静中格外清晰。
+          {{ $t('settings.appearance.preview.content2') }}
         </p>
       </div>
     </section>

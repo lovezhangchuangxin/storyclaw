@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 import { runAgentLoop } from '@/agent/loop'
 import { cloneMessages } from '@/agent/message-state'
@@ -26,6 +27,8 @@ const props = defineProps<{
   novelId: string
 }>()
 
+const { t } = useI18n()
+
 const input = ref('')
 const persistedMessages = ref<Message[]>([])
 const unsavedMessages = ref<Message[]>([])
@@ -43,7 +46,7 @@ const selectedModelId = ref('')
 
 const selectedModelLabel = computed(() => {
   const model = models.value.find((item) => item.id === selectedModelId.value)
-  return model ? model.model : '选择模型'
+  return model ? model.model : t('story.agent.selectModel')
 })
 
 const selectedModelProvider = computed(() => {
@@ -308,7 +311,7 @@ async function send() {
       },
       onError(error) {
         if (requestId !== activeRequestId) return
-        toast.error('生成失败', { description: error })
+        toast.error(t('story.agent.generationFailed'), { description: error })
       },
     })
 
@@ -325,8 +328,8 @@ async function send() {
       unsavedMessages.value = [...baseUnsavedMessages, ...result.messages]
       transientMessages.value = []
       if (result.persistenceError) {
-        pushLocalStatus('error', `保存失败：${result.persistenceError}`)
-        toast.error('对话未保存', {
+        pushLocalStatus('error', `${t('story.agent.saveFailed')}：${result.persistenceError}`)
+        toast.error(t('story.agent.conversationNotSaved'), {
           description: result.persistenceError,
         })
       }
@@ -334,7 +337,7 @@ async function send() {
   } catch (error) {
     if (requestId !== activeRequestId) return
     pushLocalStatus('error', error instanceof Error ? error.message : String(error))
-    toast.error('生成失败', {
+    toast.error(t('story.agent.generationFailed'), {
       description: error instanceof Error ? error.message : String(error),
     })
   } finally {
@@ -358,7 +361,7 @@ function handleCommand(cmdId: string) {
   if (handlers[cmdId]) {
     handlers[cmdId]()
   } else {
-    toast.error(`未知命令：/${cmdId}`)
+    toast.error(`${t('story.agent.unknownCommand')}：/${cmdId}`)
   }
 }
 
@@ -371,10 +374,10 @@ async function newConversation() {
     unsavedMessages.value = []
     localStatusMessages.value = []
     transientMessages.value = []
-    toast.success('已创建新会话')
-    pushLocalStatus('info', '已创建新会话，对话记录已清空')
+    toast.success(t('story.agent.sessionCreated'))
+    pushLocalStatus('info', t('story.agent.newSessionCreatedDesc'))
   } catch (error) {
-    toast.error('创建新会话失败', {
+    toast.error(t('story.agent.newConversationFailed'), {
       description: error instanceof Error ? error.message : String(error),
     })
   }
@@ -384,7 +387,7 @@ async function compactContext() {
   if (isGenerating.value || isCompacting.value) return
   const model = models.value.find((item) => item.id === selectedModelId.value) ?? models.value[0]
   if (!model) {
-    toast.error('请先配置模型')
+    toast.error(t('story.agent.pleaseConfigureModel'))
     return
   }
 
@@ -401,18 +404,21 @@ async function compactContext() {
     })
 
     if (result.snapshot) {
-      const msg = `上下文已整理：压缩前约 ${result.estimatedInputTokensBefore} token，压缩后约 ${result.estimatedInputTokensAfter} token`
-      toast.success('上下文已整理')
+      const msg = `${t('story.agent.contextCompacted')}：${t('story.agent.compactionBefore')} ${result.estimatedInputTokensBefore} token，${t('story.agent.compactionAfter')} ${result.estimatedInputTokensAfter} token`
+      toast.success(t('story.agent.contextCompacted'))
       pushLocalStatus('info', msg)
     } else {
-      toast.success('没有需要整理的上下文')
-      pushLocalStatus('info', '上下文暂无内容需要整理')
+      toast.success(t('story.agent.noCompactionNeeded'))
+      pushLocalStatus('info', t('story.agent.noContextToCompact'))
     }
   } catch (error) {
-    toast.error('整理失败', {
+    toast.error(t('story.agent.compactionFailed'), {
       description: error instanceof Error ? error.message : String(error),
     })
-    pushLocalStatus('error', `整理失败：${error instanceof Error ? error.message : String(error)}`)
+    pushLocalStatus(
+      'error',
+      `${t('story.agent.compactionFailed')}：${error instanceof Error ? error.message : String(error)}`,
+    )
   } finally {
     isCompacting.value = false
   }
@@ -429,7 +435,7 @@ async function copyAssistantText(item: DisplayItem) {
       if (copiedId.value === item.id) copiedId.value = null
     }, 2000)
   } catch {
-    toast.error('复制失败')
+    toast.error(t('story.agent.copyFailed'))
   }
 }
 

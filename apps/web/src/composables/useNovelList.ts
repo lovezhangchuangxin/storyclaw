@@ -1,11 +1,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getAllNovels, deleteNovel } from '@/db/novels'
 import type { Novel } from '@/db/types'
 import { toast } from 'vue-sonner'
 
 export function useNovelList() {
   const router = useRouter()
+  const { t } = useI18n()
 
   const novels = ref<Novel[]>([])
   const loading = ref(true)
@@ -57,7 +59,7 @@ export function useNovelList() {
       await deleteNovel(novel.id)
       novels.value = novels.value.filter((n) => n.id !== novel.id)
     } catch (e) {
-      toast.error('删除失败', {
+      toast.error(t('common.deleteFailed'), {
         description: e instanceof Error ? e.message : String(e),
       })
     } finally {

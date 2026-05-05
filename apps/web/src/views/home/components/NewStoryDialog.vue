@@ -16,8 +16,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getAllPrompts } from '@/db/prompts'
 import type { Prompt } from '@/db/types'
+import { useI18n } from 'vue-i18n'
 import { usePromptDrag } from '@/composables/usePromptDrag'
 import { toast } from 'vue-sonner'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   open: boolean
@@ -70,7 +73,7 @@ watch(
         allPrompts.value = ps
       })
       .catch((e) => {
-        toast.error('加载提示词失败', {
+        toast.error(t('home.newStoryDialog.loadPromptsFailed'), {
           description: e instanceof Error ? e.message : String(e),
         })
       })
@@ -100,9 +103,9 @@ function handleCreate() {
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent class="max-w-[calc(100vw-2rem)] sm:max-w-lg max-h-[85vh] overflow-hidden">
       <DialogHeader>
-        <DialogTitle>开始新故事</DialogTitle>
+        <DialogTitle>{{ $t('home.newStoryDialog.title') }}</DialogTitle>
         <DialogDescription>
-          选择要使用的提示词，它们将作为系统提示词发送给模型。
+          {{ $t('home.newStoryDialog.description') }}
         </DialogDescription>
       </DialogHeader>
 
@@ -113,7 +116,7 @@ function handleCreate() {
           >
             <Search class="size-4 text-muted-foreground shrink-0 mr-2" />
             <span class="flex-1 text-left text-muted-foreground truncate">
-              {{ promptSearch || '搜索提示词...' }}
+              {{ promptSearch || $t('home.newStoryDialog.searchPrompts') }}
             </span>
             <ChevronDown
               class="size-4 text-muted-foreground shrink-0 ml-1 transition-transform"
@@ -130,7 +133,7 @@ function handleCreate() {
           <div class="px-1 pt-1 pb-0.5">
             <Input
               v-model="promptSearch"
-              placeholder="搜索提示词..."
+              :placeholder="$t('home.newStoryDialog.searchPrompts')"
               class="border-0 h-8 text-sm shadow-none focus-visible:ring-0"
               @keydown.escape="promptPopoverOpen = false"
             />
@@ -149,7 +152,7 @@ function handleCreate() {
             </button>
           </div>
           <div v-else class="px-3 py-4 text-xs text-muted-foreground text-center">
-            没有更多提示词
+            {{ $t('home.newStoryDialog.noMorePrompts') }}
           </div>
         </PopoverContent>
       </Popover>
@@ -186,7 +189,7 @@ function handleCreate() {
             variant="secondary"
             class="text-[10px] px-1.5 py-0 shrink-0"
           >
-            内置
+            {{ $t('common.builtin') }}
           </Badge>
           <div class="flex items-center gap-0.5 shrink-0">
             <button
@@ -216,9 +219,9 @@ function handleCreate() {
 
       <DialogFooter class="mt-2">
         <DialogClose as-child>
-          <Button variant="outline">取消</Button>
+          <Button variant="outline">{{ $t('common.cancel') }}</Button>
         </DialogClose>
-        <Button @click="handleCreate">开始创作</Button>
+        <Button @click="handleCreate">{{ $t('home.newStoryDialog.startWriting') }}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

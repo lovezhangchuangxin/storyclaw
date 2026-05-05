@@ -29,15 +29,15 @@ const route = useRoute()
 const auth = useAuthStore()
 
 const items = [
-  { path: '/', label: '书架', icon: BookOpen },
-  { path: '/prompts', label: '提示词', icon: MessageSquareText },
-  { path: '/settings/model', label: '模型配置', icon: Settings },
-  { path: '/settings/server', label: '后端连接', icon: Server },
-  { path: '/settings/appearance', label: '外观', icon: Palette },
-  { path: '/my', label: '我的', icon: User },
+  { path: '/', label: 'sidebar.bookshelf', icon: BookOpen },
+  { path: '/prompts', label: 'sidebar.prompts', icon: MessageSquareText },
+  { path: '/settings/model', label: 'sidebar.modelConfig', icon: Settings },
+  { path: '/settings/server', label: 'sidebar.serverConnection', icon: Server },
+  { path: '/settings/appearance', label: 'sidebar.appearance', icon: Palette },
+  { path: '/my', label: 'sidebar.my', icon: User },
 ]
 
-const adminItem = { path: '/admin', label: '管理后台', icon: Shield }
+const adminItem = { path: '/admin', label: 'sidebar.admin', icon: Shield }
 
 const visibleItems = computed(() => {
   if (auth.isAdmin) {
@@ -74,7 +74,7 @@ function navigate(path: string) {
       >
       <button
         v-if="variant === 'desktop'"
-        :aria-label="collapsed ? '展开侧边栏' : '折叠侧边栏'"
+        :aria-label="collapsed ? $t('sidebar.expandSidebar') : $t('sidebar.collapseSidebar')"
         class="size-7 flex items-center justify-center rounded-md hover:bg-muted shrink-0"
         @click="emit('toggle')"
       >
@@ -84,7 +84,7 @@ function navigate(path: string) {
     </div>
 
     <!-- Nav items -->
-    <nav aria-label="主导航" class="flex-1 py-2 px-2">
+    <nav :aria-label="$t('sidebar.mainNav')" class="flex-1 py-2 px-2">
       <button
         v-for="item in visibleItems"
         :key="item.path"
@@ -94,12 +94,12 @@ function navigate(path: string) {
             ? 'bg-primary/10 text-primary font-medium'
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         "
-        :title="collapsed && variant === 'desktop' ? item.label : ''"
+        :title="collapsed && variant === 'desktop' ? $t(item.label) : ''"
         @click="navigate(item.path)"
       >
         <component :is="item.icon" class="size-5 shrink-0" />
         <span v-show="!(collapsed && variant === 'desktop')" class="ml-3 truncate">{{
-          item.label
+          $t(item.label)
         }}</span>
       </button>
     </nav>

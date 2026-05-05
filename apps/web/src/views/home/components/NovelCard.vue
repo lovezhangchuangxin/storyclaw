@@ -2,11 +2,14 @@
 import { Trash2 } from 'lucide-vue-next'
 import type { Novel } from '@/db/types'
 import { relativeTime } from '@/lib/time'
+import { useI18n } from 'vue-i18n'
 
 defineProps<{
   novel: Novel
   coverColor: string
 }>()
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   open: [novel: Novel]
@@ -14,10 +17,10 @@ const emit = defineEmits<{
 }>()
 
 function statusLabel(status: string): string {
-  if (status === 'completed') return '已完成'
-  if (status === 'writing') return '创作中'
-  if (status === 'paused') return '已暂停'
-  return '草稿'
+  if (status === 'completed') return t('home.card.status.completed')
+  if (status === 'writing') return t('home.card.status.writing')
+  if (status === 'paused') return t('home.card.status.paused')
+  return t('home.card.status.draft')
 }
 
 function statusBadgeClass(status: string): string {
@@ -49,22 +52,24 @@ function statusBadgeClass(status: string): string {
           <h3
             class="font-semibold text-sm leading-snug line-clamp-1 group-hover:text-primary transition-colors"
           >
-            {{ novel.title || '未命名故事' }}
+            {{ novel.title || $t('home.card.untitled') }}
           </h3>
         </div>
         <button
           class="size-7 shrink-0 flex items-center justify-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
           @click.stop="emit('delete', novel)"
-          title="删除"
+          :title="$t('common.delete')"
         >
           <Trash2 class="size-3.5" />
         </button>
       </div>
       <p class="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
-        {{ novel.synopsis || '暂无简介' }}
+        {{ novel.synopsis || $t('home.card.noSynopsis') }}
       </p>
       <div class="mt-3 flex items-center justify-between">
-        <span class="text-[11px] text-muted-foreground">{{ novel.currentWordCount }} 字</span>
+        <span class="text-[11px] text-muted-foreground">{{
+          $t('home.card.words', { count: novel.currentWordCount })
+        }}</span>
         <span
           class="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full font-medium"
           :class="statusBadgeClass(novel.status)"

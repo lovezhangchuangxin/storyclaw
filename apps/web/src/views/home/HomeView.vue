@@ -17,6 +17,7 @@ import { createNovel } from '@/db/novels'
 import { useNovelList } from '@/composables/useNovelList'
 import { getAllModels } from '@/composables/useModels'
 import { toast } from 'vue-sonner'
+import { useI18n } from 'vue-i18n'
 import NovelCard from './components/NovelCard.vue'
 import NewStoryDialog from './components/NewStoryDialog.vue'
 
@@ -30,6 +31,8 @@ const COVER_COLORS = [
   'bg-orange-500',
   'bg-indigo-500',
 ]
+
+const { t } = useI18n()
 
 function getCoverColor(id: string): string {
   let hash = 0
@@ -77,7 +80,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
     const id = crypto.randomUUID()
     await createNovel({
       id,
-      title: '新故事',
+      title: t('home.newStory'),
       synopsis: '',
       genre: '',
       targetWordCount: 0,
@@ -96,7 +99,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
     newStoryDialogOpen.value = false
     router.push(`/story/${id}?tab=agent`)
   } catch (e) {
-    toast.error('创建失败', {
+    toast.error(t('home.newStoryDialog.loadPromptsFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -119,13 +122,13 @@ async function handleCreateStory(selectedPromptIds: string[]) {
       <section
         class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
       >
-        <h3 class="text-sm font-medium mb-1">加载失败</h3>
-        <p class="text-xs text-muted-foreground mb-4">请检查后重试</p>
+        <h3 class="text-sm font-medium mb-1">{{ $t('common.loadFailed') }}</h3>
+        <p class="text-xs text-muted-foreground mb-4">{{ $t('common.loadFailedHint') }}</p>
         <button
           class="text-sm text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer"
           @click="loadNovels"
         >
-          重试
+          {{ $t('common.retry') }}
         </button>
       </section>
     </template>
@@ -138,7 +141,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           <Search
             class="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
           />
-          <Input v-model="searchQuery" placeholder="搜索小说标题或简介..." class="pl-8" />
+          <Input v-model="searchQuery" :placeholder="$t('home.searchPlaceholder')" class="pl-8" />
         </div>
         <Button
           v-if="novels.length > 0"
@@ -147,7 +150,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           @click="openCreateDialog"
         >
           <Plus class="size-4" />
-          创建
+          {{ $t('home.createButton') }}
         </Button>
       </div>
 
@@ -157,11 +160,11 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
         >
           <BookOpen class="size-12 mb-4 text-muted-foreground/30" />
-          <h3 class="text-sm font-medium mb-1">还没有故事</h3>
-          <p class="text-xs text-muted-foreground mb-6">创建一个新故事，开始你的创作之旅</p>
+          <h3 class="text-sm font-medium mb-1">{{ $t('home.empty.title') }}</h3>
+          <p class="text-xs text-muted-foreground mb-6">{{ $t('home.empty.description') }}</p>
           <Button @click="openCreateDialog">
             <Plus class="size-4" />
-            开始第一个故事
+            {{ $t('home.empty.button') }}
           </Button>
         </section>
       </template>
@@ -172,7 +175,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           class="rounded-xl border bg-card shadow-sm p-12 flex flex-col items-center justify-center text-center"
         >
           <Search class="size-8 mb-3 text-muted-foreground/30" />
-          <p class="text-sm text-muted-foreground">没有找到匹配的小说</p>
+          <p class="text-sm text-muted-foreground">{{ $t('home.noResults') }}</p>
         </section>
       </template>
 
@@ -194,14 +197,14 @@ async function handleCreateStory(selectedPromptIds: string[]) {
   <Dialog v-model:open="noModelDialogOpen">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>还没有配置模型</DialogTitle>
+        <DialogTitle>{{ $t('home.noModel.title') }}</DialogTitle>
         <DialogDescription>
-          创建故事前需要至少配置一个 AI 模型，用于驱动 Agent 创作引擎。
+          {{ $t('home.noModel.description') }}
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
         <DialogClose as-child>
-          <Button variant="outline">取消</Button>
+          <Button variant="outline">{{ $t('common.cancel') }}</Button>
         </DialogClose>
         <Button
           class="gap-1.5"
@@ -213,7 +216,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           "
         >
           <Settings class="size-4" />
-          前往配置
+          {{ $t('home.noModel.goConfig') }}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -230,16 +233,20 @@ async function handleCreateStory(selectedPromptIds: string[]) {
   <Dialog v-model:open="deleteDialogOpen">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>确认删除</DialogTitle>
+        <DialogTitle>{{ $t('common.confirmDelete') }}</DialogTitle>
         <DialogDescription>
-          确定要删除《{{ novelToDelete?.title || '未命名故事' }}》吗？此操作不可撤销。
+          {{
+            $t('home.deleteConfirm.description', {
+              title: novelToDelete?.title || $t('home.card.untitled'),
+            })
+          }}
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
         <DialogClose as-child>
-          <Button variant="outline">取消</Button>
+          <Button variant="outline">{{ $t('common.cancel') }}</Button>
         </DialogClose>
-        <Button variant="destructive" @click="confirmDelete">删除</Button>
+        <Button variant="destructive" @click="confirmDelete">{{ $t('common.delete') }}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

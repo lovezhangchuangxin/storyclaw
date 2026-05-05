@@ -1,5 +1,6 @@
 import type { Component } from 'vue'
 import { Zap, RefreshCw } from 'lucide-vue-next'
+import { i18n } from '@/i18n'
 
 export interface SlashCommand {
   id: string
@@ -12,13 +13,17 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     id: 'compact',
     label: '/compact',
-    description: '整理上下文，压缩对话历史',
+    get description() {
+      return i18n.global.t('agent.compaction.command')
+    },
     icon: Zap,
   },
   {
     id: 'new',
     label: '/new',
-    description: '新建会话，清除当前对话记录',
+    get description() {
+      return i18n.global.t('agent.newSession.command')
+    },
     icon: RefreshCw,
   },
 ]

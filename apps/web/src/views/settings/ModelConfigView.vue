@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Plus, Trash2, Pen, Star, Settings, Bot, Server, Shield } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
@@ -22,12 +23,13 @@ const dialogOpen = ref(false)
 const editingModel = ref<ModelConfig | null>(null)
 const auth = useAuthStore()
 const backendModels = useBackendModelsStore()
+const { t } = useI18n()
 
 async function loadConfig() {
   try {
     config.value = await getConfig()
   } catch (e) {
-    toast.error('加载配置失败', {
+    toast.error(t('common.loadConfigFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -105,9 +107,13 @@ async function handleSave(model: ModelConfig) {
   try {
     await saveConfig(snapshot)
     config.value = snapshot
-    toast.success(editingModel.value?.id ? '模型已更新' : '模型已添加')
+    toast.success(
+      editingModel.value?.id
+        ? t('settings.modelConfig.modelUpdated')
+        : t('settings.modelConfig.modelAdded'),
+    )
   } catch (e) {
-    toast.error('保存失败', {
+    toast.error(t('common.saveFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -129,10 +135,10 @@ async function handleSaveBackendModel(model: ModelConfig) {
       if (model.apiKey) updateData.apiKey = model.apiKey
 
       await backendModels.update(model.backendId, updateData)
-      toast.success('后端模型已更新')
+      toast.success(t('settings.modelConfig.backendModels.modelUpdated'))
     } else {
       if (!model.apiKey) {
-        toast.error('请输入 API Key')
+        toast.error(t('settings.modelConfig.backendModels.apiKeyRequired'))
         return
       }
       const createData: CreateBackendModelRequest = {
@@ -147,12 +153,13 @@ async function handleSaveBackendModel(model: ModelConfig) {
       }
 
       await backendModels.create(createData)
-      toast.success('后端模型已添加')
+      toast.success(t('settings.modelConfig.backendModels.modelAdded'))
     }
     await backendModels.fetchModels()
   } catch (e) {
-    toast.error('操作失败', {
-      description: e instanceof Error ? e.message : '请检查后端连接',
+    toast.error(t('settings.modelConfig.backendModels.operationFailed'), {
+      description:
+        e instanceof Error ? e.message : t('settings.modelConfig.backendModels.checkConnection'),
     })
   }
 }
@@ -160,9 +167,9 @@ async function handleSaveBackendModel(model: ModelConfig) {
 async function removeBackendModel(id: string) {
   try {
     await backendModels.remove(id)
-    toast.success('后端模型已删除')
+    toast.success(t('settings.modelConfig.backendModels.modelDeleted'))
   } catch (e) {
-    toast.error('删除失败', {
+    toast.error(t('common.deleteFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -183,7 +190,7 @@ async function removeModel(id: string) {
     await saveConfig(snapshot)
     config.value = snapshot
   } catch (e) {
-    toast.error('删除失败', {
+    toast.error(t('common.deleteFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -196,7 +203,7 @@ async function setDefault(id: string) {
     await saveConfig(snapshot)
     config.value = snapshot
   } catch (e) {
-    toast.error('设置默认失败', {
+    toast.error(t('common.saveFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -227,9 +234,9 @@ onMounted(() => {
       <div>
         <div class="flex items-center gap-2 mb-1">
           <Settings class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">模型配置</h3>
+          <h3 class="text-sm font-medium">{{ $t('settings.modelConfig.title') }}</h3>
         </div>
-        <p class="text-xs text-muted-foreground">管理 AI 模型接入信息</p>
+        <p class="text-xs text-muted-foreground">{{ $t('settings.modelConfig.description') }}</p>
       </div>
 
       <!-- Model list -->
@@ -261,7 +268,7 @@ onMounted(() => {
                 class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-primary/15 text-primary/60 font-medium shrink-0"
               >
                 <span class="size-1.5 rounded-full bg-primary/30" />
-                默认
+                {{ $t('common.default') }}
               </span>
             </div>
             <p class="text-xs text-muted-foreground truncate mt-0.5">{{ m.apiBase }}</p>
@@ -272,21 +279,21 @@ onMounted(() => {
             <button
               v-if="m.id !== config.defaultModelId"
               class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-primary transition-colors"
-              title="设为默认"
+              :title="$t('settings.modelConfig.setDefault')"
               @click="setDefault(m.id)"
             >
               <Star class="size-3.5" />
             </button>
             <button
               class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
-              title="编辑"
+              :title="$t('common.edit')"
               @click="openEdit(m)"
             >
               <Pen class="size-3.5" />
             </button>
             <button
               class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-destructive transition-colors"
-              title="删除"
+              :title="$t('common.delete')"
               @click="removeModel(m.id)"
             >
               <Trash2 class="size-3.5" />
@@ -298,15 +305,15 @@ onMounted(() => {
       <!-- Empty state -->
       <div v-else class="flex flex-col items-center justify-center py-16 text-muted-foreground">
         <Bot class="size-10 mb-3 text-muted-foreground/30" />
-        <p class="text-sm font-medium mb-1">还没有配置模型</p>
-        <p class="text-xs">添加一个 AI 模型来开始故事创作</p>
+        <p class="text-sm font-medium mb-1">{{ $t('settings.modelConfig.empty.title') }}</p>
+        <p class="text-xs">{{ $t('settings.modelConfig.empty.description') }}</p>
       </div>
     </section>
 
     <!-- Add Button -->
     <Button class="w-full cursor-pointer" @click="openAdd">
       <Plus class="size-4 mr-1.5" />
-      添加模型
+      {{ $t('settings.modelConfig.addModel') }}
     </Button>
 
     <!-- Backend Models Section -->
@@ -314,12 +321,14 @@ onMounted(() => {
       <div>
         <div class="flex items-center gap-2 mb-1">
           <Server class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">后端模型</h3>
-          <span class="text-[11px] px-1.5 py-0.5 rounded-full border text-muted-foreground"
-            >后端</span
-          >
+          <h3 class="text-sm font-medium">{{ $t('settings.modelConfig.backendModels.title') }}</h3>
+          <span class="text-[11px] px-1.5 py-0.5 rounded-full border text-muted-foreground">{{
+            $t('settings.modelConfig.backendModels.label')
+          }}</span>
         </div>
-        <p class="text-xs text-muted-foreground">管理员配置的共享模型，所有用户可见</p>
+        <p class="text-xs text-muted-foreground">
+          {{ $t('settings.modelConfig.backendModels.description') }}
+        </p>
       </div>
 
       <div
@@ -330,14 +339,18 @@ onMounted(() => {
       </div>
 
       <div v-if="backendModels.loading" class="text-xs text-muted-foreground py-4 text-center">
-        加载中...
+        {{ $t('common.loading') }}
       </div>
 
       <div
         v-else-if="backendModels.models.length === 0"
         class="text-xs text-muted-foreground py-4 text-center"
       >
-        {{ auth.isAdmin ? '还没有配置后端模型，点击下方按钮添加' : '暂无可用后端模型' }}
+        {{
+          auth.isAdmin
+            ? $t('settings.modelConfig.backendModels.noModels')
+            : $t('settings.modelConfig.backendModels.noModelsUser')
+        }}
       </div>
 
       <div v-else class="space-y-2">
@@ -370,14 +383,14 @@ onMounted(() => {
           <div v-if="bm.canEdit" class="flex items-center gap-0.5 shrink-0">
             <button
               class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
-              title="编辑"
+              :title="$t('common.edit')"
               @click="openBackendEdit(bm)"
             >
               <Pen class="size-3.5" />
             </button>
             <button
               class="size-7 flex items-center justify-center rounded text-muted-foreground hover:text-destructive transition-colors"
-              title="删除"
+              :title="$t('common.delete')"
               @click="removeBackendModel(bm.id)"
             >
               <Trash2 class="size-3.5" />
@@ -386,7 +399,7 @@ onMounted(() => {
           <Shield
             v-else
             class="size-3.5 text-muted-foreground/40 shrink-0"
-            title="仅管理员可编辑"
+            :title="$t('settings.modelConfig.backendModels.adminOnly')"
           />
         </div>
       </div>
@@ -398,7 +411,7 @@ onMounted(() => {
         @click="openBackendAdd"
       >
         <Plus class="size-3.5 mr-1" />
-        添加后端模型
+        {{ $t('settings.modelConfig.backendModels.addButton') }}
       </Button>
     </section>
 

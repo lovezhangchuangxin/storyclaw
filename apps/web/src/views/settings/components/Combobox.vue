@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { i18n } from '@/i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -11,7 +12,7 @@ const props = withDefaults(
     placeholder?: string
   }>(),
   {
-    placeholder: '请选择或输入',
+    placeholder: i18n.global.t('settings.combobox.placeholder'),
   },
 )
 

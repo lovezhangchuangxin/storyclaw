@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 import { getConfig, saveConfig } from '@/db/config'
 import {
@@ -21,7 +22,6 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 // Module-level singleton state: all callers share the same background image state.
-// This is intentional — the app has exactly one active background image.
 const backgroundUrl = ref<string | null>(null)
 const bgOpacity = ref(30)
 const bgBlur = ref(0)
@@ -57,6 +57,8 @@ function revokeAllThumbnailUrls() {
 }
 
 export function useBackgroundImage() {
+  const { t } = useI18n()
+
   async function loadAll() {
     if (loadPromise) return loadPromise
     loadPromise = (async () => {
@@ -100,7 +102,7 @@ export function useBackgroundImage() {
 
         loaded.value = true
       } catch (e) {
-        toast.error('加载背景图片失败', {
+        toast.error(t('error.loadBackgroundFailed'), {
           description: e instanceof Error ? e.message : String(e),
         })
       } finally {
@@ -112,11 +114,11 @@ export function useBackgroundImage() {
 
   async function uploadImage(file: File): Promise<void> {
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      toast.error('仅支持 JPEG、PNG、WebP 格式')
+      toast.error(t('error.fileTypeUnsupported'))
       return
     }
     if (file.size > MAX_FILE_SIZE) {
-      toast.error('图片大小不能超过 10MB')
+      toast.error(t('error.fileSizeExceeded'))
       return
     }
 
@@ -148,7 +150,7 @@ export function useBackgroundImage() {
     try {
       await selectImage(id)
     } catch {
-      toast.error('图片已保存但选择失败')
+      toast.error(t('common.saveFailed'))
     }
   }
 
@@ -210,7 +212,7 @@ export function useBackgroundImage() {
         }
         await saveConfig(config)
       } catch (e) {
-        toast.error('保存设置失败', {
+        toast.error(t('common.saveFailed'), {
           description: e instanceof Error ? e.message : String(e),
         })
       }

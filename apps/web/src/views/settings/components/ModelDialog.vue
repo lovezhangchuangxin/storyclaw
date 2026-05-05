@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Eye, EyeOff, Loader2, Zap, Globe, X } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -40,12 +41,16 @@ const modelName = ref('')
 const isPublic = ref(false)
 let populating = false
 let fetchSeq = 0
+const { t } = useI18n()
 
 const isEdit = computed(() => !!props.model?.id)
 const isBackend = computed(() => !!props.model?.isBackendModel)
 const title = computed(() => {
-  if (isBackend.value) return isEdit.value ? '编辑后端模型' : '添加后端模型'
-  return isEdit.value ? '编辑模型' : '添加模型'
+  if (isBackend.value)
+    return isEdit.value
+      ? t('settings.modelDialog.editTitle')
+      : t('settings.modelDialog.addBackendTitle')
+  return isEdit.value ? t('settings.modelDialog.editTitle') : t('settings.modelConfig.addModel')
 })
 
 // Test button: disabled if testing, or if required fields are missing
@@ -165,9 +170,9 @@ async function handleTest() {
   testing.value = true
   try {
     await testConnection(apiBase.value, apiKey.value, model.value)
-    toast.success('连接成功')
+    toast.success(t('settings.server.connectSuccess'))
   } catch (e: unknown) {
-    toast.error('连接失败', {
+    toast.error(t('settings.server.connectFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   } finally {
@@ -208,40 +213,52 @@ function handleSave() {
 
       <div class="space-y-4 mt-2">
         <div class="space-y-1.5">
-          <Label>模型名称</Label>
+          <Label>{{ $t('settings.modelDialog.modelName') }}</Label>
           <Input
             v-model="modelName"
-            placeholder="选填，默认为 提供商 - 模型ID"
+            :placeholder="$t('settings.modelDialog.modelNamePlaceholder')"
             class="focus-visible:ring-0"
           />
         </div>
 
         <div class="space-y-1.5">
-          <Label>提供商</Label>
-          <Combobox v-model="provider" :options="PROVIDER_NAMES" placeholder="选择或输入提供商" />
+          <Label>{{ $t('settings.modelDialog.provider') }}</Label>
+          <Combobox
+            v-model="provider"
+            :options="PROVIDER_NAMES"
+            :placeholder="$t('settings.combobox.placeholder')"
+          />
         </div>
 
         <div class="space-y-1.5">
-          <Label>API 地址</Label>
+          <Label>{{ $t('settings.modelDialog.apiBase') }}</Label>
           <Input
             v-model="apiBase"
-            :placeholder="isBackend && isEdit ? '(已配置)' : 'https://api.openai.com/v1'"
+            :placeholder="
+              isBackend && isEdit
+                ? '(' + $t('settings.modelDialog.configured') + ')'
+                : 'https://api.openai.com/v1'
+            "
             class="focus-visible:ring-0"
           />
           <p v-if="isBackend && isEdit" class="text-[11px] text-muted-foreground">
-            留空则保留已配置的 API 地址。仅在你需要更改时填写。
+            {{ $t('settings.modelDialog.apiBaseHint') }}
           </p>
         </div>
 
         <div class="space-y-1.5">
-          <Label>API Key</Label>
+          <Label>{{ $t('settings.modelDialog.apiKey') }}</Label>
           <div class="group relative">
             <Input
               v-model="apiKey"
               :type="showKey ? 'text' : 'password'"
               autocomplete="off"
               data-1p-ignore
-              :placeholder="isBackend && isEdit ? '(已配置，填写则更新)' : 'sk-······'"
+              :placeholder="
+                isBackend && isEdit
+                  ? '(' + $t('settings.modelDialog.configuredUpdate') + ')'
+                  : 'sk-······'
+              "
               class="focus-visible:ring-0 pr-9"
             />
             <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -249,7 +266,7 @@ function handleSave() {
                 v-if="isBackend && isEdit && apiKey"
                 type="button"
                 class="text-muted-foreground hover:text-destructive transition-opacity"
-                title="清空 API Key"
+                :title="$t('settings.modelDialog.clearApiKey')"
                 @click="apiKey = ''"
               >
                 <X class="size-4" />
@@ -265,19 +282,19 @@ function handleSave() {
             </div>
           </div>
           <p v-if="isBackend && isEdit" class="text-[11px] text-muted-foreground">
-            留空则保留已配置的 API Key。填写新值则更新，点击 × 按钮清空。
+            {{ $t('settings.modelDialog.apiKeyHint') }}
           </p>
         </div>
 
         <div class="space-y-1.5">
           <Label class="flex items-center gap-1.5">
-            模型 ID
+            {{ $t('settings.modelDialog.modelId') }}
             <Loader2 v-if="modelsLoading" class="size-3.5 animate-spin text-muted-foreground" />
           </Label>
           <Combobox
             v-model="model"
             :options="modelOptions"
-            placeholder="选择或输入模型名"
+            :placeholder="$t('settings.modelDialog.modelIdPlaceholder')"
             @open="handleModelComboOpen"
           />
         </div>
@@ -286,32 +303,34 @@ function handleSave() {
           <div>
             <Label class="flex items-center gap-1.5">
               <Globe class="size-3" />
-              公开模型
+              {{ $t('settings.modelDialog.publicModel') }}
             </Label>
-            <p class="text-[11px] text-muted-foreground mt-0.5">开启后所有用户可见和使用</p>
+            <p class="text-[11px] text-muted-foreground mt-0.5">
+              {{ $t('settings.modelDialog.publicModelHint') }}
+            </p>
           </div>
           <Switch v-model="isPublic" />
         </div>
 
         <div class="space-y-3 rounded-lg border border-dashed p-3">
           <div>
-            <p class="text-xs font-medium">上下文管理</p>
+            <p class="text-xs font-medium">{{ $t('settings.modelDialog.compactionSection') }}</p>
             <p class="text-[11px] text-muted-foreground">
               {{
                 isBackend
-                  ? '后端模型的上下文压缩在前端执行，可自定义配置。'
-                  : '控制窗口预算、自动压缩阈值和摘要模型。'
+                  ? $t('settings.modelDialog.compactionHintBackend')
+                  : $t('settings.modelDialog.compactionHintLocal')
               }}
             </p>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div class="space-y-1.5">
-              <Label class="text-xs">最大输出</Label>
+              <Label class="text-xs">{{ $t('settings.modelDialog.maxOutputTokens') }}</Label>
               <Input v-model="maxOutputTokens" type="number" min="1" class="focus-visible:ring-0" />
             </div>
             <div class="space-y-1.5">
-              <Label class="text-xs">上下文窗口</Label>
+              <Label class="text-xs">{{ $t('settings.modelDialog.contextWindow') }}</Label>
               <Input
                 v-model="contextWindowTokens"
                 type="number"
@@ -320,7 +339,7 @@ function handleSave() {
               />
             </div>
             <div class="space-y-1.5">
-              <Label class="text-xs">输出预留</Label>
+              <Label class="text-xs">{{ $t('settings.modelDialog.outputReserve') }}</Label>
               <Input
                 v-model="outputReserveTokens"
                 type="number"
@@ -329,7 +348,7 @@ function handleSave() {
               />
             </div>
             <div class="space-y-1.5">
-              <Label class="text-xs">触发比例</Label>
+              <Label class="text-xs">{{ $t('settings.modelDialog.compactionTrigger') }}</Label>
               <Input
                 v-model="compactionTriggerRatio"
                 type="number"
@@ -340,7 +359,7 @@ function handleSave() {
               />
             </div>
             <div class="space-y-1.5">
-              <Label class="text-xs">目标比例</Label>
+              <Label class="text-xs">{{ $t('settings.modelDialog.compactionTarget') }}</Label>
               <Input
                 v-model="compactionTargetRatio"
                 type="number"
@@ -351,10 +370,10 @@ function handleSave() {
               />
             </div>
             <div class="space-y-1.5">
-              <Label class="text-xs">摘要模型 ID</Label>
+              <Label class="text-xs">{{ $t('settings.modelDialog.summaryModel') }}</Label>
               <Input
                 v-model="summaryModelId"
-                placeholder="留空则复用当前模型"
+                :placeholder="$t('settings.modelDialog.summaryModelPlaceholder')"
                 class="focus-visible:ring-0"
               />
             </div>
@@ -366,11 +385,13 @@ function handleSave() {
         <Button variant="outline" :disabled="testDisabled" @click="handleTest">
           <Loader2 v-if="testing" class="size-4 animate-spin mr-1.5" />
           <Zap v-else class="size-4 mr-1.5" />
-          测试
+          {{ $t('settings.modelDialog.test') }}
         </Button>
-        <Button variant="outline" @click="emit('update:open', false)">取消</Button>
+        <Button variant="outline" @click="emit('update:open', false)">{{
+          $t('common.cancel')
+        }}</Button>
         <Button :disabled="saveDisabled" @click="handleSave">
-          {{ isEdit ? '保存' : '添加' }}
+          {{ isEdit ? $t('common.save') : $t('common.create') }}
         </Button>
       </div>
     </DialogContent>

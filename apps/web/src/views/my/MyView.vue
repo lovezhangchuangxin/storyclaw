@@ -1,8 +1,23 @@
 <script setup lang="ts">
-import { BookOpen, PenLine, BrainCircuit, Clock } from 'lucide-vue-next'
+import { BookOpen, PenLine, BrainCircuit, Clock, Languages } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import { useStats } from '@/composables/useStats'
+import { useLocaleStore } from '@/stores/locale'
+import type { SupportedLocale } from '@/db/types'
+import { onMounted } from 'vue'
 
+const { t, locale } = useI18n()
 const { todayWordCount, todayTokens, loading, durationText } = useStats()
+const localeStore = useLocaleStore()
+
+onMounted(() => {
+  localeStore.initialize()
+})
+
+const availableLocales: { value: SupportedLocale; label: string }[] = [
+  { value: 'zh-CN', label: '中文' },
+  { value: 'en-US', label: 'English' },
+]
 </script>
 
 <template>
@@ -10,7 +25,7 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
     <!-- Stats Section -->
     <section>
       <h2 class="text-xs sm:text-sm font-semibold text-muted-foreground mb-2 sm:mb-3 px-1">
-        今日统计
+        {{ t('my.todayStats') }}
       </h2>
       <div class="grid grid-cols-3 gap-2 sm:gap-3">
         <!-- Words -->
@@ -22,9 +37,11 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
               <PenLine class="size-4 text-primary/40" />
             </div>
             <div class="min-w-0">
-              <p class="text-[11px] sm:text-xs text-muted-foreground leading-tight">今日写作</p>
+              <p class="text-[11px] sm:text-xs text-muted-foreground leading-tight">
+                {{ t('my.todayWriting') }}
+              </p>
               <p v-if="loading" class="text-xs sm:text-sm text-muted-foreground/50 mt-0.5">
-                加载中…
+                {{ t('common.loading') }}
               </p>
               <p v-else class="text-sm sm:text-lg font-bold tabular-nums leading-tight mt-0.5">
                 {{ todayWordCount.toLocaleString() }}
@@ -42,9 +59,11 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
               <BrainCircuit class="size-4 text-primary/40" />
             </div>
             <div class="min-w-0">
-              <p class="text-[11px] sm:text-xs text-muted-foreground leading-tight">Token 用量</p>
+              <p class="text-[11px] sm:text-xs text-muted-foreground leading-tight">
+                {{ t('my.tokenUsage') }}
+              </p>
               <p v-if="loading" class="text-xs sm:text-sm text-muted-foreground/50 mt-0.5">
-                加载中…
+                {{ t('common.loading') }}
               </p>
               <p v-else class="text-sm sm:text-lg font-bold tabular-nums leading-tight mt-0.5">
                 {{ todayTokens.toLocaleString() }}
@@ -62,9 +81,11 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
               <Clock class="size-4 text-primary/40" />
             </div>
             <div class="min-w-0">
-              <p class="text-[11px] sm:text-xs text-muted-foreground leading-tight">今日时长</p>
+              <p class="text-[11px] sm:text-xs text-muted-foreground leading-tight">
+                {{ t('my.todayDuration') }}
+              </p>
               <p v-if="loading" class="text-xs sm:text-sm text-muted-foreground/50 mt-0.5">
-                加载中…
+                {{ t('common.loading') }}
               </p>
               <p v-else class="text-xs sm:text-sm font-bold tabular-nums leading-tight mt-0.5">
                 {{ durationText }}
@@ -75,6 +96,32 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
       </div>
     </section>
 
+    <!-- Language Section -->
+    <section class="rounded-xl border bg-card shadow-sm p-5 space-y-3">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <Languages class="size-4 text-muted-foreground" />
+          <h3 class="text-sm font-medium">{{ t('my.locale.label') }}</h3>
+        </div>
+        <p class="text-xs text-muted-foreground">{{ t('my.locale.description') }}</p>
+      </div>
+      <div class="inline-flex rounded-lg border p-0.5 bg-muted/50">
+        <button
+          v-for="opt in availableLocales"
+          :key="opt.value"
+          class="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer"
+          :class="
+            locale === opt.value
+              ? 'bg-background shadow-sm text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          "
+          @click="localeStore.switchLocale(opt.value)"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
+    </section>
+
     <!-- App Info Card -->
     <section class="rounded-xl border bg-card shadow-sm p-5">
       <div class="flex items-center gap-4">
@@ -82,8 +129,8 @@ const { todayWordCount, todayTokens, loading, durationText } = useStats()
           <BookOpen class="size-5 text-primary/40" />
         </div>
         <div>
-          <p class="text-sm font-semibold">StoryClaw</p>
-          <p class="text-xs text-muted-foreground">本地模式 · 数据存储在浏览器中</p>
+          <p class="text-sm font-semibold">{{ t('my.appName') }}</p>
+          <p class="text-xs text-muted-foreground">{{ t('my.localMode') }}</p>
         </div>
       </div>
     </section>

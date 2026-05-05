@@ -1,0 +1,413 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "retry": "Retry",
+    "back": "Back",
+    "create": "Create",
+    "new": "New",
+    "search": "Search…",
+    "loading": "Loading…",
+    "noData": "No data",
+    "loadFailed": "Failed to load",
+    "loadFailedHint": "Please check and try again",
+    "confirmDelete": "Confirm Delete",
+    "confirmDeleteDesc": "This action cannot be undone",
+    "deleteFailed": "Failed to delete",
+    "saveFailed": "Failed to save",
+    "loadConfigFailed": "Failed to load config",
+    "none": "None",
+    "builtin": "Built-in",
+    "default": "Default",
+    "unknown": "Unknown"
+  },
+
+  "sidebar": {
+    "bookshelf": "Bookshelf",
+    "prompts": "Prompts",
+    "modelConfig": "Model Config",
+    "serverConnection": "Backend",
+    "appearance": "Appearance",
+    "my": "My",
+    "admin": "Admin",
+    "mainNav": "Main navigation",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "openNavMenu": "Open navigation menu"
+  },
+
+  "layout": {
+    "connected": "Connected to backend",
+    "disconnected": "Not connected to backend"
+  },
+
+  "home": {
+    "title": "Bookshelf",
+    "searchPlaceholder": "Search novels by title or description...",
+    "createButton": "Create",
+    "empty": {
+      "title": "No stories yet",
+      "description": "Create a new story and start your writing journey",
+      "button": "Start your first story"
+    },
+    "noResults": "No matching novels found",
+    "newStory": "New Story",
+    "noModel": {
+      "title": "No models configured",
+      "description": "You need at least one AI model configured to power the Agent creation engine.",
+      "goConfig": "Go to Config"
+    },
+    "deleteConfirm": {
+      "description": "Are you sure you want to delete \"{title}\"? This action cannot be undone."
+    },
+    "card": {
+      "untitled": "Untitled Story",
+      "noSynopsis": "No synopsis",
+      "words": "{count} words",
+      "status": {
+        "draft": "Draft",
+        "writing": "Writing",
+        "completed": "Completed",
+        "paused": "Paused"
+      }
+    },
+    "newStoryDialog": {
+      "title": "Start a New Story",
+      "description": "Select prompts to influence the story's style and direction.",
+      "searchPrompts": "Search prompts...",
+      "startWriting": "Start Writing",
+      "loadPromptsFailed": "Failed to load prompts",
+      "noMorePrompts": "No more prompts"
+    }
+  },
+
+  "my": {
+    "title": "My",
+    "todayStats": "Today's Stats",
+    "todayWriting": "Words Written",
+    "tokenUsage": "Token Usage",
+    "todayDuration": "Time Spent",
+    "appName": "StoryClaw",
+    "localMode": "Local Mode · Data stored in your browser",
+    "locale": {
+      "label": "Language",
+      "zhCN": "中文",
+      "enUS": "English",
+      "description": "Choose the interface language"
+    }
+  },
+
+  "story": {
+    "reader": "Read",
+    "agent": "Chat",
+    "switchToAgent": "Switch to Chat",
+    "switchToReader": "Switch to Read",
+    "viewNovelData": "View novel data",
+    "noContent": "No content yet",
+    "untitled": "Untitled",
+    "previousChapter": "← Prev",
+    "nextChapter": "Next →",
+    "agent": {
+      "welcome": {
+        "greeting": "Start creating your story",
+        "hint": "Tell me your ideas, and the AI Agent will handle the rest"
+      },
+      "inputPlaceholder": "Send a message, / commands",
+      "searchCommands": "Search commands...",
+      "noMatchingCommand": "No matching commands",
+      "configureModel": "Configure Model",
+      "send": "Send",
+      "execute": "Execute",
+      "selectModel": "Select Model",
+      "pleaseConfigureModel": "Please configure a model first",
+      "sessionCreated": "New session created",
+      "contextCompacted": "Context compacted",
+      "copyFailed": "Copy failed",
+      "generationFailed": "Generation failed",
+      "saveFailed": "Save failed",
+      "unknownCommand": "Unknown command",
+      "unknownCommandHint": "Use /help to see available commands"
+    },
+    "tool": {
+      "executing": "Executing...",
+      "cancelled": "Cancelled",
+      "error": "Error",
+      "success": "Success",
+      "chapterFormat": "Ch.{index}",
+      "words": "{count} words",
+      "items": "{count} items",
+      "parameters": "Parameters",
+      "result": "Result"
+    },
+    "thinking": {
+      "process": "Thinking",
+      "chars": "{count} chars"
+    },
+    "drawer": {
+      "basicInfo": "Basic Info",
+      "styleSettings": "Style Settings",
+      "outline": "Outline",
+      "premise": "Premise",
+      "status": {
+        "drafting": "Drafting",
+        "writing": "Writing",
+        "completed": "Completed",
+        "paused": "Paused"
+      },
+      "role": {
+        "protagonist": "Protagonist",
+        "antagonist": "Antagonist",
+        "supporting": "Supporting",
+        "minor": "Minor"
+      },
+      "collapse": "Collapse",
+      "expandAll": "Expand All"
+    }
+  },
+
+  "prompts": {
+    "title": "Prompts",
+    "searchPlaceholder": "Search prompts...",
+    "newButton": "New",
+    "noResults": "No matching prompts found",
+    "deleteConfirm": "Are you sure you want to delete prompt \"{name}\"? This action cannot be undone.",
+    "dialog": {
+      "viewTitle": "View Prompt",
+      "editTitle": "Edit Prompt",
+      "newTitle": "New Prompt",
+      "nameLabel": "Name",
+      "contentLabel": "Content",
+      "namePlaceholder": "Prompt name",
+      "contentPlaceholder": "Enter prompt content...",
+      "nameRequired": "Name is required",
+      "contentRequired": "Content is required",
+      "nameDuplicate": "Prompt name already exists"
+    }
+  },
+
+  "settings": {
+    "modelConfig": {
+      "title": "Model Configuration",
+      "description": "Manage AI model connections",
+      "addModel": "Add Model",
+      "empty": {
+        "title": "No models configured yet",
+        "description": "Add an AI model to start creating stories"
+      },
+      "modelUpdated": "Model updated",
+      "modelAdded": "Model added",
+      "setDefault": "Set as default",
+      "backendModels": {
+        "title": "Backend Models",
+        "label": "Backend",
+        "description": "Shared models configured by the admin, visible to all users",
+        "addButton": "Add Backend Model",
+        "addTitle": "Add Backend Model",
+        "noModels": "No backend models configured yet, click below to add",
+        "noModelsUser": "No backend models available",
+        "modelDeleted": "Backend model deleted",
+        "modelAdded": "Backend model added",
+        "modelUpdated": "Backend model updated",
+        "apiKeyRequired": "API Key is required",
+        "operationFailed": "Operation failed",
+        "checkConnection": "Please check backend connection",
+        "adminOnly": "Admin only"
+      }
+    },
+    "server": {
+      "title": "Backend Connection",
+      "description": "Connect to backend for cross-device sync and LLM proxy",
+      "connectionStatus": "Connection Status",
+      "connectionStatusDesc": "Current backend service connection status",
+      "connected": "Connected",
+      "disconnected": "Not connected",
+      "serverAddress": "Server Address",
+      "email": "Email",
+      "password": "Password",
+      "connect": "Connect",
+      "connecting": "Connecting…",
+      "connectSuccess": "Connected successfully",
+      "connectFailed": "Connection failed",
+      "connectFailedHint": "Unable to connect to backend, please check the address",
+      "backendAbnormal": "Backend response abnormal",
+      "backendVersion": "Backend version: {version}",
+      "disconnect": "Disconnect",
+      "pleaseWait": "Please wait…",
+      "login": "Log In",
+      "register": "Register",
+      "loginSuccess": "Login successful",
+      "registerSuccess": "Registration successful",
+      "loginFailed": "Login failed",
+      "registerFailed": "Registration failed",
+      "checkCredentials": "Please check your email and password",
+      "noAccount": "No account? Register",
+      "hasAccount": "Already have an account? Log In",
+      "loggedIn": "Logged in, sync and admin features available",
+      "logout": "Log Out",
+      "loggedOut": "Logged out",
+      "proxy": {
+        "label": "Use backend proxy for LLM calls",
+        "description": "Route model requests through the backend, no local API Key needed"
+      },
+      "localModeHint": "You can also skip the backend entirely and use local mode. All data is stored in your browser.",
+      "saveSettingsFailed": "Failed to save settings",
+      "admin": "Admin"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": {
+        "label": "App Theme",
+        "description": "Choose the overall app color scheme",
+        "light": "Light",
+        "dark": "Dark",
+        "parchment": "Parchment",
+        "frost": "Frost",
+        "peach": "Peach",
+        "pine": "Pine"
+      },
+      "background": {
+        "label": "Background Image",
+        "description": "Upload an image as the app background, supports multiple images",
+        "uploadHint": "Upload",
+        "deleteImage": "Delete image",
+        "opacity": "Opacity",
+        "blur": "Blur"
+      },
+      "typography": {
+        "label": "Font & Typography",
+        "description": "Adjust the appearance and spacing of reading text",
+        "fontSize": "Font Size",
+        "lineHeight": "Line Height",
+        "paragraphSpacing": "Paragraph Spacing"
+      },
+      "scrollMode": {
+        "label": "Scroll Mode",
+        "description": "Choose your preferred reading scroll mode",
+        "scroll": "Scroll",
+        "scrollDesc": "Continuous scrolling",
+        "paged": "Paged",
+        "pagedDesc": "Swipe left and right",
+        "auto": "Auto",
+        "autoDesc": "Auto-scroll",
+        "autoSpeed": "Auto-scroll Speed"
+      },
+      "preview": {
+        "label": "Live Preview",
+        "description": "Preview your reading settings here",
+        "content1": "As dusk fell, the wind in the woods died down. She stood at the bridge, watching the faint lights in the distance, thinking of words she could never say.",
+        "content2": "\"What are you still waiting for?\" A voice came from behind, soft, yet unmistakably clear in the silence."
+      },
+      "fontOptions": {
+        "notoSans": "Sans Serif",
+        "notoSerif": "Serif",
+        "system": "System Default"
+      }
+    },
+    "modelDialog": {
+      "editTitle": "Edit Model",
+      "addBackendTitle": "Add Backend Model",
+      "modelName": "Model Name",
+      "provider": "Provider",
+      "apiBase": "API Base URL",
+      "modelId": "Model ID",
+      "apiKey": "API Key",
+      "maxOutputTokens": "Max Output Tokens",
+      "contextWindow": "Context Window",
+      "outputReserve": "Output Reserve",
+      "compactionTrigger": "Compaction Trigger",
+      "compactionTarget": "Compaction Target",
+      "summaryModel": "Summary Model",
+      "test": "Test",
+      "modelNamePlaceholder": "Optional, defaults to Provider — Model ID",
+      "apiBaseHint": "Leave blank to keep the configured API address. Only fill in if you need to change it.",
+      "clearApiKey": "Clear API Key",
+      "apiKeyHint": "Leave blank to keep the configured API Key. Fill in a new value to update, or click × to clear.",
+      "modelIdPlaceholder": "Select or type model name",
+      "publicModel": "Public Model",
+      "publicModelHint": "When enabled, visible and usable by all users",
+      "compactionSection": "Context Management",
+      "compactionHintBackend": "Backend model compaction runs on the frontend and can be customized.",
+      "compactionHintLocal": "Control window budget, auto-compaction threshold, and summary model.",
+      "summaryModelPlaceholder": "Leave blank to reuse current model",
+      "configured": "Configured",
+      "configuredUpdate": "Configured, fill in to update",
+      "compactionDescription": "Auto-triggers compaction when context token usage reaches {trigger}% of the window, compacting to {target}%"
+    },
+    "combobox": {
+      "placeholder": "Select or type"
+    }
+  },
+
+  "admin": {
+    "title": "Admin Panel",
+    "overview": "Overview",
+    "users": "Users",
+    "novels": "Novels",
+    "stats": {
+      "totalUsers": "Total Users",
+      "totalNovels": "Total Novels",
+      "totalLlmCalls": "LLM Calls",
+      "dailyActiveUsers": "Daily Active Users",
+      "novelsPerUser": "Novels per User"
+    },
+    "table": {
+      "email": "Email",
+      "role": "Role",
+      "novelCount": "Novels",
+      "registeredAt": "Registered",
+      "title": "Title",
+      "author": "Author",
+      "wordCount": "Words",
+      "status": "Status",
+      "updatedAt": "Updated",
+      "previousPage": "Previous",
+      "nextPage": "Next"
+    },
+    "role": {
+      "admin": "Admin",
+      "user": "User"
+    }
+  },
+
+  "agent": {
+    "cancelled": "Generation cancelled",
+    "incomplete": "Response ended incompletely",
+    "maxIterations": "Maximum tool call iterations reached",
+    "noModel": "No model configured",
+    "modelNotFound": "Model not found ({modelId}), it may have been deleted",
+    "needLogin": "Backend model requires login. Please log in or refresh the page.",
+    "compaction": {
+      "command": "Compact context, compress conversation history to reduce token usage"
+    },
+    "newSession": {
+      "command": "New session, clear current conversation history"
+    }
+  },
+
+  "error": {
+    "paramValidation": "Parameter validation failed",
+    "fileTypeUnsupported": "Only JPEG, PNG, WebP formats are supported",
+    "fileSizeExceeded": "Image size cannot exceed 10MB",
+    "loadBackgroundFailed": "Failed to load background images",
+    "builtinPromptDelete": "Built-in prompts cannot be deleted"
+  },
+
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{n} minutes ago",
+    "hoursAgo": "{n} hours ago",
+    "daysAgo": "{n} days ago",
+    "monthsAgo": "{n} months ago",
+    "yearsAgo": "{n} years ago",
+    "hours": "{h} hr",
+    "minutes": "{m} min",
+    "hoursMinutes": "{h} hr {m} min"
+  },
+
+  "db": {
+    "defaultStyle": "StoryClaw Default Style"
+  }
+}

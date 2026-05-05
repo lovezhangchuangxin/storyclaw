@@ -6,10 +6,12 @@ import type { Component } from 'vue'
 import AppSidebar from './AppSidebar.vue'
 import { useBackgroundImage } from '@/composables/useBackgroundImage'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const { t } = useI18n()
 const collapsed = ref(loadCollapsed())
 const mobileOpen = ref(false)
 
@@ -28,18 +30,16 @@ onBeforeUnmount(() => {
   cleanup()
 })
 
-const title = ref((route.meta.title as string) ?? '')
+const customTitle = ref<string | null>(null)
 
-watch(
-  () => route.meta.title,
-  (t) => {
-    title.value = (t as string) ?? ''
-  },
-  { immediate: true },
-)
+const displayTitle = computed(() => {
+  if (customTitle.value) return customTitle.value
+  const metaTitle = route.meta.title as string
+  return metaTitle ? t(metaTitle) : ''
+})
 
-provide('setTitle', (t: string | null) => {
-  title.value = t ?? (route.meta.title as string) ?? ''
+provide('setTitle', (newTitle: string | null) => {
+  customTitle.value = newTitle
 })
 const showBack = computed(() => !!route.meta.back)
 
@@ -111,7 +111,7 @@ function closeMobile() {
           class="flex items-center h-12 shrink-0 border-b px-3 gap-3 bg-background/90 backdrop-blur-sm"
         >
           <button
-            aria-label="打开导航菜单"
+            :aria-label="$t('sidebar.openNavMenu')"
             class="size-8 flex items-center justify-center rounded-md hover:bg-muted md:hidden"
             @click="mobileOpen = true"
           >
@@ -119,18 +119,18 @@ function closeMobile() {
           </button>
           <button
             v-if="showBack"
-            aria-label="返回"
+            :aria-label="$t('common.back')"
             class="size-8 flex items-center justify-center rounded-md hover:bg-muted"
             @click="router.back()"
           >
             <ArrowLeft class="size-5" aria-hidden="true" />
           </button>
-          <h1 class="text-sm font-semibold truncate">{{ title }}</h1>
+          <h1 class="text-sm font-semibold truncate">{{ displayTitle }}</h1>
           <div class="flex-1" />
           <Cloud
             class="size-4 shrink-0 hidden sm:block"
             :class="syncClass"
-            :title="auth.isAuthenticated ? '已连接后端' : '未连接后端'"
+            :title="auth.isAuthenticated ? $t('layout.connected') : $t('layout.disconnected')"
           />
           <component :is="topbarExtra" v-if="topbarExtra" />
         </header>

@@ -1,4 +1,5 @@
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getDB } from '@/db'
 import type { Conversation } from '@/db/types'
 
@@ -17,15 +18,6 @@ function isToday(ts: number): boolean {
     d.getMonth() === n.getMonth() &&
     d.getDate() === n.getDate()
   )
-}
-
-function formatDuration(totalSeconds: number): string {
-  const h = Math.floor(totalSeconds / 3600)
-  const m = Math.floor((totalSeconds % 3600) / 60)
-  const s = totalSeconds % 60
-  if (h > 0) return `${h} 小时 ${m} 分钟`
-  if (m > 0) return `${m} 分钟 ${s} 秒`
-  return `${s} 秒`
 }
 
 const SESSION_START = Date.now()
@@ -81,6 +73,7 @@ function getTodaySessionSeconds(): number {
 }
 
 export function useStats() {
+  const { t } = useI18n()
   const todayWordCount = ref(0)
   const todayTokens = ref(0)
   const todayUsageSeconds = ref(0)
@@ -88,6 +81,14 @@ export function useStats() {
   const durationText = ref('')
 
   let tickTimer: ReturnType<typeof setInterval> | null = null
+
+  function formatDuration(totalSeconds: number): string {
+    const h = Math.floor(totalSeconds / 3600)
+    const m = Math.floor((totalSeconds % 3600) / 60)
+    if (h > 0) return t('time.hoursMinutes', { h, m })
+    if (m > 0) return t('time.minutes', { m })
+    return `${totalSeconds}s`
+  }
 
   function refreshUsageTime() {
     todayUsageSeconds.value = getTodaySessionSeconds()

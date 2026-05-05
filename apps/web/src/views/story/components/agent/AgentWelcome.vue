@@ -1,19 +1,31 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { BookOpen } from 'lucide-vue-next'
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   fill: [value: string]
 }>()
 
-const suggestions = [
+const suggestions = computed(() => [
   {
     icon: '✨',
-    label: '告诉我你想要什么样的故事...',
-    prompt: '告诉我你想要什么样的故事，我来帮你创作。',
+    label: t('story.agent.welcome.suggestion1'),
+    prompt: t('story.agent.welcome.suggestion1Prompt'),
   },
-  { icon: '🎭', label: '帮我设计角色和世界观', prompt: '帮我设计一个故事的角色和世界观。' },
-  { icon: '📖', label: '写一个章节让我看看', prompt: '写一个章节让我看看你的写作能力。' },
-]
+  {
+    icon: '🎭',
+    label: t('story.agent.welcome.suggestion2'),
+    prompt: t('story.agent.welcome.suggestion2Prompt'),
+  },
+  {
+    icon: '📖',
+    label: t('story.agent.welcome.suggestion3'),
+    prompt: t('story.agent.welcome.suggestion3Prompt'),
+  },
+])
 </script>
 
 <template>
@@ -36,8 +48,10 @@ const suggestions = [
       </div>
 
       <!-- Headline -->
-      <h2 class="mb-2 text-xl font-semibold tracking-tight text-foreground">开始创作你的故事</h2>
-      <p class="mb-8 text-sm text-muted-foreground">告诉我你的想法，我会帮你将灵感变为文字</p>
+      <h2 class="mb-2 text-xl font-semibold tracking-tight text-foreground">
+        {{ t('story.agent.welcome.greeting') }}
+      </h2>
+      <p class="mb-8 text-sm text-muted-foreground">{{ t('story.agent.welcome.hint') }}</p>
 
       <!-- Suggestion chips -->
       <div class="flex flex-col gap-2.5">

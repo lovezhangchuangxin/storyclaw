@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { adminListUsers, adminListNovels, adminGetStats } from '@/lib/api-client'
 import type { AdminStats, AdminUserSummary, AdminNovelSummary } from '@/db/types'
@@ -21,6 +22,7 @@ import {
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const stats = ref<AdminStats | null>(null)
 const statsLoading = ref(true)
@@ -109,7 +111,7 @@ async function loadUsers(p = 1) {
     usersTotal.value = resp.total
     usersPage.value = resp.page
   } catch {
-    toast.error('加载用户列表失败')
+    toast.error(t('common.loadFailed'))
   } finally {
     usersLoading.value = false
   }
@@ -123,7 +125,7 @@ async function loadNovels(p = 1) {
     novelsTotal.value = resp.total
     novelsPage.value = resp.page
   } catch {
-    toast.error('加载小说列表失败')
+    toast.error(t('common.loadFailed'))
   } finally {
     novelsLoading.value = false
   }
@@ -150,14 +152,14 @@ onMounted(() => {
   <div class="max-w-5xl mx-auto p-4 md:p-6 space-y-5">
     <div class="flex items-center gap-2">
       <Shield class="size-5 text-muted-foreground" />
-      <h2 class="text-lg font-semibold">管理后台</h2>
+      <h2 class="text-lg font-semibold">{{ $t('admin.title') }}</h2>
     </div>
 
     <Tabs :default-value="tabFromQuery" @update:model-value="onTabChange">
       <TabsList>
-        <TabsTrigger value="overview">概览</TabsTrigger>
-        <TabsTrigger value="users">用户</TabsTrigger>
-        <TabsTrigger value="novels">小说</TabsTrigger>
+        <TabsTrigger value="overview">{{ $t('admin.overview') }}</TabsTrigger>
+        <TabsTrigger value="users">{{ $t('admin.users') }}</TabsTrigger>
+        <TabsTrigger value="novels">{{ $t('admin.novels') }}</TabsTrigger>
       </TabsList>
 
       <!-- Overview Tab -->
@@ -169,7 +171,7 @@ onMounted(() => {
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader class="flex flex-row items-center justify-between pb-2">
-              <CardTitle class="text-sm font-medium">总用户</CardTitle>
+              <CardTitle class="text-sm font-medium">{{ $t('admin.stats.totalUsers') }}</CardTitle>
               <Users class="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -179,7 +181,7 @@ onMounted(() => {
           </Card>
           <Card>
             <CardHeader class="flex flex-row items-center justify-between pb-2">
-              <CardTitle class="text-sm font-medium">总小说</CardTitle>
+              <CardTitle class="text-sm font-medium">{{ $t('admin.stats.totalNovels') }}</CardTitle>
               <BookOpen class="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -189,7 +191,9 @@ onMounted(() => {
           </Card>
           <Card>
             <CardHeader class="flex flex-row items-center justify-between pb-2">
-              <CardTitle class="text-sm font-medium">LLM 调用</CardTitle>
+              <CardTitle class="text-sm font-medium">{{
+                $t('admin.stats.totalLlmCalls')
+              }}</CardTitle>
               <Activity class="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -201,7 +205,9 @@ onMounted(() => {
           </Card>
           <Card>
             <CardHeader class="flex flex-row items-center justify-between pb-2">
-              <CardTitle class="text-sm font-medium">人均小说</CardTitle>
+              <CardTitle class="text-sm font-medium">{{
+                $t('admin.stats.novelsPerUser')
+              }}</CardTitle>
               <TrendingUp class="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -228,10 +234,10 @@ onMounted(() => {
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b bg-muted/50">
-                  <th class="text-left p-3 font-medium">邮箱</th>
-                  <th class="text-left p-3 font-medium">角色</th>
-                  <th class="text-right p-3 font-medium">小说数</th>
-                  <th class="text-right p-3 font-medium">注册时间</th>
+                  <th class="text-left p-3 font-medium">{{ $t('admin.table.email') }}</th>
+                  <th class="text-left p-3 font-medium">{{ $t('admin.table.role') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.table.novelCount') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.table.registeredAt') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -250,7 +256,7 @@ onMounted(() => {
                           : 'bg-muted text-muted-foreground'
                       "
                     >
-                      {{ user.role === 'admin' ? '管理员' : '用户' }}
+                      {{ user.role === 'admin' ? $t('admin.role.admin') : $t('admin.role.user') }}
                     </span>
                   </td>
                   <td class="p-3 text-right">{{ user.novelCount }}</td>
@@ -260,7 +266,7 @@ onMounted(() => {
                 </tr>
                 <tr v-if="recentUsers.length === 0 && !usersLoading">
                   <td colspan="4" class="p-8 text-center text-sm text-muted-foreground">
-                    暂无用户
+                    {{ $t('common.noData') }}
                   </td>
                 </tr>
               </tbody>
@@ -283,11 +289,11 @@ onMounted(() => {
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b bg-muted/50">
-                  <th class="text-left p-3 font-medium">标题</th>
-                  <th class="text-left p-3 font-medium">作者</th>
-                  <th class="text-right p-3 font-medium">字数</th>
-                  <th class="text-center p-3 font-medium">状态</th>
-                  <th class="text-right p-3 font-medium">更新时间</th>
+                  <th class="text-left p-3 font-medium">{{ $t('admin.table.title') }}</th>
+                  <th class="text-left p-3 font-medium">{{ $t('admin.table.author') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.table.wordCount') }}</th>
+                  <th class="text-center p-3 font-medium">{{ $t('admin.table.status') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.table.updatedAt') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -296,7 +302,7 @@ onMounted(() => {
                   :key="novel.id"
                   class="border-b hover:bg-muted/30 transition-colors"
                 >
-                  <td class="p-3 font-medium">{{ novel.title || '未命名' }}</td>
+                  <td class="p-3 font-medium">{{ novel.title || $t('common.unknown') }}</td>
                   <td class="p-3 text-muted-foreground">{{ novel.authorEmail }}</td>
                   <td class="p-3 text-right">{{ novel.wordCount?.toLocaleString() }}</td>
                   <td class="p-3 text-center">
@@ -310,7 +316,7 @@ onMounted(() => {
                 </tr>
                 <tr v-if="recentNovels.length === 0 && !novelsLoading">
                   <td colspan="5" class="p-8 text-center text-sm text-muted-foreground">
-                    暂无小说
+                    {{ $t('common.noData') }}
                   </td>
                 </tr>
               </tbody>
@@ -327,7 +333,7 @@ onMounted(() => {
             <Search
               class="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
             />
-            <Input v-model="userSearch" placeholder="搜索用户邮箱..." class="pl-8" />
+            <Input v-model="userSearch" :placeholder="$t('common.search')" class="pl-8" />
           </div>
           <span class="text-sm text-muted-foreground shrink-0">共 {{ usersTotal }} 人</span>
         </div>
@@ -343,10 +349,10 @@ onMounted(() => {
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b bg-muted/50">
-                  <th class="text-left p-3 font-medium">邮箱</th>
-                  <th class="text-left p-3 font-medium">角色</th>
-                  <th class="text-right p-3 font-medium">小说数</th>
-                  <th class="text-right p-3 font-medium">注册时间</th>
+                  <th class="text-left p-3 font-medium">{{ $t('admin.table.email') }}</th>
+                  <th class="text-left p-3 font-medium">{{ $t('admin.table.role') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.table.novelCount') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.table.registeredAt') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -365,7 +371,7 @@ onMounted(() => {
                           : 'bg-muted text-muted-foreground'
                       "
                     >
-                      {{ user.role === 'admin' ? '管理员' : '用户' }}
+                      {{ user.role === 'admin' ? $t('admin.role.admin') : $t('admin.role.user') }}
                     </span>
                   </td>
                   <td class="p-3 text-right">{{ user.novelCount }}</td>
@@ -383,14 +389,14 @@ onMounted(() => {
             class="p-12 flex flex-col items-center justify-center text-center"
           >
             <Search class="size-8 mb-3 text-muted-foreground/30" />
-            <p class="text-sm text-muted-foreground">没有找到匹配的用户</p>
+            <p class="text-sm text-muted-foreground">{{ $t('common.noData') }}</p>
           </div>
           <div
             v-if="users.length === 0 && !userSearch"
             class="p-12 flex flex-col items-center justify-center text-center"
           >
             <Users class="size-8 mb-3 text-muted-foreground/30" />
-            <p class="text-sm text-muted-foreground">暂无注册用户</p>
+            <p class="text-sm text-muted-foreground">{{ $t('common.noData') }}</p>
           </div>
 
           <!-- Pagination -->
@@ -402,7 +408,7 @@ onMounted(() => {
               @click="loadUsers(usersPage - 1)"
             >
               <ChevronLeft class="size-4" />
-              上一页
+              {{ $t('admin.table.previousPage') }}
             </Button>
             <span class="text-sm text-muted-foreground">
               {{ usersPage }} / {{ totalPages(usersTotal) }}
@@ -413,7 +419,7 @@ onMounted(() => {
               :disabled="usersPage >= totalPages(usersTotal)"
               @click="loadUsers(usersPage + 1)"
             >
-              下一页
+              {{ $t('admin.table.nextPage') }}
               <ChevronRight class="size-4" />
             </Button>
           </div>
@@ -428,7 +434,7 @@ onMounted(() => {
             <Search
               class="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
             />
-            <Input v-model="novelSearch" placeholder="搜索小说标题或作者..." class="pl-8" />
+            <Input v-model="novelSearch" :placeholder="$t('common.search')" class="pl-8" />
           </div>
           <span class="text-sm text-muted-foreground shrink-0">共 {{ novelsTotal }} 本</span>
         </div>
@@ -444,11 +450,11 @@ onMounted(() => {
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b bg-muted/50">
-                  <th class="text-left p-3 font-medium">标题</th>
-                  <th class="text-left p-3 font-medium">作者</th>
-                  <th class="text-right p-3 font-medium">字数</th>
-                  <th class="text-center p-3 font-medium">状态</th>
-                  <th class="text-right p-3 font-medium">更新时间</th>
+                  <th class="text-left p-3 font-medium">{{ $t('admin.table.title') }}</th>
+                  <th class="text-left p-3 font-medium">{{ $t('admin.table.author') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.table.wordCount') }}</th>
+                  <th class="text-center p-3 font-medium">{{ $t('admin.table.status') }}</th>
+                  <th class="text-right p-3 font-medium">{{ $t('admin.table.updatedAt') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -457,7 +463,7 @@ onMounted(() => {
                   :key="novel.id"
                   class="border-b hover:bg-muted/30 transition-colors"
                 >
-                  <td class="p-3 font-medium">{{ novel.title || '未命名' }}</td>
+                  <td class="p-3 font-medium">{{ novel.title || $t('common.unknown') }}</td>
                   <td class="p-3 text-muted-foreground">{{ novel.authorEmail }}</td>
                   <td class="p-3 text-right">{{ novel.wordCount?.toLocaleString() }}</td>
                   <td class="p-3 text-center">
@@ -479,14 +485,14 @@ onMounted(() => {
             class="p-12 flex flex-col items-center justify-center text-center"
           >
             <Search class="size-8 mb-3 text-muted-foreground/30" />
-            <p class="text-sm text-muted-foreground">没有找到匹配的小说</p>
+            <p class="text-sm text-muted-foreground">{{ $t('common.noData') }}</p>
           </div>
           <div
             v-if="novels.length === 0 && !novelSearch"
             class="p-12 flex flex-col items-center justify-center text-center"
           >
             <BookOpen class="size-8 mb-3 text-muted-foreground/30" />
-            <p class="text-sm text-muted-foreground">暂无小说</p>
+            <p class="text-sm text-muted-foreground">{{ $t('common.noData') }}</p>
           </div>
 
           <!-- Pagination -->
@@ -498,7 +504,7 @@ onMounted(() => {
               @click="loadNovels(novelsPage - 1)"
             >
               <ChevronLeft class="size-4" />
-              上一页
+              {{ $t('admin.table.previousPage') }}
             </Button>
             <span class="text-sm text-muted-foreground">
               {{ novelsPage }} / {{ totalPages(novelsTotal) }}
@@ -509,7 +515,7 @@ onMounted(() => {
               :disabled="novelsPage >= totalPages(novelsTotal)"
               @click="loadNovels(novelsPage + 1)"
             >
-              下一页
+              {{ $t('admin.table.nextPage') }}
               <ChevronRight class="size-4" />
             </Button>
           </div>

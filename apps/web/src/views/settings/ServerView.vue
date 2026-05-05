@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Server, LogOut } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ const connected = ref(false)
 const connecting = ref(false)
 const proxyEnabled = ref(false)
 const isLogin = ref(true)
+const { t } = useI18n()
 
 async function loadConfig() {
   try {
@@ -39,7 +41,7 @@ async function loadConfig() {
       connected.value = false
     }
   } catch (e) {
-    toast.error('加载配置失败', {
+    toast.error(t('common.loadConfigFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -53,7 +55,7 @@ async function toggleProxy(enabled: boolean) {
     await saveConfig(snapshot)
     config.value = snapshot
   } catch (e) {
-    toast.error('保存设置失败')
+    toast.error(t('settings.server.saveSettingsFailed'))
   }
 }
 
@@ -70,11 +72,13 @@ async function connect() {
     const health = await getHealth()
     if (health.status === 'ok') {
       connected.value = true
-      toast.success('连接成功', {
-        description: `后端版本: ${health.version ?? '未知'}`,
+      toast.success(t('settings.server.connectSuccess'), {
+        description: t('settings.server.backendVersion', {
+          version: health.version ?? t('common.unknown'),
+        }),
       })
     } else {
-      throw new Error('后端响应异常')
+      throw new Error(t('settings.server.backendAbnormal'))
     }
   } catch (e) {
     connected.value = false
@@ -82,8 +86,8 @@ async function connect() {
     snapshot2.backendUrl = ''
     await saveConfig(snapshot2).catch(() => {})
     config.value = snapshot2
-    toast.error('连接失败', {
-      description: e instanceof Error ? e.message : '无法连接到后端，请检查地址是否正确',
+    toast.error(t('settings.server.connectFailed'), {
+      description: e instanceof Error ? e.message : t('settings.server.connectFailedHint'),
     })
   } finally {
     connecting.value = false
@@ -100,7 +104,7 @@ async function disconnect() {
     connected.value = false
     backendUrl.value = ''
   } catch (e) {
-    toast.error('保存失败', {
+    toast.error(t('common.saveFailed'), {
       description: e instanceof Error ? e.message : String(e),
     })
   }
@@ -114,17 +118,22 @@ async function handleAuth() {
     : await auth.register(email.value, password.value)
 
   if (success) {
-    toast.success(isLogin.value ? '登录成功' : '注册成功')
+    toast.success(
+      isLogin.value ? t('settings.server.loginSuccess') : t('settings.server.registerSuccess'),
+    )
   } else {
-    toast.error(isLogin.value ? '登录失败' : '注册失败', {
-      description: auth.error ?? '请检查邮箱和密码',
-    })
+    toast.error(
+      isLogin.value ? t('settings.server.loginFailed') : t('settings.server.registerFailed'),
+      {
+        description: auth.error ?? t('settings.server.checkCredentials'),
+      },
+    )
   }
 }
 
 async function handleLogout() {
   auth.logout()
-  toast.success('已退出登录')
+  toast.success(t('settings.server.loggedOut'))
 }
 
 function toggleMode() {
@@ -142,9 +151,11 @@ loadConfig()
       <div>
         <div class="flex items-center gap-2 mb-1">
           <Server class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">连接状态</h3>
+          <h3 class="text-sm font-medium">{{ $t('settings.server.connectionStatus') }}</h3>
         </div>
-        <p class="text-xs text-muted-foreground">后端服务的当前连接情况</p>
+        <p class="text-xs text-muted-foreground">
+          {{ $t('settings.server.connectionStatusDesc') }}
+        </p>
       </div>
 
       <div
@@ -163,7 +174,9 @@ loadConfig()
           class="size-2.5 rounded-full shrink-0 transition-colors duration-300"
           :class="connected ? 'bg-green-500 shadow-sm shadow-green-500/30' : 'bg-muted-foreground'"
         />
-        <span class="text-sm font-medium">{{ connected ? '已连接' : '未连接' }}</span>
+        <span class="text-sm font-medium">{{
+          connected ? $t('settings.server.connected') : $t('settings.server.disconnected')
+        }}</span>
         <span
           v-if="connected && auth.isAuthenticated"
           class="text-xs text-emerald-600 dark:text-emerald-400 ml-auto"
@@ -185,14 +198,14 @@ loadConfig()
       <div>
         <div class="flex items-center gap-2 mb-1">
           <Server class="size-4 text-muted-foreground" />
-          <h3 class="text-sm font-medium">后端连接</h3>
+          <h3 class="text-sm font-medium">{{ $t('settings.server.title') }}</h3>
         </div>
-        <p class="text-xs text-muted-foreground">连接后端以跨设备同步数据和使用后端代理调用 LLM</p>
+        <p class="text-xs text-muted-foreground">{{ $t('settings.server.description') }}</p>
       </div>
 
       <div class="space-y-3">
         <div class="space-y-1.5">
-          <Label class="text-xs">服务器地址</Label>
+          <Label class="text-xs">{{ $t('settings.server.serverAddress') }}</Label>
           <Input
             v-model="backendUrl"
             placeholder="https://storyclaw.example.com"
@@ -203,11 +216,11 @@ loadConfig()
 
         <template v-if="connected && !auth.isAuthenticated">
           <div class="space-y-1.5">
-            <Label class="text-xs">邮箱</Label>
+            <Label class="text-xs">{{ $t('settings.server.email') }}</Label>
             <Input v-model="email" placeholder="your@email.com" class="focus-visible:ring-0" />
           </div>
           <div class="space-y-1.5">
-            <Label class="text-xs">密码</Label>
+            <Label class="text-xs">{{ $t('settings.server.password') }}</Label>
             <Input v-model="password" type="password" class="focus-visible:ring-0" />
           </div>
         </template>
@@ -220,18 +233,18 @@ loadConfig()
                 v-if="auth.isAdmin"
                 class="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
               >
-                管理员
+                {{ $t('settings.server.admin') }}
               </span>
             </div>
-            <p class="text-xs text-muted-foreground">已登录，可使用同步和管理功能</p>
+            <p class="text-xs text-muted-foreground">{{ $t('settings.server.loggedIn') }}</p>
           </div>
         </template>
 
         <div v-if="connected" class="flex items-center justify-between px-1 py-2">
           <div>
-            <Label class="text-xs">使用后端代理调用 LLM</Label>
+            <Label class="text-xs">{{ $t('settings.server.proxy.label') }}</Label>
             <p class="text-[11px] text-muted-foreground mt-0.5">
-              开启后通过后端转发模型请求，无需在本地配置 API Key
+              {{ $t('settings.server.proxy.description') }}
             </p>
           </div>
           <Switch :checked="proxyEnabled" @update:checked="toggleProxy" />
@@ -247,7 +260,7 @@ loadConfig()
           :disabled="!backendUrl || connecting"
           @click="connect"
         >
-          {{ connecting ? '连接中...' : '连接' }}
+          {{ connecting ? $t('settings.server.connecting') : $t('settings.server.connect') }}
         </Button>
 
         <!-- Connected, not authenticated -->
@@ -257,21 +270,31 @@ loadConfig()
             :disabled="!email || !password || auth.isLoading"
             @click="handleAuth"
           >
-            {{ auth.isLoading ? '请稍候...' : isLogin ? '登录' : '注册' }}
+            {{
+              auth.isLoading
+                ? $t('settings.server.pleaseWait')
+                : isLogin
+                  ? $t('settings.server.login')
+                  : $t('settings.server.register')
+            }}
           </Button>
           <Button variant="ghost" class="w-full text-xs" @click="toggleMode">
-            {{ isLogin ? '没有账号？点击注册' : '已有账号？点击登录' }}
+            {{ isLogin ? $t('settings.server.noAccount') : $t('settings.server.hasAccount') }}
           </Button>
-          <Button variant="outline" class="w-full" @click="disconnect"> 断开连接 </Button>
+          <Button variant="outline" class="w-full" @click="disconnect">
+            {{ $t('settings.server.disconnect') }}
+          </Button>
         </template>
 
         <!-- Connected and authenticated -->
         <template v-else>
           <Button variant="outline" class="w-full" @click="handleLogout">
             <LogOut class="size-3.5 mr-2" />
-            退出登录
+            {{ $t('settings.server.logout') }}
           </Button>
-          <Button variant="ghost" class="w-full text-xs" @click="disconnect"> 断开连接 </Button>
+          <Button variant="ghost" class="w-full text-xs" @click="disconnect">
+            {{ $t('settings.server.disconnect') }}
+          </Button>
         </template>
       </div>
 
@@ -287,7 +310,7 @@ loadConfig()
     <!-- Footer -->
     <div class="border-t pt-4">
       <p class="text-xs text-muted-foreground text-center">
-        也可以不连接后端，直接使用本地模式。所有数据存储在浏览器中。
+        {{ $t('settings.server.localModeHint') }}
       </p>
     </div>
   </div>

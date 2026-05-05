@@ -2,6 +2,7 @@
 import { ref, computed, inject, h, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import type { Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { MessageCircle, BookOpen, Database } from 'lucide-vue-next'
 import ReaderView from '@/components/reader/ReaderView.vue'
 import ReaderControls from '@/components/reader/ReaderControls.vue'
@@ -24,13 +25,18 @@ const dataDrawerOpen = ref(false)
 const setTopbarExtra = inject<(c: Component | null) => void>('setTopbarExtra')
 const setTitle = inject<(t: string | null) => void>('setTitle')
 
-const tabTitles: Record<'reader' | 'agent', string> = { reader: '阅读', agent: '对话' }
+const { t } = useI18n()
+
+const tabTitles = computed<Record<'reader' | 'agent', string>>(() => ({
+  reader: t('story.reader'),
+  agent: t('story.agentTab'),
+}))
 
 watch(mode, async (val) => {
   router.replace({
     query: val === 'agent' ? { tab: 'agent' } : {},
   })
-  setTitle?.(tabTitles[val])
+  setTitle?.(tabTitles.value[val])
   if (val === 'reader' && storyId.value) {
     chapters.value = await getChaptersByNovelId(storyId.value)
     chapters.value.sort((a, b) => a.index - b.index)
@@ -38,7 +44,7 @@ watch(mode, async (val) => {
 })
 
 onMounted(() => {
-  setTitle?.(tabTitles[mode.value])
+  setTitle?.(tabTitles.value[mode.value])
   setTopbarExtra?.({
     setup() {
       return () =>
@@ -48,7 +54,7 @@ onMounted(() => {
             {
               class:
                 'size-8 flex items-center justify-center rounded-md hover:bg-muted shrink-0 transition duration-150 active:scale-90',
-              'aria-label': '查看小说数据',
+              'aria-label': t('story.viewNovelData'),
               onClick: () => {
                 dataDrawerOpen.value = true
               },
@@ -63,7 +69,8 @@ onMounted(() => {
               onClick: () => {
                 mode.value = mode.value === 'reader' ? 'agent' : 'reader'
               },
-              'aria-label': mode.value === 'reader' ? '切换到对话' : '切换到阅读',
+              'aria-label':
+                mode.value === 'reader' ? t('story.switchToAgent') : t('story.switchToReader'),
             },
             [
               h(
@@ -147,8 +154,8 @@ function onJumpToChapter(index: number) {
     >
       <ReaderView
         key="reader"
-        :content="currentChapter?.content ?? '暂无内容'"
-        :title="currentChapter?.title ?? '无标题'"
+        :content="currentChapter?.content ?? t('story.noContent')"
+        :title="currentChapter?.title ?? t('story.untitled')"
         :chapter-index="chapterIndex"
         :total-chapters="totalChapters"
         :settings="settings"

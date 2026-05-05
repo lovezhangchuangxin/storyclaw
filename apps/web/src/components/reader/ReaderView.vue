@@ -143,7 +143,7 @@ defineExpose({ scrollToPos })
           class="text-sm opacity-50 hover:opacity-100 transition-opacity px-4 py-2.5 rounded-lg hover:bg-foreground/5"
           @click="emit('prevChapter')"
         >
-          ← 上一章
+          {{ $t('story.previousChapter') }}
         </button>
         <span class="flex-1" />
         <button
@@ -151,7 +151,7 @@ defineExpose({ scrollToPos })
           class="text-sm opacity-50 hover:opacity-100 transition-opacity px-4 py-2.5 rounded-lg hover:bg-foreground/5"
           @click="emit('nextChapter')"
         >
-          下一章 →
+          {{ $t('story.nextChapter') }}
         </button>
       </nav>
     </div>

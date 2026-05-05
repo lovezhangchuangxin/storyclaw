@@ -1,5 +1,6 @@
 import { getDB } from './index'
 import type { Prompt } from './types'
+import { i18n } from '@/i18n'
 
 export async function getAllPrompts(): Promise<Prompt[]> {
   const db = await getDB()
@@ -32,7 +33,7 @@ export async function deletePrompt(id: string): Promise<void> {
   const db = await getDB()
   const prompt = await db.get('prompts', id)
   if (prompt?.isBuiltin) {
-    throw new Error('内置提示词不可删除')
+    throw new Error(i18n.global.t('error.builtinPromptDelete'))
   }
   await db.delete('prompts', id)
 }
