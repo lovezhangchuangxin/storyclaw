@@ -6,9 +6,9 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
   return [
     {
       name: 'create_outline',
-      displayName: '创建大纲',
+      displayName: 'tools.create_outline.displayName',
       icon: '📖',
-      description: '创建故事大纲，包含标题、梗概和三幕结构。在首次设计大纲时调用。',
+      description: 'tools.create_outline.description',
       parameters: {
         type: 'object',
         properties: {
@@ -43,9 +43,9 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'update_outline',
-      displayName: '更新大纲',
+      displayName: 'tools.update_outline.displayName',
       icon: '📖',
-      description: '修改已有的大纲内容，可以更新某一幕或整体前提。',
+      description: 'tools.update_outline.description',
       parameters: {
         type: 'object',
         properties: {
@@ -123,9 +123,9 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'get_outline',
-      displayName: '获取大纲',
+      displayName: 'tools.get_outline.displayName',
       icon: '📖',
-      description: '获取当前故事的大纲。',
+      description: 'tools.get_outline.description',
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {

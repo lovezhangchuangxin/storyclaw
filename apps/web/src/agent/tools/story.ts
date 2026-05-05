@@ -10,10 +10,9 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
   return [
     {
       name: 'upsert_story',
-      displayName: '创建或更新故事',
+      displayName: 'tools.upsert_story.displayName',
       icon: '📚',
-      description:
-        '创建新故事或更新已有故事信息。如果当前故事记录已存在，则更新标题和简介（用于在创作过程中修改故事元信息）；如果不存在则新建。创建完成后可以使用 generate_title 和 generate_synopsis 来完善信息。',
+      description: 'tools.upsert_story.description',
       parameters: {
         type: 'object',
         properties: {
@@ -60,9 +59,9 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
     },
     {
       name: 'get_story_status',
-      displayName: '获取故事状态',
+      displayName: 'tools.get_story_status.displayName',
       icon: '📚',
-      description: '获取当前故事的整体状态，包括进度、章节完成情况、角色数量等。',
+      description: 'tools.get_story_status.description',
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {
@@ -90,9 +89,9 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
     },
     {
       name: 'generate_title',
-      displayName: '生成标题',
+      displayName: 'tools.generate_title.displayName',
       icon: '🏷️',
-      description: '根据故事内容生成标题，并更新小说标题。',
+      description: 'tools.generate_title.description',
       parameters: {
         type: 'object',
         properties: { title: { type: 'string', description: '新标题' } },
@@ -113,9 +112,9 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
     },
     {
       name: 'generate_synopsis',
-      displayName: '生成简介',
+      displayName: 'tools.generate_synopsis.displayName',
       icon: '🏷️',
-      description: '根据故事内容生成简介，并更新小说简介。',
+      description: 'tools.generate_synopsis.description',
       parameters: {
         type: 'object',
         properties: { synopsis: { type: 'string', description: '故事简介' } },

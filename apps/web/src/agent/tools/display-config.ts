@@ -7,10 +7,12 @@
  * When adding a new tool, add its config here.
  */
 
+import { i18n } from '@/i18n'
+
 export type FieldType = 'text' | 'multiline' | 'badge' | 'list' | 'tags' | 'hidden'
 
 export interface FieldDisplay {
-  /** Chinese label shown to the user */
+  /** i18n key for the label shown to the user, resolved at render time */
   label: string
   /** Key path in the data object, e.g. "data.name" or "threeActs.act1.summary" */
   key: string
@@ -33,40 +35,42 @@ export interface ToolDisplayConfig {
 
 // ── helpers ────────────────────────────────────────────────
 
+const { t } = i18n.global
+
 function roleLabel(role: string): string {
   const map: Record<string, string> = {
-    protagonist: '主角',
-    antagonist: '反角',
-    supporting: '配角',
-    minor: '次要',
+    protagonist: t('story.drawer.role.protagonist'),
+    antagonist: t('story.drawer.role.antagonist'),
+    supporting: t('story.drawer.role.supporting'),
+    minor: t('story.drawer.role.minor'),
   }
   return map[role] ?? role
 }
 
 function perspectiveLabel(v: string): string {
   const map: Record<string, string> = {
-    'first-person': '第一人称',
-    'third-person-limited': '第三人称有限',
-    'third-person-omniscient': '第三人称全知',
+    'first-person': t('story.tool.perspective.firstPerson'),
+    'third-person-limited': t('story.tool.perspective.thirdLimited'),
+    'third-person-omniscient': t('story.tool.perspective.thirdOmniscient'),
   }
   return map[v] ?? v
 }
 
 function tenseLabel(v: string): string {
   const map: Record<string, string> = {
-    past: '过去时',
-    present: '现在时',
+    past: t('story.tool.tense.past'),
+    present: t('story.tool.tense.present'),
   }
   return map[v] ?? v
 }
 
 function statusLabel(v: string): string {
   const map: Record<string, string> = {
-    drafting: '起草中',
-    completed: '已完成',
-    editing: '编辑中',
-    abandoned: '已弃坑',
-    planned: '已规划',
+    drafting: t('story.tool.status.drafting'),
+    completed: t('story.tool.status.completed'),
+    editing: t('story.tool.status.editing'),
+    abandoned: t('story.tool.status.abandoned'),
+    planned: t('story.tool.status.planned'),
   }
   return map[v] ?? v
 }
@@ -78,89 +82,128 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
 
   upsert_story: {
     argFields: [
-      { label: '标题', key: 'title', type: 'text' },
-      { label: '简介', key: 'synopsis', type: 'multiline' },
+      { label: 'toolLabels.title', key: 'title', type: 'text' },
+      { label: 'toolLabels.synopsis', key: 'synopsis', type: 'multiline' },
     ],
-    resultFields: [{ label: '标题', key: 'title', type: 'text', transform: (v) => `已保存：${v}` }],
+    resultFields: [
+      {
+        label: 'toolLabels.title',
+        key: 'title',
+        type: 'text',
+        transform: (v) => t('toolTransforms.saved', { value: v }),
+      },
+    ],
     argPreview: (args) => String(args.title ?? ''),
-    resultPreview: (r) => String(r.title ?? '操作成功'),
+    resultPreview: (r) => String(r.title ?? t('toolTransforms.success')),
   },
 
   get_story_status: {
     resultFields: [
-      { label: '标题', key: 'title', type: 'text' },
-      { label: '状态', key: 'status', type: 'badge', transform: (v) => statusLabel(v as string) },
+      { label: 'toolLabels.title', key: 'title', type: 'text' },
       {
-        label: '字数',
+        label: 'toolLabels.status',
+        key: 'status',
+        type: 'badge',
+        transform: (v) => statusLabel(v as string),
+      },
+      {
+        label: 'toolLabels.wordCount',
         key: 'currentWordCount',
         type: 'text',
-        transform: (v) => `${Number(v).toLocaleString()} 字`,
+        transform: (v) => t('toolTransforms.wordsCount', { count: Number(v).toLocaleString() }),
       },
-      { label: '已完成', key: 'completedChapters', type: 'text' },
-      { label: '总章节', key: 'totalChapters', type: 'text', transform: (v) => `${v} 章` },
-      { label: '角色', key: 'characterCount', type: 'text', transform: (v) => `${v} 位` },
+      { label: 'toolLabels.completedChapters', key: 'completedChapters', type: 'text' },
       {
-        label: '大纲',
+        label: 'toolLabels.totalChapters',
+        key: 'totalChapters',
+        type: 'text',
+        transform: (v) => t('toolTransforms.chaptersCount', { count: v }),
+      },
+      {
+        label: 'toolLabels.characterCount',
+        key: 'characterCount',
+        type: 'text',
+        transform: (v) => t('toolTransforms.charsCount', { count: v }),
+      },
+      {
+        label: 'toolLabels.hasOutline',
         key: 'hasOutline',
         type: 'badge',
-        transform: (v) => (v ? '已有大纲' : '暂无大纲'),
+        transform: (v) => (v ? t('toolLabels.hasOutlineTrue') : t('toolLabels.hasOutlineFalse')),
       },
     ],
-    resultPreview: (r) =>
-      `${r.totalChapters ?? 0} 章 · ${Number(r.currentWordCount ?? 0).toLocaleString()} 字`,
+    resultPreview: (r) => {
+      const chapters = t('toolTransforms.chaptersCount', { count: r.totalChapters ?? 0 })
+      const words = t('toolTransforms.wordsCount', {
+        count: Number(r.currentWordCount ?? 0).toLocaleString(),
+      })
+      return `${chapters} · ${words}`
+    },
   },
 
   generate_title: {
-    argFields: [{ label: '新标题', key: 'title', type: 'text' }],
+    argFields: [{ label: 'toolLabels.newTitle', key: 'title', type: 'text' }],
     resultFields: [
-      { label: '标题', key: 'title', type: 'text', transform: (v) => `已更新为：${v}` },
+      {
+        label: 'toolLabels.title',
+        key: 'title',
+        type: 'text',
+        transform: (v) => t('toolTransforms.updatedTitle', { value: v }),
+      },
     ],
-    resultPreview: (r) => `标题已生成：${r.title}`,
+    resultPreview: (r) => t('toolTransforms.titleGenerated', { title: r.title }),
   },
 
   generate_synopsis: {
-    argFields: [{ label: '简介', key: 'synopsis', type: 'multiline' }],
-    resultFields: [{ label: '状态', key: 'success', type: 'badge', transform: () => '简介已生成' }],
-    resultPreview: () => '简介已更新',
+    argFields: [{ label: 'toolLabels.synopsis', key: 'synopsis', type: 'multiline' }],
+    resultFields: [
+      {
+        label: 'toolLabels.status',
+        key: 'success',
+        type: 'badge',
+        transform: () => t('toolTransforms.synopsisGenerated'),
+      },
+    ],
+    resultPreview: () => t('toolTransforms.synopsisUpdated'),
   },
 
   // ── Outline ─────────────────────────────────────────────
 
   create_outline: {
     argFields: [
-      { label: '前提', key: 'premise', type: 'multiline' },
-      { label: '第一幕 · 建置', key: 'act1', type: 'multiline' },
-      { label: '第二幕 · 对抗', key: 'act2', type: 'multiline' },
-      { label: '第三幕 · 解决', key: 'act3', type: 'multiline' },
+      { label: 'toolLabels.premise', key: 'premise', type: 'multiline' },
+      { label: 'toolLabels.act1Detail', key: 'act1', type: 'multiline' },
+      { label: 'toolLabels.act2Detail', key: 'act2', type: 'multiline' },
+      { label: 'toolLabels.act3Detail', key: 'act3', type: 'multiline' },
     ],
-    resultFields: [{ label: '状态', key: 'success', type: 'hidden' }],
-    resultPreview: () => '大纲已创建',
+    resultFields: [{ label: 'toolLabels.status', key: 'success', type: 'hidden' }],
+    resultPreview: () => t('toolTransforms.outlineCreated'),
   },
 
   update_outline: {
     argFields: [
-      { label: '前提', key: 'premise', type: 'multiline' },
-      { label: '第一幕', key: 'act1', type: 'multiline' },
-      { label: '第二幕', key: 'act2', type: 'multiline' },
-      { label: '第三幕', key: 'act3', type: 'multiline' },
-      { label: '第一幕关键事件', key: 'act1_keyEvents', type: 'list' },
-      { label: '第一幕角色弧线', key: 'act1_characterArcs', type: 'tags' },
-      { label: '第二幕关键事件', key: 'act2_keyEvents', type: 'list' },
-      { label: '第二幕角色弧线', key: 'act2_characterArcs', type: 'tags' },
-      { label: '第三幕关键事件', key: 'act3_keyEvents', type: 'list' },
-      { label: '第三幕角色弧线', key: 'act3_characterArcs', type: 'tags' },
+      { label: 'toolLabels.premise', key: 'premise', type: 'multiline' },
+      { label: 'toolLabels.act1', key: 'act1', type: 'multiline' },
+      { label: 'toolLabels.act2', key: 'act2', type: 'multiline' },
+      { label: 'toolLabels.act3', key: 'act3', type: 'multiline' },
+      { label: 'toolLabels.act1KeyEvents', key: 'act1_keyEvents', type: 'list' },
+      { label: 'toolLabels.act1CharacterArcs', key: 'act1_characterArcs', type: 'tags' },
+      { label: 'toolLabels.act2KeyEvents', key: 'act2_keyEvents', type: 'list' },
+      { label: 'toolLabels.act2CharacterArcs', key: 'act2_characterArcs', type: 'tags' },
+      { label: 'toolLabels.act3KeyEvents', key: 'act3_keyEvents', type: 'list' },
+      { label: 'toolLabels.act3CharacterArcs', key: 'act3_characterArcs', type: 'tags' },
     ],
-    resultPreview: () => '大纲已更新',
+    resultPreview: () => t('toolTransforms.outlineUpdated'),
   },
 
   get_outline: {
     resultFields: [
-      { label: '前提', key: 'premise', type: 'multiline' },
-      { label: '第一幕', key: 'threeActs.act1.summary', type: 'multiline' },
-      { label: '第二幕', key: 'threeActs.act2.summary', type: 'multiline' },
-      { label: '第三幕', key: 'threeActs.act3.summary', type: 'multiline' },
+      { label: 'toolLabels.premise', key: 'premise', type: 'multiline' },
+      { label: 'toolLabels.act1', key: 'threeActs.act1.summary', type: 'multiline' },
+      { label: 'toolLabels.act2', key: 'threeActs.act2.summary', type: 'multiline' },
+      { label: 'toolLabels.act3', key: 'threeActs.act3.summary', type: 'multiline' },
     ],
-    resultPreview: (r) => ('前提' in r ? '大纲已获取' : ''),
+    resultPreview: (r) => ('premise' in r ? t('toolTransforms.outlineFetched') : ''),
   },
 
   // ── Chapters ────────────────────────────────────────────
@@ -168,7 +211,7 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
   plan_chapters: {
     argFields: [
       {
-        label: '章节规划',
+        label: 'toolLabels.chapterPlan',
         key: 'chapters',
         type: 'list',
         transform: (v) => {
@@ -179,125 +222,186 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
           return arr
             .map(
               (c, i) =>
-                `第${i + 1}章 ${c.title}${c.estimatedWordCount ? ` (约${c.estimatedWordCount}字)` : ''}\n${c.summary}`,
+                `${t('toolTransforms.chapterNumber', { index: i + 1 })} ${c.title}${c.estimatedWordCount ? ` (${t('toolTransforms.wordsCount', { count: c.estimatedWordCount.toLocaleString() })})` : ''}\n${c.summary}`,
             )
             .join('\n\n---\n\n')
         },
       },
     ],
-    resultFields: [{ label: '已规划', key: 'count', type: 'text', transform: (v) => `${v} 章` }],
+    resultFields: [
+      {
+        label: 'toolLabels.planned',
+        key: 'count',
+        type: 'text',
+        transform: (v) => t('toolTransforms.chaptersCount', { count: v }),
+      },
+    ],
     argPreview: (args) => {
       const chapters = args.chapters as Array<{ title: string }> | undefined
       return chapters?.length
-        ? `${chapters.length} 章 · ${chapters
+        ? `${t('toolTransforms.chaptersCount', { count: chapters.length })} · ${chapters
             .map((c) => c.title)
             .slice(0, 3)
-            .join('、')}${chapters.length > 3 ? '…' : ''}`
+            .join(', ')}${chapters.length > 3 ? '…' : ''}`
         : ''
     },
-    resultPreview: (r) => `${r.count} 章规划完成`,
+    resultPreview: (r) => t('toolTransforms.chaptersPlanDone', { count: r.count }),
   },
 
   write_chapter: {
     argFields: [
-      { label: '章节', key: 'index', type: 'text', transform: (v) => `第${Number(v) + 1}章` },
-      { label: '正文', key: 'content', type: 'multiline' },
+      {
+        label: 'toolLabels.index',
+        key: 'index',
+        type: 'text',
+        transform: (v) => t('toolTransforms.chapterNumber', { index: Number(v) + 1 }),
+      },
+      { label: 'toolLabels.content', key: 'content', type: 'multiline' },
     ],
     resultFields: [
       {
-        label: '字数',
+        label: 'toolLabels.wordCount',
         key: 'wordCount',
         type: 'text',
-        transform: (v) => `${Number(v).toLocaleString()} 字`,
+        transform: (v) => t('toolTransforms.wordsCount', { count: Number(v).toLocaleString() }),
       },
     ],
     argPreview: (args) => {
       const idx = args.index as number
-      const chapter = typeof idx === 'number' ? `第${idx + 1}章` : ''
+      const chapter =
+        typeof idx === 'number' ? t('toolTransforms.chapterNumber', { index: idx + 1 }) : ''
       const content = args.content as string | undefined
       const preview = content ? content.replace(/\n/g, ' ').slice(0, 30) : ''
       return [chapter, preview].filter(Boolean).join(' · ')
     },
-    resultPreview: (r) => `${Number(r.wordCount ?? 0).toLocaleString()} 字 · 已完成`,
+    resultPreview: (r) =>
+      t('toolTransforms.chapterWritten', {
+        wordCount: Number(r.wordCount ?? 0).toLocaleString(),
+      }),
   },
 
   rewrite_chapter: {
     argFields: [
-      { label: '章节', key: 'index', type: 'text', transform: (v) => `第${Number(v) + 1}章` },
-      { label: '重写内容', key: 'content', type: 'multiline' },
+      {
+        label: 'toolLabels.index',
+        key: 'index',
+        type: 'text',
+        transform: (v) => t('toolTransforms.chapterNumber', { index: Number(v) + 1 }),
+      },
+      { label: 'toolLabels.rewriteContent', key: 'content', type: 'multiline' },
     ],
     resultFields: [
       {
-        label: '字数',
+        label: 'toolLabels.wordCount',
         key: 'wordCount',
         type: 'text',
-        transform: (v) => `${Number(v).toLocaleString()} 字`,
+        transform: (v) => t('toolTransforms.wordsCount', { count: Number(v).toLocaleString() }),
       },
     ],
     argPreview: (args) => {
       const idx = args.index as number
-      const chapter = typeof idx === 'number' ? `第${idx + 1}章` : ''
+      const chapter =
+        typeof idx === 'number' ? t('toolTransforms.chapterNumber', { index: idx + 1 }) : ''
       const content = args.content as string | undefined
       const preview = content ? content.replace(/\n/g, ' ').slice(0, 30) : ''
       return [chapter, preview].filter(Boolean).join(' · ')
     },
-    resultPreview: (r) => `${Number(r.wordCount ?? 0).toLocaleString()} 字 · 已重写`,
+    resultPreview: (r) =>
+      t('toolTransforms.chapterRewritten', {
+        wordCount: Number(r.wordCount ?? 0).toLocaleString(),
+      }),
   },
 
   get_chapter: {
     argFields: [
-      { label: '章节', key: 'index', type: 'text', transform: (v) => `第${Number(v) + 1}章` },
+      {
+        label: 'toolLabels.index',
+        key: 'index',
+        type: 'text',
+        transform: (v) => t('toolTransforms.chapterNumber', { index: Number(v) + 1 }),
+      },
     ],
     resultFields: [
-      { label: '标题', key: 'title', type: 'text' },
-      { label: '状态', key: 'status', type: 'badge', transform: (v) => statusLabel(v as string) },
+      { label: 'toolLabels.title', key: 'title', type: 'text' },
       {
-        label: '字数',
+        label: 'toolLabels.status',
+        key: 'status',
+        type: 'badge',
+        transform: (v) => statusLabel(v as string),
+      },
+      {
+        label: 'toolLabels.wordCount',
         key: 'wordCount',
         type: 'text',
-        transform: (v) => `${Number(v).toLocaleString()} 字`,
+        transform: (v) => t('toolTransforms.wordsCount', { count: Number(v).toLocaleString() }),
       },
-      { label: '概要', key: 'summary', type: 'multiline' },
-      { label: '正文预览', key: 'content', type: 'multiline' },
+      { label: 'toolLabels.summary', key: 'summary', type: 'multiline' },
+      { label: 'toolLabels.contentPreview', key: 'content', type: 'multiline' },
     ],
-    resultPreview: (r) => ('title' in r ? `第${Number(r.index ?? 0) + 1}章 · ${r.title}` : ''),
+    resultPreview: (r) =>
+      'title' in r
+        ? `${t('toolTransforms.chapterNumber', { index: Number(r.index ?? 0) + 1 })} · ${r.title}`
+        : '',
   },
 
   // ── Characters ──────────────────────────────────────────
 
   create_character: {
     argFields: [
-      { label: '姓名', key: 'name', type: 'text' },
-      { label: '定位', key: 'role', type: 'badge', transform: (v) => roleLabel(v as string) },
-      { label: '外貌', key: 'appearance', type: 'multiline' },
-      { label: '性格', key: 'personality', type: 'multiline' },
-      { label: '背景', key: 'background', type: 'multiline' },
-      { label: '动机', key: 'motivation', type: 'multiline' },
-      { label: '成长弧线', key: 'arc', type: 'multiline' },
+      { label: 'toolLabels.name', key: 'name', type: 'text' },
+      {
+        label: 'toolLabels.role',
+        key: 'role',
+        type: 'badge',
+        transform: (v) => roleLabel(v as string),
+      },
+      { label: 'toolLabels.appearance', key: 'appearance', type: 'multiline' },
+      { label: 'toolLabels.personality', key: 'personality', type: 'multiline' },
+      { label: 'toolLabels.background', key: 'background', type: 'multiline' },
+      { label: 'toolLabels.motivation', key: 'motivation', type: 'multiline' },
+      { label: 'toolLabels.arc', key: 'arc', type: 'multiline' },
     ],
     resultFields: [
-      { label: '姓名', key: 'data.name', type: 'text', transform: (v) => `已创建：${v}` },
-      { label: '定位', key: 'data.role', type: 'badge', transform: (v) => roleLabel(v as string) },
+      {
+        label: 'toolLabels.name',
+        key: 'data.name',
+        type: 'text',
+        transform: (v) => t('toolTransforms.created', { value: v }),
+      },
+      {
+        label: 'toolLabels.role',
+        key: 'data.role',
+        type: 'badge',
+        transform: (v) => roleLabel(v as string),
+      },
     ],
-    argPreview: (args) => `${args.name ?? '未命名'} (${roleLabel(args.role as string)})`,
+    argPreview: (args) =>
+      `${args.name ?? t('story.drawer.unnamed')} (${roleLabel(args.role as string)})`,
     resultPreview: (r) => {
       const data = r.data as Record<string, unknown> | undefined
-      return data?.name ? `已创建：${data.name}` : '角色已创建'
+      return data?.name
+        ? t('toolTransforms.created', { value: data.name })
+        : t('toolTransforms.characterCreated')
     },
   },
 
   update_character: {
     argFields: [
-      { label: '角色ID', key: 'characterId', type: 'hidden' },
-      { label: '姓名', key: 'name', type: 'text' },
-      { label: '定位', key: 'role', type: 'badge', transform: (v) => roleLabel(v as string) },
-      { label: '外貌', key: 'appearance', type: 'multiline' },
-      { label: '性格', key: 'personality', type: 'multiline' },
-      { label: '背景', key: 'background', type: 'multiline' },
-      { label: '动机', key: 'motivation', type: 'multiline' },
-      { label: '成长弧线', key: 'arc', type: 'multiline' },
+      { label: 'toolLabels.characterId', key: 'characterId', type: 'hidden' },
+      { label: 'toolLabels.name', key: 'name', type: 'text' },
       {
-        label: '关系',
+        label: 'toolLabels.role',
+        key: 'role',
+        type: 'badge',
+        transform: (v) => roleLabel(v as string),
+      },
+      { label: 'toolLabels.appearance', key: 'appearance', type: 'multiline' },
+      { label: 'toolLabels.personality', key: 'personality', type: 'multiline' },
+      { label: 'toolLabels.background', key: 'background', type: 'multiline' },
+      { label: 'toolLabels.motivation', key: 'motivation', type: 'multiline' },
+      { label: 'toolLabels.arc', key: 'arc', type: 'multiline' },
+      {
+        label: 'toolLabels.relationships',
         key: 'relationships',
         type: 'list',
         transform: (v) => {
@@ -308,40 +412,54 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
           return rels
             .map(
               (r) =>
-                `${r.characterName}（${r.relation}）${r.description ? `：${r.description}` : ''}`,
+                `${r.characterName} (${r.relation})${r.description ? `: ${r.description}` : ''}`,
             )
             .join('\n')
         },
       },
     ],
     resultFields: [
-      { label: '姓名', key: 'data.name', type: 'text', transform: (v) => `已更新：${v}` },
+      {
+        label: 'toolLabels.name',
+        key: 'data.name',
+        type: 'text',
+        transform: (v) => t('toolTransforms.updated', { value: v }),
+      },
     ],
     argPreview: (args) =>
-      args.name ? `${args.name} (${roleLabel(args.role as string)})` : '更新角色',
+      args.name
+        ? `${args.name} (${roleLabel(args.role as string)})`
+        : t('toolTransforms.characterUpdated'),
     resultPreview: (r) => {
       const data = r.data as Record<string, unknown> | undefined
-      return data?.name ? `已更新：${data.name}` : '角色已更新'
+      return data?.name
+        ? t('toolTransforms.updated', { value: data.name })
+        : t('toolTransforms.characterUpdated')
     },
   },
 
   delete_character: {
-    resultFields: [{ label: '状态', key: 'success', type: 'hidden' }],
-    resultPreview: () => '角色已删除',
+    resultFields: [{ label: 'toolLabels.status', key: 'success', type: 'hidden' }],
+    resultPreview: () => t('toolTransforms.characterDeleted'),
   },
 
   get_character: {
-    argFields: [{ label: '角色ID', key: 'characterId', type: 'text' }],
+    argFields: [{ label: 'toolLabels.characterId', key: 'characterId', type: 'text' }],
     resultFields: [
-      { label: '姓名', key: 'name', type: 'text' },
-      { label: '定位', key: 'role', type: 'badge', transform: (v) => roleLabel(v as string) },
-      { label: '外貌', key: 'appearance', type: 'multiline' },
-      { label: '性格', key: 'personality', type: 'multiline' },
-      { label: '背景', key: 'background', type: 'multiline' },
-      { label: '动机', key: 'motivation', type: 'multiline' },
-      { label: '成长弧线', key: 'arc', type: 'multiline' },
+      { label: 'toolLabels.name', key: 'name', type: 'text' },
       {
-        label: '关系',
+        label: 'toolLabels.role',
+        key: 'role',
+        type: 'badge',
+        transform: (v) => roleLabel(v as string),
+      },
+      { label: 'toolLabels.appearance', key: 'appearance', type: 'multiline' },
+      { label: 'toolLabels.personality', key: 'personality', type: 'multiline' },
+      { label: 'toolLabels.background', key: 'background', type: 'multiline' },
+      { label: 'toolLabels.motivation', key: 'motivation', type: 'multiline' },
+      { label: 'toolLabels.arc', key: 'arc', type: 'multiline' },
+      {
+        label: 'toolLabels.relationships',
         key: 'relationships',
         type: 'list',
         transform: (v) => {
@@ -349,7 +467,7 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
             | Array<{ characterName: string; relation: string; description?: string }>
             | undefined
           if (!rels?.length) return ''
-          return rels.map((r) => `${r.characterName}（${r.relation}）`.trim()).join('\n')
+          return rels.map((r) => `${r.characterName} (${r.relation})`.trim()).join('\n')
         },
       },
     ],
@@ -358,31 +476,36 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
 
   list_characters: {
     resultFields: [
-      { label: '角色数', key: 'count', type: 'text', transform: (v) => `${v} 位` },
       {
-        label: '角色列表',
+        label: 'toolLabels.characterCount',
+        key: 'count',
+        type: 'text',
+        transform: (v) => t('toolTransforms.charsCount', { count: v }),
+      },
+      {
+        label: 'toolLabels.characterList',
         key: 'characters',
         type: 'list',
         transform: (v) => {
           const chars = v as Array<{ name: string; role: string }> | undefined
-          if (!chars?.length) return '（暂无角色）'
+          if (!chars?.length) return t('toolTransforms.noCharacters')
           return chars.map((c) => `${c.name} (${roleLabel(c.role)})`).join('\n')
         },
       },
     ],
-    resultPreview: (r) => `${r.count ?? 0} 位角色`,
+    resultPreview: (r) => t('toolTransforms.characterCountLabel', { count: r.count ?? 0 }),
   },
 
   // ── World building ──────────────────────────────────────
 
   set_world_building: {
     argFields: [
-      { label: '时代', key: 'era', type: 'text' },
-      { label: '地点', key: 'location', type: 'text' },
-      { label: '规则', key: 'rules', type: 'multiline' },
-      { label: '文化', key: 'culture', type: 'multiline' },
+      { label: 'toolLabels.era', key: 'era', type: 'text' },
+      { label: 'toolLabels.location', key: 'location', type: 'text' },
+      { label: 'toolLabels.rules', key: 'rules', type: 'multiline' },
+      { label: 'toolLabels.culture', key: 'culture', type: 'multiline' },
       {
-        label: '势力',
+        label: 'toolLabels.factions',
         key: 'factions',
         type: 'tags',
         transform: (v) => {
@@ -390,19 +513,19 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
           return factions?.map((f) => f.name).join(', ') ?? ''
         },
       },
-      { label: '备注', key: 'notes', type: 'multiline' },
+      { label: 'toolLabels.notes', key: 'notes', type: 'multiline' },
     ],
-    resultPreview: () => '世界观已设定',
+    resultPreview: () => t('toolTransforms.worldBuildingSet'),
   },
 
   get_world_building: {
     resultFields: [
-      { label: '时代', key: 'era', type: 'text' },
-      { label: '地点', key: 'location', type: 'text' },
-      { label: '规则', key: 'rules', type: 'multiline' },
-      { label: '文化', key: 'culture', type: 'multiline' },
+      { label: 'toolLabels.era', key: 'era', type: 'text' },
+      { label: 'toolLabels.location', key: 'location', type: 'text' },
+      { label: 'toolLabels.rules', key: 'rules', type: 'multiline' },
+      { label: 'toolLabels.culture', key: 'culture', type: 'multiline' },
       {
-        label: '势力',
+        label: 'toolLabels.factions',
         key: 'factions',
         type: 'tags',
         transform: (v) => {
@@ -410,7 +533,7 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
           return factions?.map((f) => f.name).join(', ') ?? ''
         },
       },
-      { label: '备注', key: 'notes', type: 'multiline' },
+      { label: 'toolLabels.notes', key: 'notes', type: 'multiline' },
     ],
     resultPreview: (r) => ('era' in r ? `${r.era} · ${r.location}` : ''),
   },
@@ -420,27 +543,37 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
   set_style: {
     argFields: [
       {
-        label: '叙事视角',
+        label: 'toolLabels.narrativePerspective',
         key: 'narrativePerspective',
         type: 'badge',
         transform: (v) => perspectiveLabel(v as string),
       },
-      { label: '时态', key: 'tense', type: 'badge', transform: (v) => tenseLabel(v as string) },
-      { label: '语言风格', key: 'languageStyle', type: 'text' },
+      {
+        label: 'toolLabels.tense',
+        key: 'tense',
+        type: 'badge',
+        transform: (v) => tenseLabel(v as string),
+      },
+      { label: 'toolLabels.languageStyle', key: 'languageStyle', type: 'text' },
     ],
-    resultPreview: () => '文风已设定',
+    resultPreview: () => t('toolTransforms.styleSet'),
   },
 
   get_style: {
     resultFields: [
       {
-        label: '叙事视角',
+        label: 'toolLabels.narrativePerspective',
         key: 'narrativePerspective',
         type: 'badge',
         transform: (v) => perspectiveLabel(v as string),
       },
-      { label: '时态', key: 'tense', type: 'badge', transform: (v) => tenseLabel(v as string) },
-      { label: '语言风格', key: 'languageStyle', type: 'text' },
+      {
+        label: 'toolLabels.tense',
+        key: 'tense',
+        type: 'badge',
+        transform: (v) => tenseLabel(v as string),
+      },
+      { label: 'toolLabels.languageStyle', key: 'languageStyle', type: 'text' },
     ],
     resultPreview: (r) =>
       'narrativePerspective' in r

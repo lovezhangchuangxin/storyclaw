@@ -31,25 +31,28 @@ function resolveValue(field: FieldDisplay): { raw: unknown; display: string; exi
   return { raw, display, exists }
 }
 
-function badgeColor(value: string): string {
+function badgeColor(raw: unknown): string {
+  if (raw === true) return 'badge-green'
+  if (raw === false) return 'badge-gray'
+
+  const v = String(raw ?? '')
   const colorMap: Record<string, string> = {
-    主角: 'badge-blue',
-    反角: 'badge-red',
-    配角: 'badge-green',
-    次要: 'badge-gray',
-    第一人称: 'badge-blue',
-    第三人称有限: 'badge-green',
-    第三人称全知: 'badge-purple',
-    过去时: 'badge-orange',
-    现在时: 'badge-teal',
-    已有大纲: 'badge-green',
-    暂无大纲: 'badge-gray',
-    起草中: 'badge-yellow',
-    已完成: 'badge-green',
-    编辑中: 'badge-blue',
-    已规划: 'badge-blue',
+    protagonist: 'badge-blue',
+    antagonist: 'badge-red',
+    supporting: 'badge-green',
+    minor: 'badge-gray',
+    'first-person': 'badge-blue',
+    'third-person-limited': 'badge-green',
+    'third-person-omniscient': 'badge-purple',
+    past: 'badge-orange',
+    present: 'badge-teal',
+    drafting: 'badge-yellow',
+    completed: 'badge-green',
+    editing: 'badge-blue',
+    abandoned: 'badge-gray',
+    planned: 'badge-blue',
   }
-  return colorMap[value] ?? 'badge-gray'
+  return colorMap[v] ?? 'badge-gray'
 }
 
 // Render context helpers
@@ -63,7 +66,7 @@ function isLongText(text: string): boolean {
     <template v-for="field in fields" :key="field.key">
       <template v-if="field.type !== 'hidden'">
         <div v-if="resolveValue(field).exists" class="field-row">
-          <span class="field-label">{{ field.label }}</span>
+          <span class="field-label">{{ $t(field.label) }}</span>
 
           <!-- text: inline label + value -->
           <span v-if="field.type === 'text'" class="field-value">
@@ -73,7 +76,7 @@ function isLongText(text: string): boolean {
           <!-- badge: colored capsule -->
           <span
             v-else-if="field.type === 'badge'"
-            :class="['badge-capsule', badgeColor(resolveValue(field).display)]"
+            :class="['badge-capsule', badgeColor(resolveValue(field).raw)]"
           >
             {{ resolveValue(field).display }}
           </span>

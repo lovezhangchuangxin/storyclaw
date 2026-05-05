@@ -19,9 +19,9 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
   return [
     {
       name: 'plan_chapters',
-      displayName: '规划章节',
+      displayName: 'tools.plan_chapters.displayName',
       icon: '📋',
-      description: '根据大纲规划章节划分和各章节概要。在大纲确定后调用。',
+      description: 'tools.plan_chapters.description',
       parameters: {
         type: 'object',
         properties: {
@@ -95,9 +95,9 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'write_chapter',
-      displayName: '创作章节',
+      displayName: 'tools.write_chapter.displayName',
       icon: '✍️',
-      description: '创作指定章节的内容。这是流式输出，用户将看到内容逐步生成。',
+      description: 'tools.write_chapter.description',
       parameters: {
         type: 'object',
         properties: {
@@ -127,9 +127,9 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'rewrite_chapter',
-      displayName: '重写章节',
+      displayName: 'tools.rewrite_chapter.displayName',
       icon: '✍️',
-      description: '根据用户反馈重写指定章节。',
+      description: 'tools.rewrite_chapter.description',
       parameters: {
         type: 'object',
         properties: {
@@ -158,9 +158,9 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'get_chapter',
-      displayName: '获取章节',
+      displayName: 'tools.get_chapter.displayName',
       icon: '📋',
-      description: '获取指定章节的完整内容。',
+      description: 'tools.get_chapter.description',
       parameters: {
         type: 'object',
         properties: { index: { type: 'number' } },

@@ -1,4 +1,5 @@
 import type OpenAI from 'openai'
+import { i18n } from '@/i18n'
 import { getConfig } from '@/db/config'
 import { getAllModels } from '@/composables/useModels'
 import { getConversationByNovelId, saveConversation } from '@/db/conversations'
@@ -165,10 +166,9 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
   const historyMessages = providedHistoryMessages ?? existingConversation?.messages ?? []
   const turnMessages: Message[] = [createUserMessage(userMessage)]
 
+  const { t } = i18n.global
   if (!modelConfig) {
-    const errorMessage = modelId
-      ? `找不到模型（${modelId}）。可能是后端模型未加载，请检查后端连接。`
-      : '没有配置模型。请在模型配置中配置至少一个模型。'
+    const errorMessage = modelId ? t('agent.modelNotFound', { modelId }) : t('agent.noModel')
     onError?.(errorMessage)
     turnMessages.push(createStatusMessage('error', errorMessage))
     const persistence = await persistTurn(novelId, historyMessages, turnMessages)
@@ -250,7 +250,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
   try {
     while (iterationCount < MAX_TOOL_ITERATIONS) {
       if (signal?.aborted) {
-        turnMessages.push(createStatusMessage('cancelled', '已取消生成'))
+        turnMessages.push(createStatusMessage('cancelled', t('agent.cancelled')))
         emitMessagesUpdated()
         turnCompleted = true
         break
@@ -280,7 +280,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
 
       if (response.aborted) {
         finalizeInFlightAssistant(turnMessages, assistantMessage, 'cancelled')
-        turnMessages.push(createStatusMessage('cancelled', '已取消生成'))
+        turnMessages.push(createStatusMessage('cancelled', t('agent.cancelled')))
         emitMessagesUpdated()
         turnCompleted = true
         currentAssistantMessage = null
@@ -290,7 +290,10 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
       if (response.finishReason !== 'stop' && response.finishReason !== 'tool_calls') {
         finalizeInFlightAssistant(turnMessages, assistantMessage, 'truncated')
         turnMessages.push(
-          createStatusMessage('warning', `回复未完整结束（${response.finishReason || 'unknown'}）`),
+          createStatusMessage(
+            'warning',
+            t('agent.incomplete', { reason: response.finishReason || 'unknown' }),
+          ),
         )
         emitMessagesUpdated()
         turnCompleted = true
@@ -334,7 +337,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
         }
 
         if (assistantMessage.state === 'cancelled') {
-          turnMessages.push(createStatusMessage('cancelled', '已取消生成'))
+          turnMessages.push(createStatusMessage('cancelled', t('agent.cancelled')))
           emitMessagesUpdated()
           turnCompleted = true
           currentAssistantMessage = null
@@ -361,7 +364,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
     currentAssistantMessage = null
 
     if (state === 'cancelled') {
-      turnMessages.push(createStatusMessage('cancelled', '已取消生成'))
+      turnMessages.push(createStatusMessage('cancelled', t('agent.cancelled')))
     } else {
       onError?.(message)
       turnMessages.push(createStatusMessage('error', message))
@@ -371,7 +374,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
   }
 
   if (!turnCompleted && iterationCount >= MAX_TOOL_ITERATIONS) {
-    turnMessages.push(createStatusMessage('warning', '已达到最大工具调用次数，已自动停止'))
+    turnMessages.push(createStatusMessage('warning', t('agent.maxIterations')))
     emitMessagesUpdated()
   }
 

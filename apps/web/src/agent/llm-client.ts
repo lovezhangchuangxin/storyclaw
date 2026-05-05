@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import type { ModelConfig } from '@/db/types'
+import { i18n } from '@/i18n'
 import { getAccessToken } from '@/lib/api-client'
 import { isAbortError } from './utils'
 
@@ -41,7 +42,7 @@ export function createLLMClient(options: LLMClientOptions) {
     apiKey: (() => {
       if (useBackendProxy && backendUrl) {
         const token = getAccessToken()
-        if (!token) throw new Error('使用后端模型需要登录，请先登录或刷新页面。')
+        if (!token) throw new Error(i18n.global.t('agent.needLogin'))
         return token
       }
       return config.apiKey

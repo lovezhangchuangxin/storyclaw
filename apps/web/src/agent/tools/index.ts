@@ -1,5 +1,6 @@
 import type OpenAI from 'openai'
 import { z } from 'zod'
+import { i18n } from '@/i18n'
 import { getToolRegistry } from './registry'
 import type { ToolContext } from './types'
 
@@ -17,10 +18,13 @@ let _displayMap: Map<string, { displayName: string; icon: string }> | null = nul
 /** Build the display-info cache once. Display info is static (same across all contexts). */
 function ensureDisplayMap(): Map<string, { displayName: string; icon: string }> {
   if (!_displayMap) {
-    // Use a minimal context — only name/displayName/icon are collected, which are context-independent.
+    const { t } = i18n.global
     const tools = getToolRegistry({ novelId: '' })
     _displayMap = new Map(
-      [...tools.values()].map((t) => [t.name, { displayName: t.displayName, icon: t.icon }]),
+      [...tools.values()].map((tool) => [
+        tool.name,
+        { displayName: t(tool.displayName), icon: tool.icon },
+      ]),
     )
   }
   return _displayMap
@@ -60,12 +64,13 @@ export async function executeToolCall(
 export function getToolDefinitions(
   context: ToolContext,
 ): OpenAI.Chat.Completions.ChatCompletionTool[] {
-  return [...getToolRegistry(context).values()].map((t) => ({
+  const { t } = i18n.global
+  return [...getToolRegistry(context).values()].map((tool) => ({
     type: 'function' as const,
     function: {
-      name: t.name,
-      description: t.description,
-      parameters: t.parameters,
+      name: tool.name,
+      description: t(tool.description),
+      parameters: tool.parameters,
     },
   }))
 }

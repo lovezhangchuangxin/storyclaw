@@ -12,6 +12,7 @@
     "search": "Search…",
     "loading": "Loading…",
     "noData": "No data",
+    "noFieldData": "(No data)",
     "loadFailed": "Failed to load",
     "loadFailedHint": "Please check and try again",
     "confirmDelete": "Confirm Delete",
@@ -102,7 +103,7 @@
 
   "story": {
     "reader": "Read",
-    "agent": "Chat",
+    "agentTab": "Chat",
     "switchToAgent": "Switch to Chat",
     "switchToReader": "Switch to Read",
     "viewNovelData": "View novel data",
@@ -113,7 +114,13 @@
     "agent": {
       "welcome": {
         "greeting": "Start creating your story",
-        "hint": "Tell me your ideas, and the AI Agent will handle the rest"
+        "hint": "Tell me your ideas, and the AI Agent will handle the rest",
+        "suggestion1": "Tell me what kind of story you want...",
+        "suggestion2": "Help me design characters and worldbuilding",
+        "suggestion3": "Write a chapter for me to see",
+        "suggestion1Prompt": "Tell me what kind of story you want, and I'll help you create it.",
+        "suggestion2Prompt": "Help me design a story's characters and worldbuilding.",
+        "suggestion3Prompt": "Write a chapter so I can see your writing ability."
       },
       "inputPlaceholder": "Send a message, / commands",
       "searchCommands": "Search commands...",
@@ -129,7 +136,15 @@
       "generationFailed": "Generation failed",
       "saveFailed": "Save failed",
       "unknownCommand": "Unknown command",
-      "unknownCommandHint": "Use /help to see available commands"
+      "unknownCommandHint": "Use /help to see available commands",
+      "newConversationFailed": "Failed to create new conversation",
+      "compactionFailed": "Compaction failed",
+      "noCompactionNeeded": "No context to compact",
+      "conversationNotSaved": "Conversation not saved",
+      "newSessionCreatedDesc": "New session created, conversation history cleared",
+      "noContextToCompact": "No context to compact yet",
+      "compactionBefore": "Before compaction ~",
+      "compactionAfter": "After compaction ~"
     },
     "tool": {
       "executing": "Executing...",
@@ -139,8 +154,25 @@
       "chapterFormat": "Ch.{index}",
       "words": "{count} words",
       "items": "{count} items",
+      "chapters": "{count} chapters",
       "parameters": "Parameters",
-      "result": "Result"
+      "result": "Result",
+      "perspective": {
+        "firstPerson": "First Person",
+        "thirdLimited": "Third Person Limited",
+        "thirdOmniscient": "Third Person Omniscient"
+      },
+      "tense": {
+        "past": "Past Tense",
+        "present": "Present Tense"
+      },
+      "status": {
+        "drafting": "Drafting",
+        "completed": "Completed",
+        "editing": "Editing",
+        "abandoned": "Abandoned",
+        "planned": "Planned"
+      }
     },
     "thinking": {
       "process": "Thinking",
@@ -164,7 +196,50 @@
         "minor": "Minor"
       },
       "collapse": "Collapse",
-      "expandAll": "Expand All"
+      "expandAll": "Expand All",
+      "title": "Novel Data",
+      "dataLoadFailed": "Failed to load data",
+      "notExist": "Novel data does not exist",
+      "noOtherData": "No other data",
+      "noSynopsis": "No synopsis",
+      "notSet": "Not set",
+      "unnamed": "Unnamed",
+      "chapterStatus": {
+        "planned": "Planned",
+        "draft": "Draft"
+      },
+      "worldBuilding": "Worldbuilding",
+      "character": {
+        "characters": "Characters",
+        "personality": "Personality",
+        "appearance": "Appearance",
+        "background": "Background",
+        "motivation": "Motivation",
+        "arc": "Character Arc",
+        "relationships": "Relationships"
+      },
+      "labels": {
+        "genre": "Genre",
+        "wordCount": "Word Count",
+        "perspective": "Perspective",
+        "tense": "Tense",
+        "languageStyle": "Language Style",
+        "customPrompt": "Custom Prompt",
+        "synopsis": "Synopsis",
+        "keyEvents": "Key Events",
+        "chapterPlan": "Chapter Plan",
+        "tableTitle": "Title",
+        "tableStatus": "Status",
+        "era": "Era",
+        "location": "Location",
+        "rules": "Rules",
+        "culture": "Culture",
+        "notes": "Notes",
+        "factions": "Factions",
+        "act1": "Act 1",
+        "act2": "Act 2",
+        "act3": "Act 3"
+      }
     }
   },
 
@@ -374,7 +449,7 @@
 
   "agent": {
     "cancelled": "Generation cancelled",
-    "incomplete": "Response ended incompletely",
+    "incomplete": "Response ended incompletely ({reason})",
     "maxIterations": "Maximum tool call iterations reached",
     "noModel": "No model configured",
     "modelNotFound": "Model not found ({modelId}), it may have been deleted",
@@ -385,6 +460,110 @@
     "newSession": {
       "command": "New session, clear current conversation history"
     }
+  },
+
+  "tools": {
+    "create_outline": { "displayName": "Create Outline", "description": "Create a story outline with premise and three-act structure. Call this when designing the outline for the first time." },
+    "update_outline": { "displayName": "Update Outline", "description": "Modify the existing outline content, you can update a specific act or the overall premise." },
+    "get_outline": { "displayName": "Get Outline", "description": "Get the outline of the current story." },
+    "create_character": { "displayName": "Create Character", "description": "Create a new character. Call this tool to add a character to the story." },
+    "update_character": { "displayName": "Update Character", "description": "Modify an existing character's information." },
+    "delete_character": { "displayName": "Delete Character", "description": "Remove a character from the story." },
+    "get_character": { "displayName": "Get Character", "description": "Get detailed information about a specified character." },
+    "list_characters": { "displayName": "List Characters", "description": "List all characters in the current story." },
+    "plan_chapters": { "displayName": "Plan Chapters", "description": "Plan chapter divisions and summaries based on the outline. Call this after the outline is confirmed." },
+    "write_chapter": { "displayName": "Write Chapter", "description": "Write the content of a specified chapter. This is streaming output, users will see the content generated progressively." },
+    "rewrite_chapter": { "displayName": "Rewrite Chapter", "description": "Rewrite a specified chapter based on user feedback." },
+    "get_chapter": { "displayName": "Get Chapter", "description": "Get the full content of a specified chapter." },
+    "set_world_building": { "displayName": "Set Worldbuilding", "description": "Set the worldbuilding for the story, including era, location, rules, culture, etc." },
+    "get_world_building": { "displayName": "Get Worldbuilding", "description": "Get the worldbuilding settings of the current story." },
+    "set_style": { "displayName": "Set Style", "description": "Set writing style preferences, including narrative perspective, tense, language style, etc." },
+    "get_style": { "displayName": "Get Style", "description": "Get the writing style settings of the current story, including narrative perspective, tense, language style, etc." },
+    "upsert_story": { "displayName": "Create or Update Story", "description": "Create a new story or update existing story information. If the story record already exists, update the title and synopsis; if not, create a new one." },
+    "get_story_status": { "displayName": "Get Story Status", "description": "Get the overall status of the current story, including progress, chapter completion, character count, etc." },
+    "generate_title": { "displayName": "Generate Title", "description": "Generate a title based on the story content and update the novel title." },
+    "generate_synopsis": { "displayName": "Generate Synopsis", "description": "Generate a synopsis based on the story content and update the novel synopsis." }
+  },
+
+  "toolLabels": {
+    "title": "Title",
+    "synopsis": "Synopsis",
+    "newTitle": "New Title",
+    "status": "Status",
+    "wordCount": "Word Count",
+    "completedChapters": "Completed",
+    "totalChapters": "Total Chapters",
+    "characterCount": "Characters",
+    "hasOutline": "Outline",
+    "hasOutlineTrue": "Has Outline",
+    "hasOutlineFalse": "No Outline",
+    "index": "Chapter",
+    "content": "Content",
+    "contentPreview": "Content Preview",
+    "summary": "Summary",
+    "name": "Name",
+    "role": "Role",
+    "appearance": "Appearance",
+    "personality": "Personality",
+    "background": "Background",
+    "motivation": "Motivation",
+    "arc": "Arc",
+    "relationships": "Relationships",
+    "characterId": "Character ID",
+    "era": "Era",
+    "location": "Location",
+    "rules": "Rules",
+    "culture": "Culture",
+    "notes": "Notes",
+    "factions": "Factions",
+    "narrativePerspective": "Narrative Perspective",
+    "tense": "Tense",
+    "languageStyle": "Language Style",
+    "premise": "Premise",
+    "act1Detail": "Act 1 · Setup",
+    "act2Detail": "Act 2 · Confrontation",
+    "act3Detail": "Act 3 · Resolution",
+    "act1": "Act 1",
+    "act2": "Act 2",
+    "act3": "Act 3",
+    "act1KeyEvents": "Act 1 Key Events",
+    "act1CharacterArcs": "Act 1 Character Arcs",
+    "act2KeyEvents": "Act 2 Key Events",
+    "act2CharacterArcs": "Act 2 Character Arcs",
+    "act3KeyEvents": "Act 3 Key Events",
+    "act3CharacterArcs": "Act 3 Character Arcs",
+    "chapterPlan": "Chapter Plan",
+    "planned": "Planned",
+    "characterList": "Character List",
+    "rewriteContent": "Rewrite Content"
+  },
+
+  "toolTransforms": {
+    "saved": "Saved: {value}",
+    "updatedTitle": "Updated to: {value}",
+    "created": "Created: {value}",
+    "updated": "Updated: {value}",
+    "wordsCount": "{count} words",
+    "chaptersCount": "{count} chapters",
+    "charsCount": "{count} characters",
+    "chapterNumber": "Ch.{index}",
+    "success": "Success",
+    "titleGenerated": "Title generated: {title}",
+    "synopsisGenerated": "Synopsis generated",
+    "synopsisUpdated": "Synopsis updated",
+    "outlineCreated": "Outline created",
+    "outlineUpdated": "Outline updated",
+    "outlineFetched": "Outline fetched",
+    "chaptersPlanDone": "{count} chapters planned",
+    "chapterWritten": "{wordCount} words · Completed",
+    "chapterRewritten": "{wordCount} words · Rewritten",
+    "characterCreated": "Character created",
+    "characterUpdated": "Character updated",
+    "characterDeleted": "Character deleted",
+    "characterCountLabel": "{count} characters",
+    "worldBuildingSet": "Worldbuilding set",
+    "styleSet": "Style set",
+    "noCharacters": "(No characters)"
   },
 
   "error": {

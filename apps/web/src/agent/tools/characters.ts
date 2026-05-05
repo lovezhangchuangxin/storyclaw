@@ -12,9 +12,9 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
   return [
     {
       name: 'create_character',
-      displayName: '创建角色',
+      displayName: 'tools.create_character.displayName',
       icon: '👤',
-      description: '创建新角色。调用此工具来添加角色到故事中。',
+      description: 'tools.create_character.description',
       parameters: {
         type: 'object',
         properties: {
@@ -61,9 +61,9 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'update_character',
-      displayName: '更新角色',
+      displayName: 'tools.update_character.displayName',
       icon: '👤',
-      description: '修改已有角色的信息。',
+      description: 'tools.update_character.description',
       parameters: {
         type: 'object',
         properties: {
@@ -142,9 +142,9 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'delete_character',
-      displayName: '删除角色',
+      displayName: 'tools.delete_character.displayName',
       icon: '👤',
-      description: '从故事中删除角色。',
+      description: 'tools.delete_character.description',
       parameters: {
         type: 'object',
         properties: { characterId: { type: 'string', description: '角色ID' } },
@@ -160,9 +160,9 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'get_character',
-      displayName: '获取角色',
+      displayName: 'tools.get_character.displayName',
       icon: '👤',
-      description: '获取指定角色的详细信息。',
+      description: 'tools.get_character.description',
       parameters: {
         type: 'object',
         properties: { characterId: { type: 'string' } },
@@ -178,9 +178,9 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'list_characters',
-      displayName: '列出角色',
+      displayName: 'tools.list_characters.displayName',
       icon: '👤',
-      description: '列出当前故事的所有角色。',
+      description: 'tools.list_characters.description',
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {

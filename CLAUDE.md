@@ -123,8 +123,6 @@ storyclaw/
 
 **注意事项：**
 - `defineProps()` 中不能引用 `<script setup>` 局部变量（编译器 hoist），需用 `i18n.global.t()`
-- Agent 内部（Web Worker 上下文）的状态消息目前保持中文，不走 i18n
-- Agent LLM 系统提示词（`persona.ts`、工具描述等）保持中文，不参与 i18n
 - 路由 `meta.title` 已改为 i18n key（如 `'sidebar.bookshelf'`），由 AppLayout 自动翻译
 
 ### 开发任务

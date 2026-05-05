@@ -6,9 +6,9 @@ export function createStyleTools(context: ToolContext): ToolDefinition[] {
   return [
     {
       name: 'set_style',
-      displayName: '设定文风',
+      displayName: 'tools.set_style.displayName',
       icon: '🎨',
-      description: '设定文风偏好，包括叙事视角、时态、语言风格等。',
+      description: 'tools.set_style.description',
       parameters: {
         type: 'object',
         properties: {
@@ -45,9 +45,9 @@ export function createStyleTools(context: ToolContext): ToolDefinition[] {
     },
     {
       name: 'get_style',
-      displayName: '获取文风',
+      displayName: 'tools.get_style.displayName',
       icon: '🎨',
-      description: '获取当前故事的文风设定，包括叙事视角、时态、语言风格等。',
+      description: 'tools.get_style.description',
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {

@@ -7,9 +7,9 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
   return [
     {
       name: 'set_world_building',
-      displayName: '设定世界观',
+      displayName: 'tools.set_world_building.displayName',
       icon: '🌍',
-      description: '设定故事的世界观，包括时代背景、地点、规则、文化等。',
+      description: 'tools.set_world_building.description',
       parameters: {
         type: 'object',
         properties: {
@@ -73,9 +73,9 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
     },
     {
       name: 'get_world_building',
-      displayName: '获取世界观',
+      displayName: 'tools.get_world_building.displayName',
       icon: '🌍',
-      description: '获取当前故事的世界观设定。',
+      description: 'tools.get_world_building.description',
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {
