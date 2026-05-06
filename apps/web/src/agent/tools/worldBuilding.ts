@@ -51,6 +51,25 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
           .optional(),
       }),
       async execute(args: Record<string, unknown>) {
+        const existing = await getWorldBuildingByNovelId(context.novelId)
+        if (existing) {
+          existing.era = args.era as string
+          existing.location = args.location as string
+          if ('rules' in args && args.rules != null) existing.rules = args.rules as string
+          if ('culture' in args && args.culture != null) existing.culture = args.culture as string
+          if ('notes' in args && args.notes != null) existing.notes = args.notes as string
+          if (args.factions) {
+            existing.factions = (args.factions as Array<Record<string, unknown>>).map((f) => ({
+              name: f.name as string,
+              description: (f.description as string) ?? '',
+              goals: (f.goals as string) ?? '',
+            }))
+          }
+          existing.updatedAt = Date.now()
+          await saveWorldBuilding(existing)
+          return { success: true, data: existing }
+        }
+
         const wb: WorldBuilding = {
           novelId: context.novelId,
           era: args.era as string,

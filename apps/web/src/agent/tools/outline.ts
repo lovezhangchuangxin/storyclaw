@@ -26,6 +26,17 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
         act3: z.string(),
       }),
       async execute(args: Record<string, unknown>) {
+        const existing = await getOutlineByNovelId(context.novelId)
+        if (existing) {
+          existing.premise = args.premise as string
+          existing.threeActs.act1.summary = args.act1 as string
+          existing.threeActs.act2.summary = args.act2 as string
+          existing.threeActs.act3.summary = args.act3 as string
+          existing.updatedAt = Date.now()
+          await saveOutline(existing)
+          return { success: true, data: existing }
+        }
+
         const outline = {
           novelId: context.novelId,
           premise: args.premise as string,

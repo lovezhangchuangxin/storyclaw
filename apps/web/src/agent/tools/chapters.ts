@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { ToolContext, ToolDefinition } from './types'
-import { getChapterByIndex, getChaptersByNovelId, saveChapter } from '@/db/chapters'
+import { getChapterByIndex, getChaptersByNovelId, saveChapter, deleteChapter } from '@/db/chapters'
 import { getNovelById, updateNovel } from '@/db/novels'
 import { getOutlineByNovelId, saveOutline } from '@/db/outlines'
 import type { Chapter } from '@/db/types'
@@ -64,25 +64,44 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
           status: 'planned' as const,
         }))
 
-        // Write chapters first so the store is fully populated before updating the outline.
+        // Fetch existing chapters to preserve already-written content.
+        const existing = await getChaptersByNovelId(context.novelId)
+        const existingMap = new Map(existing.map((ch) => [ch.index, ch]))
+
         await Promise.all(
           chapterPlans.map((plan) => {
-            const chapter: Chapter = {
-              novelId: context.novelId,
-              index: plan.index,
-              title: plan.title,
-              summary: plan.summary,
-              content: '',
-              wordCount: 0,
-              status: 'planned',
-              pointOfView: plan.pointOfView,
-              scenes: [],
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-            }
+            const prev = existingMap.get(plan.index)
+            const chapter: Chapter = prev
+              ? {
+                  ...prev,
+                  title: plan.title,
+                  summary: plan.summary,
+                  pointOfView: plan.pointOfView,
+                  updatedAt: Date.now(),
+                }
+              : {
+                  novelId: context.novelId,
+                  index: plan.index,
+                  title: plan.title,
+                  summary: plan.summary,
+                  content: '',
+                  wordCount: 0,
+                  status: 'planned',
+                  pointOfView: plan.pointOfView,
+                  scenes: [],
+                  createdAt: Date.now(),
+                  updatedAt: Date.now(),
+                }
             return saveChapter(chapter)
           }),
         )
+
+        // Remove stale chapters beyond the new plan range
+        const maxIndex = chapterPlans.length - 1
+        const stale = existing.filter((ch) => ch.index > maxIndex)
+        if (stale.length > 0) {
+          await Promise.all(stale.map((ch) => deleteChapter(context.novelId, ch.index)))
+        }
 
         if (outline) {
           outline.chapterPlan = chapterPlans

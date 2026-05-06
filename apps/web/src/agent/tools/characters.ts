@@ -43,6 +43,24 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         arc: z.string().optional(),
       }),
       async execute(args: Record<string, unknown>) {
+        // Deduplicate by name: update existing character instead of creating a duplicate.
+        const existing = await getCharactersByNovelId(context.novelId)
+        const prev = existing.find(
+          (c) => c.name.toLowerCase() === (args.name as string).toLowerCase(),
+        )
+
+        if (prev) {
+          prev.role = args.role as Character['role']
+          prev.appearance = (args.appearance as string) ?? prev.appearance
+          prev.personality = args.personality as string
+          prev.background = (args.background as string) ?? prev.background
+          prev.motivation = (args.motivation as string) ?? prev.motivation
+          prev.arc = (args.arc as string) ?? prev.arc
+          prev.updatedAt = Date.now()
+          await saveCharacter(prev)
+          return { success: true, data: prev }
+        }
+
         const character: Character = {
           id: uuid(),
           novelId: context.novelId,
