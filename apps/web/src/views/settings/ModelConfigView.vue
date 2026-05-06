@@ -14,7 +14,6 @@ import type {
 } from '@/db/types'
 import { DEFAULT_CONFIG } from '@/db/types'
 import { modelLabel } from '@/lib/model-utils'
-import { uuid } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
 import { useBackendModelsStore } from '@/stores/backendModels'
 import ModelDialog from './components/ModelDialog.vue'
@@ -48,7 +47,7 @@ function openEdit(model: ModelConfig) {
 
 function openBackendAdd() {
   editingModel.value = {
-    id: uuid(),
+    id: '',
     provider: '',
     apiBase: '',
     apiKey: '',
