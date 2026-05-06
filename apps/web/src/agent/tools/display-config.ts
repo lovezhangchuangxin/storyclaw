@@ -71,6 +71,8 @@ function statusLabel(v: string): string {
     editing: t('story.tool.status.editing'),
     abandoned: t('story.tool.status.abandoned'),
     planned: t('story.tool.status.planned'),
+    draft: t('story.tool.status.draft'),
+    archived: t('story.tool.status.archived'),
   }
   return map[v] ?? v
 }
@@ -141,35 +143,9 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
     },
   },
 
-  generate_title: {
-    argFields: [{ label: 'toolLabels.newTitle', key: 'title', type: 'text' }],
-    resultFields: [
-      {
-        label: 'toolLabels.title',
-        key: 'title',
-        type: 'text',
-        transform: (v) => t('toolTransforms.updatedTitle', { value: v }),
-      },
-    ],
-    resultPreview: (r) => t('toolTransforms.titleGenerated', { title: r.title }),
-  },
-
-  generate_synopsis: {
-    argFields: [{ label: 'toolLabels.synopsis', key: 'synopsis', type: 'multiline' }],
-    resultFields: [
-      {
-        label: 'toolLabels.status',
-        key: 'success',
-        type: 'badge',
-        transform: () => t('toolTransforms.synopsisGenerated'),
-      },
-    ],
-    resultPreview: () => t('toolTransforms.synopsisUpdated'),
-  },
-
   // ── Outline ─────────────────────────────────────────────
 
-  create_outline: {
+  upsert_outline: {
     argFields: [
       { label: 'toolLabels.premise', key: 'premise', type: 'multiline' },
       { label: 'toolLabels.act1Detail', key: 'act1', type: 'multiline' },
@@ -280,38 +256,6 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
       }),
   },
 
-  rewrite_chapter: {
-    argFields: [
-      {
-        label: 'toolLabels.index',
-        key: 'index',
-        type: 'text',
-        transform: (v) => t('toolTransforms.chapterNumber', { index: Number(v) + 1 }),
-      },
-      { label: 'toolLabels.rewriteContent', key: 'content', type: 'multiline' },
-    ],
-    resultFields: [
-      {
-        label: 'toolLabels.wordCount',
-        key: 'wordCount',
-        type: 'text',
-        transform: (v) => t('toolTransforms.wordsCount', { count: Number(v).toLocaleString() }),
-      },
-    ],
-    argPreview: (args) => {
-      const idx = args.index as number
-      const chapter =
-        typeof idx === 'number' ? t('toolTransforms.chapterNumber', { index: idx + 1 }) : ''
-      const content = args.content as string | undefined
-      const preview = content ? content.replace(/\n/g, ' ').slice(0, 30) : ''
-      return [chapter, preview].filter(Boolean).join(' · ')
-    },
-    resultPreview: (r) =>
-      t('toolTransforms.chapterRewritten', {
-        wordCount: Number(r.wordCount ?? 0).toLocaleString(),
-      }),
-  },
-
   get_chapter: {
     argFields: [
       {
@@ -342,6 +286,80 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
       'title' in r
         ? `${t('toolTransforms.chapterNumber', { index: Number(r.index ?? 0) + 1 })} · ${r.title}`
         : '',
+  },
+
+  list_chapters: {
+    resultFields: [
+      {
+        label: 'toolLabels.chapterCount',
+        key: 'count',
+        type: 'text',
+        transform: (v) => t('toolTransforms.chaptersCount', { count: v }),
+      },
+      {
+        label: 'toolLabels.chapterList',
+        key: 'chapters',
+        type: 'list',
+        transform: (v) => {
+          const chapters = v as
+            | Array<{ index: number; title: string; status: string; wordCount: number }>
+            | undefined
+          if (!chapters?.length) return t('toolTransforms.noChapters')
+          return chapters
+            .map(
+              (c) =>
+                `${t('toolTransforms.chapterNumber', { index: c.index + 1 })} ${c.title} (${statusLabel(c.status)}, ${t('toolTransforms.wordsCount', { count: c.wordCount.toLocaleString() })})`,
+            )
+            .join('\n')
+        },
+      },
+    ],
+    resultPreview: (r) => t('toolTransforms.chaptersCount', { count: r.count ?? 0 }),
+  },
+
+  delete_chapter: {
+    argFields: [
+      {
+        label: 'toolLabels.index',
+        key: 'index',
+        type: 'text',
+        transform: (v) => t('toolTransforms.chapterNumber', { index: Number(v) + 1 }),
+      },
+    ],
+    resultPreview: (r) =>
+      t('toolTransforms.chapterDeleted', {
+        index: Number(r.deletedIndex ?? 0) + 1,
+        title: r.title ?? '',
+      }),
+  },
+
+  search_content: {
+    argFields: [{ label: 'toolLabels.query', key: 'query', type: 'text' }],
+    resultFields: [
+      {
+        label: 'toolLabels.matchCount',
+        key: 'matchCount',
+        type: 'text',
+        transform: (v) => t('toolTransforms.matchCount', { count: v }),
+      },
+      {
+        label: 'toolLabels.results',
+        key: 'results',
+        type: 'list',
+        transform: (v) => {
+          const results = v as Array<{ index: number; title: string; snippet: string }> | undefined
+          if (!results?.length) return t('toolTransforms.noMatches')
+          return results
+            .map(
+              (r) =>
+                `${t('toolTransforms.chapterNumber', { index: r.index + 1 })} ${r.title}\n${r.snippet}`,
+            )
+            .join('\n\n---\n\n')
+        },
+      },
+    ],
+    argPreview: (args) => String(args.query ?? ''),
+    resultPreview: (r) => t('toolTransforms.matchCount', { count: r.matchCount ?? 0 }),
   },
 
   // ── Characters ──────────────────────────────────────────
@@ -498,7 +516,7 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
 
   // ── World building ──────────────────────────────────────
 
-  set_world_building: {
+  upsert_world_building: {
     argFields: [
       { label: 'toolLabels.era', key: 'era', type: 'text' },
       { label: 'toolLabels.location', key: 'location', type: 'text' },

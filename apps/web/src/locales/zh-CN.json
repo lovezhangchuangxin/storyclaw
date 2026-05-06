@@ -183,7 +183,9 @@
         "completed": "已完成",
         "editing": "编辑中",
         "abandoned": "已弃坑",
-        "planned": "已规划"
+        "planned": "已规划",
+        "draft": "草稿",
+        "archived": "已归档"
       }
     },
     "thinking": {
@@ -218,7 +220,8 @@
       "unnamed": "未命名",
       "chapterStatus": {
         "planned": "规划中",
-        "draft": "草稿"
+        "draft": "草稿",
+        "archived": "已归档"
       },
       "worldBuilding": "世界观",
       "character": {
@@ -487,8 +490,8 @@
   },
 
   "tools": {
-    "create_outline": {
-      "displayName": "创建大纲",
+    "upsert_outline": {
+      "displayName": "创建/更新大纲",
       "description": "创建故事大纲，包含标题、梗概和三幕结构。在首次设计大纲时调用。"
     },
     "update_outline": {
@@ -510,13 +513,18 @@
     },
     "write_chapter": {
       "displayName": "创作章节",
-      "description": "创作指定章节的内容。这是流式输出，用户将看到内容逐步生成。"
+      "description": "创作或重写指定章节的内容。这是流式输出，用户将看到内容逐步生成。"
     },
-    "rewrite_chapter": { "displayName": "重写章节", "description": "根据用户反馈重写指定章节。" },
     "get_chapter": { "displayName": "获取章节", "description": "获取指定章节的完整内容。" },
-    "set_world_building": {
-      "displayName": "设定世界观",
-      "description": "设定故事的世界观，包括时代背景、地点、规则、文化等。"
+    "list_chapters": {
+      "displayName": "列出章节",
+      "description": "列出当前故事所有章节的概览信息。"
+    },
+    "delete_chapter": { "displayName": "删除章节", "description": "删除指定章节。" },
+    "search_content": { "displayName": "搜索内容", "description": "在所有章节正文中搜索关键词。" },
+    "upsert_world_building": {
+      "displayName": "创建/更新世界观",
+      "description": "创建或更新故事的世界观，包括时代背景、地点、规则、文化等。"
     },
     "get_world_building": {
       "displayName": "获取世界观",
@@ -532,19 +540,11 @@
     },
     "upsert_story": {
       "displayName": "创建或更新故事",
-      "description": "创建新故事或更新已有故事信息。如果当前故事记录已存在，则更新标题和简介；如果不存在则新建。创建完成后可以使用 generate_title 和 generate_synopsis 来完善信息。"
+      "description": "创建新故事或更新已有故事信息。可单独更新标题或简介，也可同时传入两者。"
     },
     "get_story_status": {
       "displayName": "获取故事状态",
       "description": "获取当前故事的整体状态，包括进度、章节完成情况、角色数量等。"
-    },
-    "generate_title": {
-      "displayName": "生成标题",
-      "description": "根据故事内容生成标题，并更新小说标题。"
-    },
-    "generate_synopsis": {
-      "displayName": "生成简介",
-      "description": "根据故事内容生成简介，并更新小说简介。"
     }
   },
 
@@ -598,7 +598,11 @@
     "chapterPlan": "章节规划",
     "planned": "已规划",
     "characterList": "角色列表",
-    "rewriteContent": "重写内容"
+    "chapterCount": "章节数",
+    "chapterList": "章节列表",
+    "query": "关键词",
+    "matchCount": "匹配数",
+    "results": "搜索结果"
   },
 
   "toolTransforms": {
@@ -611,15 +615,15 @@
     "charsCount": "{count} 位",
     "chapterNumber": "第{index}章",
     "success": "操作成功",
-    "titleGenerated": "标题已生成：{title}",
-    "synopsisGenerated": "简介已生成",
-    "synopsisUpdated": "简介已更新",
     "outlineCreated": "大纲已创建",
     "outlineUpdated": "大纲已更新",
     "outlineFetched": "大纲已获取",
     "chaptersPlanDone": "{count} 章规划完成",
     "chapterWritten": "{wordCount} 字 · 已完成",
-    "chapterRewritten": "{wordCount} 字 · 已重写",
+    "chapterDeleted": "第{index}章「{title}」已删除",
+    "noChapters": "（暂无章节）",
+    "matchCount": "{count} 个匹配",
+    "noMatches": "未找到匹配内容",
     "characterCreated": "角色已创建",
     "characterUpdated": "角色已更新",
     "characterDeleted": "角色已删除",

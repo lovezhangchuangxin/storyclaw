@@ -183,7 +183,9 @@
         "completed": "Completed",
         "editing": "Editing",
         "abandoned": "Abandoned",
-        "planned": "Planned"
+        "planned": "Planned",
+        "draft": "Draft",
+        "archived": "Archived"
       }
     },
     "thinking": {
@@ -218,7 +220,8 @@
       "unnamed": "Unnamed",
       "chapterStatus": {
         "planned": "Planned",
-        "draft": "Draft"
+        "draft": "Draft",
+        "archived": "Archived"
       },
       "worldBuilding": "Worldbuilding",
       "character": {
@@ -487,8 +490,8 @@
   },
 
   "tools": {
-    "create_outline": {
-      "displayName": "Create Outline",
+    "upsert_outline": {
+      "displayName": "Upsert Outline",
       "description": "Create a story outline with premise and three-act structure. Call this when designing the outline for the first time."
     },
     "update_outline": {
@@ -525,19 +528,27 @@
     },
     "write_chapter": {
       "displayName": "Write Chapter",
-      "description": "Write the content of a specified chapter. This is streaming output, users will see the content generated progressively."
-    },
-    "rewrite_chapter": {
-      "displayName": "Rewrite Chapter",
-      "description": "Rewrite a specified chapter based on user feedback."
+      "description": "Write or rewrite the content of a specified chapter. This is streaming output, users will see the content generated progressively."
     },
     "get_chapter": {
       "displayName": "Get Chapter",
       "description": "Get the full content of a specified chapter."
     },
-    "set_world_building": {
-      "displayName": "Set Worldbuilding",
-      "description": "Set the worldbuilding for the story, including era, location, rules, culture, etc."
+    "list_chapters": {
+      "displayName": "List Chapters",
+      "description": "List all chapters in the current story with overview information."
+    },
+    "delete_chapter": {
+      "displayName": "Delete Chapter",
+      "description": "Delete a specified chapter."
+    },
+    "search_content": {
+      "displayName": "Search Content",
+      "description": "Search for a keyword across all chapter content."
+    },
+    "upsert_world_building": {
+      "displayName": "Upsert Worldbuilding",
+      "description": "Create or update the worldbuilding for the story, including era, location, rules, culture, etc."
     },
     "get_world_building": {
       "displayName": "Get Worldbuilding",
@@ -553,19 +564,11 @@
     },
     "upsert_story": {
       "displayName": "Create or Update Story",
-      "description": "Create a new story or update existing story information. If the story record already exists, update the title and synopsis; if not, create a new one."
+      "description": "Create a new story or update existing story information. Can update title or synopsis independently, or both together."
     },
     "get_story_status": {
       "displayName": "Get Story Status",
       "description": "Get the overall status of the current story, including progress, chapter completion, character count, etc."
-    },
-    "generate_title": {
-      "displayName": "Generate Title",
-      "description": "Generate a title based on the story content and update the novel title."
-    },
-    "generate_synopsis": {
-      "displayName": "Generate Synopsis",
-      "description": "Generate a synopsis based on the story content and update the novel synopsis."
     }
   },
 
@@ -619,7 +622,11 @@
     "chapterPlan": "Chapter Plan",
     "planned": "Planned",
     "characterList": "Character List",
-    "rewriteContent": "Rewrite Content"
+    "chapterCount": "Chapter Count",
+    "chapterList": "Chapter List",
+    "query": "Query",
+    "matchCount": "Matches",
+    "results": "Results"
   },
 
   "toolTransforms": {
@@ -632,15 +639,15 @@
     "charsCount": "{count} characters",
     "chapterNumber": "Ch.{index}",
     "success": "Success",
-    "titleGenerated": "Title generated: {title}",
-    "synopsisGenerated": "Synopsis generated",
-    "synopsisUpdated": "Synopsis updated",
     "outlineCreated": "Outline created",
     "outlineUpdated": "Outline updated",
     "outlineFetched": "Outline fetched",
     "chaptersPlanDone": "{count} chapters planned",
     "chapterWritten": "{wordCount} words · Completed",
-    "chapterRewritten": "{wordCount} words · Rewritten",
+    "chapterDeleted": "Ch.{index} \"{title}\" deleted",
+    "noChapters": "(No chapters yet)",
+    "matchCount": "{count} matches",
+    "noMatches": "No matches found",
     "characterCreated": "Character created",
     "characterUpdated": "Character updated",
     "characterDeleted": "Character deleted",

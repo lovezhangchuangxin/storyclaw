@@ -58,7 +58,7 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
           prev.arc = (args.arc as string) ?? prev.arc
           prev.updatedAt = Date.now()
           await saveCharacter(prev)
-          return { success: true, data: prev }
+          return { success: true, action: 'updated', data: prev }
         }
 
         const character: Character = {
@@ -75,7 +75,7 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
           updatedAt: Date.now(),
         }
         await saveCharacter(character)
-        return { success: true, data: character }
+        return { success: true, action: 'created', data: character }
       },
     },
     {

@@ -30,6 +30,10 @@ const props = defineProps<{
   novelId: string
 }>()
 
+const emit = defineEmits<{
+  (e: 'chapters-changed'): void
+}>()
+
 const { t } = useI18n()
 
 const input = ref('')
@@ -359,6 +363,8 @@ async function send() {
         })
       }
     }
+
+    emit('chapters-changed')
   } catch (error) {
     if (requestId !== activeRequestId) return
     pushLocalStatus('error', error instanceof Error ? error.message : String(error))

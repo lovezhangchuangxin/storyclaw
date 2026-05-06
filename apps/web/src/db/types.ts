@@ -95,18 +95,11 @@ export interface Chapter {
   title: string
   content: string
   wordCount: number
-  status: 'planned' | 'draft' | 'completed'
+  status: 'planned' | 'draft' | 'completed' | 'archived'
   pointOfView?: string
   summary?: string
-  scenes: Scene[]
   createdAt: number
   updatedAt: number
-}
-
-export interface Scene {
-  id: string
-  title: string
-  content: string
 }
 
 // ---- World Building ----

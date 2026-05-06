@@ -152,6 +152,12 @@ function onJumpToChapter(index: number) {
   if (mode.value === 'agent') mode.value = 'reader'
   chapterIndex.value = index
 }
+
+async function onChaptersChanged() {
+  if (mode.value !== 'reader' || !storyId.value) return
+  chapters.value = await getChaptersByNovelId(storyId.value)
+  chapters.value.sort((a, b) => a.index - b.index)
+}
 </script>
 
 <template>
@@ -179,7 +185,11 @@ function onJumpToChapter(index: number) {
       :class="mode === 'agent' ? 'tab-panel-active' : 'tab-panel-inactive'"
       :aria-hidden="mode !== 'agent'"
     >
-      <AgentChat :key="`agent:${storyId}`" :novel-id="storyId" />
+      <AgentChat
+        :key="`agent:${storyId}`"
+        :novel-id="storyId"
+        @chapters-changed="onChaptersChanged"
+      />
     </div>
 
     <!-- Bottom controls sheet -->

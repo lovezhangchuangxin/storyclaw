@@ -78,11 +78,6 @@ export interface ChapterSnapshot {
   pointOfView: string
   summary: string
   wordCount: number
-  scenes: Array<{
-    id: string
-    title: string
-    content: string
-  }>
   updatedAt: number
 }
 
@@ -219,11 +214,6 @@ function serializeChapters(chapters: Chapter[]): ChapterSnapshot[] {
       pointOfView: chapter.pointOfView ?? '',
       summary: compactText(chapter.summary ?? chapter.content, 600),
       wordCount: chapter.wordCount,
-      scenes: chapter.scenes.map((scene) => ({
-        id: scene.id,
-        title: scene.title,
-        content: compactText(scene.content, 240),
-      })),
       updatedAt: chapter.updatedAt,
     }))
 }

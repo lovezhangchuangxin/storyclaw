@@ -16,28 +16,30 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
       parameters: {
         type: 'object',
         properties: {
-          title: { type: 'string', description: '故事标题' },
-          synopsis: { type: 'string', description: '故事简介' },
+          title: { type: 'string', description: '故事标题（可选，更新时只传需要修改的字段）' },
+          synopsis: { type: 'string', description: '故事简介（可选，更新时只传需要修改的字段）' },
         },
-        required: ['title', 'synopsis'],
+        required: [],
       },
       validationSchema: z.object({
-        title: z.string(),
-        synopsis: z.string(),
+        title: z.string().optional(),
+        synopsis: z.string().optional(),
       }),
       async execute(args: Record<string, unknown>) {
         const existing = await getNovelById(context.novelId)
         if (existing) {
-          const changed =
-            ('title' in args && args.title !== existing.title) ||
-            ('synopsis' in args && args.synopsis !== existing.synopsis)
-          if (changed) {
-            if ('title' in args) existing.title = args.title as string
-            if ('synopsis' in args) existing.synopsis = args.synopsis as string
-            existing.updatedAt = Date.now()
-            await updateNovel(existing)
+          if (!('title' in args) && !('synopsis' in args)) {
+            return { success: true, id: existing.id, title: existing.title, unchanged: true }
           }
+          if ('title' in args) existing.title = args.title as string
+          if ('synopsis' in args) existing.synopsis = args.synopsis as string
+          existing.updatedAt = Date.now()
+          await updateNovel(existing)
           return { success: true, id: existing.id, title: existing.title }
+        }
+
+        if (!args.title && !args.synopsis) {
+          return { error: '创建故事时至少需要提供标题或简介' }
         }
 
         const novel: Novel = {
@@ -85,52 +87,6 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
           hasOutline: !!outline,
           styleSettings: novel.styleSettings,
         }
-      },
-    },
-    {
-      name: 'generate_title',
-      displayName: 'tools.generate_title.displayName',
-      icon: '🏷️',
-      description: 'tools.generate_title.description',
-      parameters: {
-        type: 'object',
-        properties: { title: { type: 'string', description: '新标题' } },
-        required: ['title'],
-      },
-      validationSchema: z.object({
-        title: z.string(),
-      }),
-      async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
-        if (!novel) return { error: '小说不存在' }
-
-        novel.title = args.title as string
-        novel.updatedAt = Date.now()
-        await updateNovel(novel)
-        return { success: true, title: novel.title }
-      },
-    },
-    {
-      name: 'generate_synopsis',
-      displayName: 'tools.generate_synopsis.displayName',
-      icon: '🏷️',
-      description: 'tools.generate_synopsis.description',
-      parameters: {
-        type: 'object',
-        properties: { synopsis: { type: 'string', description: '故事简介' } },
-        required: ['synopsis'],
-      },
-      validationSchema: z.object({
-        synopsis: z.string(),
-      }),
-      async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
-        if (!novel) return { error: '小说不存在' }
-
-        novel.synopsis = args.synopsis as string
-        novel.updatedAt = Date.now()
-        await updateNovel(novel)
-        return { success: true, synopsis: novel.synopsis }
       },
     },
   ]

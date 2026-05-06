@@ -127,12 +127,8 @@ const argSummary = computed(() => {
     return config.value.argPreview
   }
 
-  // Streaming fallback for write_chapter / rewrite_chapter
-  if (
-    !args &&
-    props.rawArguments &&
-    (props.toolName === 'write_chapter' || props.toolName === 'rewrite_chapter')
-  ) {
+  // Streaming fallback for write_chapter
+  if (!args && props.rawArguments && props.toolName === 'write_chapter') {
     const preview = extractStreamingToolPreview(props.rawArguments)
     return [
       preview.chapter,
@@ -146,8 +142,7 @@ const argSummary = computed(() => {
   // Legacy fallback for tools without config
   if (!args) return ''
   switch (props.toolName) {
-    case 'write_chapter':
-    case 'rewrite_chapter': {
+    case 'write_chapter': {
       const idx = args.index as number
       const chapter =
         typeof idx === 'number' ? t('story.tool.chapterFormat', { index: idx + 1 }) : ''
@@ -203,11 +198,7 @@ const resultSummary = computed(() => {
     if (parsed.wordCount !== undefined)
       parts.push(t('story.tool.words', { count: parsed.wordCount }))
     if (parsed.title) parts.push(parsed.title)
-    if (
-      parsed.index !== undefined &&
-      props.toolName !== 'write_chapter' &&
-      props.toolName !== 'rewrite_chapter'
-    )
+    if (parsed.index !== undefined && props.toolName !== 'write_chapter')
       parts.push(t('story.tool.chapterFormat', { index: parsed.index + 1 }))
     if (
       typeof parsed.name === 'string' &&
@@ -265,7 +256,6 @@ const textClass = computed(() => {
 const toolIconComp = computed(() => {
   switch (props.toolName) {
     case 'write_chapter':
-    case 'rewrite_chapter':
       return PenLine
     case 'plan_chapters':
       return ListOrdered

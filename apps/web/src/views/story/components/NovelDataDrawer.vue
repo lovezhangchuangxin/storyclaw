@@ -94,6 +94,7 @@ const chapterStatusLabels: Record<string, () => string> = {
   writing: () => t('story.drawer.status.writing'),
   draft: () => t('story.drawer.chapterStatus.draft'),
   completed: () => t('story.drawer.status.completed'),
+  archived: () => t('story.drawer.chapterStatus.archived'),
 }
 
 const roleLabels: Record<string, () => string> = {
@@ -114,6 +115,7 @@ function badgeClass(status: string): string {
     case 'planned':
       return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
     case 'paused':
+    case 'archived':
       return 'bg-muted text-muted-foreground'
     default:
       return ''

@@ -6,10 +6,10 @@ import type { WorldBuilding } from '@/db/types'
 export function createWorldBuildingTools(context: ToolContext): ToolDefinition[] {
   return [
     {
-      name: 'set_world_building',
-      displayName: 'tools.set_world_building.displayName',
+      name: 'upsert_world_building',
+      displayName: 'tools.upsert_world_building.displayName',
       icon: '🌍',
-      description: 'tools.set_world_building.description',
+      description: 'tools.upsert_world_building.description',
       parameters: {
         type: 'object',
         properties: {
@@ -20,7 +20,7 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
           notes: { type: 'string', description: '其他备注' },
           factions: {
             type: 'array',
-            description: '势力/派系列表（可选）',
+            description: '势力/派系列表（可选，设置后会替换全部已有势力）',
             items: {
               type: 'object',
               properties: {
@@ -32,11 +32,11 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
             },
           },
         },
-        required: ['era', 'location'],
+        required: [],
       },
       validationSchema: z.object({
-        era: z.string(),
-        location: z.string(),
+        era: z.string().optional(),
+        location: z.string().optional(),
         rules: z.string().optional(),
         culture: z.string().optional(),
         notes: z.string().optional(),
@@ -53,8 +53,9 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
       async execute(args: Record<string, unknown>) {
         const existing = await getWorldBuildingByNovelId(context.novelId)
         if (existing) {
-          existing.era = args.era as string
-          existing.location = args.location as string
+          if ('era' in args && args.era != null) existing.era = args.era as string
+          if ('location' in args && args.location != null)
+            existing.location = args.location as string
           if ('rules' in args && args.rules != null) existing.rules = args.rules as string
           if ('culture' in args && args.culture != null) existing.culture = args.culture as string
           if ('notes' in args && args.notes != null) existing.notes = args.notes as string
@@ -70,10 +71,14 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
           return { success: true, data: existing }
         }
 
+        if (!args.era && !args.location) {
+          return { error: '首次创建世界观时至少需要提供时代背景或主要地点' }
+        }
+
         const wb: WorldBuilding = {
           novelId: context.novelId,
-          era: args.era as string,
-          location: args.location as string,
+          era: (args.era as string) ?? '',
+          location: (args.location as string) ?? '',
           rules: (args.rules as string) ?? '',
           culture: (args.culture as string) ?? '',
           factions: args.factions
