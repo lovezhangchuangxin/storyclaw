@@ -49,9 +49,7 @@ function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSett
     <div class="px-5 pb-5 space-y-4">
       <!-- Theme -->
       <div>
-        <div
-          class="flex items-center gap-4 overflow-x-auto scrollbar-none pt-2 pb-1 px-0.5 -mx-0.5"
-        >
+        <div class="flex items-center gap-4 overflow-x-auto scrollbar-none pt-2 pb-1 px-1 -mx-1">
           <button
             v-for="t in themes"
             :key="t.id"
