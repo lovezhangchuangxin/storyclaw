@@ -7,7 +7,7 @@ import { MessageCircle, BookOpen, Database } from 'lucide-vue-next'
 import ReaderView from '@/components/reader/ReaderView.vue'
 import ReaderControls from '@/components/reader/ReaderControls.vue'
 import { getChaptersByNovelId } from '@/db/chapters'
-import { getConfig } from '@/db/config'
+import { getConfig, saveConfig } from '@/db/config'
 import type { ReaderSettings } from '@/components/reader/types'
 import type { Chapter } from '@/db/types'
 
@@ -99,7 +99,6 @@ const settings = ref<ReaderSettings>({
   lineHeight: 1.6,
   paragraphSpacing: 1,
   scrollMode: 'scroll',
-  autoScrollSpeed: 50,
 })
 
 getConfig().then((c) => {
@@ -135,8 +134,18 @@ function onShowControls() {
   showControls.value = !showControls.value
 }
 
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+
 function updateSettings(s: ReaderSettings) {
   settings.value = s
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(async () => {
+    const c = await getConfig()
+    if (c) {
+      c.readingSettings = { ...settings.value }
+      saveConfig(c)
+    }
+  }, 300)
 }
 
 function onJumpToChapter(index: number) {

@@ -25,9 +25,20 @@ function migrateTheme(config: Record<string, unknown>): void {
   }
 }
 
+function migrateScrollMode(config: Record<string, unknown>): void {
+  if (config.readingSettings && typeof config.readingSettings === 'object') {
+    const rs = config.readingSettings as Record<string, unknown>
+    if (rs.scrollMode === 'auto') {
+      rs.scrollMode = 'paged'
+    }
+    delete rs.autoScrollSpeed
+  }
+}
+
 function normalizeConfig(config: AppConfig): AppConfig {
   const raw = config as unknown as Record<string, unknown>
   migrateTheme(raw)
+  migrateScrollMode(raw)
   return {
     ...createDefaultConfig(),
     ...raw,

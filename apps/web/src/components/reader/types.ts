@@ -5,8 +5,7 @@ export interface ReaderSettings {
   fontSize: number
   lineHeight: number
   paragraphSpacing: number
-  scrollMode: 'scroll' | 'paged' | 'auto'
-  autoScrollSpeed: number
+  scrollMode: 'scroll' | 'paged'
 }
 
 export const FONT_OPTIONS = [

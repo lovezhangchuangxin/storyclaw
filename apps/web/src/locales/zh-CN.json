@@ -378,10 +378,7 @@
         "scroll": "滚动",
         "scrollDesc": "连续滚动阅读",
         "paged": "翻页",
-        "pagedDesc": "左右翻页浏览",
-        "auto": "自动",
-        "autoDesc": "自动滚动",
-        "autoSpeed": "自动滚动速度"
+        "pagedDesc": "左右翻页浏览"
       },
       "preview": {
         "label": "实时预览",

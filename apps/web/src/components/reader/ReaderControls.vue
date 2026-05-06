@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { BookOpen, ScrollText } from 'lucide-vue-next'
 import { Slider } from '@/components/ui/slider'
 import type { ReaderSettings } from './types'
 import type { AppTheme } from '@/db/types'
@@ -81,6 +82,39 @@ function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSett
             >
               {{ t.name }}
             </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scroll mode -->
+      <div>
+        <p class="text-xs font-medium text-muted-foreground mb-2.5">
+          {{ $t('settings.appearance.scrollMode.label') }}
+        </p>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            class="flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs transition-all duration-200"
+            :class="
+              settings.scrollMode === 'scroll'
+                ? 'bg-primary/10 text-primary font-medium ring-1 ring-primary/30'
+                : 'bg-muted/50 text-muted-foreground hover:bg-muted/80'
+            "
+            @click="updateSetting('scrollMode', 'scroll')"
+          >
+            <ScrollText class="size-3.5" />
+            {{ $t('settings.appearance.scrollMode.scroll') }}
+          </button>
+          <button
+            class="flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs transition-all duration-200"
+            :class="
+              settings.scrollMode === 'paged'
+                ? 'bg-primary/10 text-primary font-medium ring-1 ring-primary/30'
+                : 'bg-muted/50 text-muted-foreground hover:bg-muted/80'
+            "
+            @click="updateSetting('scrollMode', 'paged')"
+          >
+            <BookOpen class="size-3.5" />
+            {{ $t('settings.appearance.scrollMode.paged') }}
           </button>
         </div>
       </div>

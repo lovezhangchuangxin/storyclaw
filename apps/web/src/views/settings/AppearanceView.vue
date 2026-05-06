@@ -11,7 +11,6 @@ import {
   Type,
   BookOpen,
   ScrollText,
-  Play,
   Eye,
   ImageIcon,
   Plus,
@@ -177,17 +176,9 @@ const paragraphSpacing = computed({
 
 const scrollMode = computed({
   get: () => config.value.readingSettings.scrollMode,
-  set: (v: 'scroll' | 'paged' | 'auto') => {
+  set: (v: 'scroll' | 'paged') => {
     config.value.readingSettings.scrollMode = v
     save()
-  },
-})
-
-const autoScrollSpeed = computed({
-  get: () => [config.value.readingSettings.autoScrollSpeed],
-  set: (v: number[]) => {
-    config.value.readingSettings.autoScrollSpeed = v[0]
-    debouncedSave()
   },
 })
 
@@ -460,7 +451,7 @@ loadAll()
         </p>
       </div>
 
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-2 gap-3">
         <button
           class="rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer flex flex-col items-center gap-2 text-center"
           :class="
@@ -502,41 +493,6 @@ loadAll()
             </p>
           </div>
         </button>
-
-        <button
-          class="rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer flex flex-col items-center gap-2 text-center"
-          :class="
-            scrollMode === 'auto'
-              ? 'border-primary bg-primary/5 shadow-sm'
-              : 'border-transparent hover:border-border/80 shadow-sm'
-          "
-          @click="scrollMode = 'auto'"
-        >
-          <Play
-            class="size-5"
-            :class="scrollMode === 'auto' ? 'text-primary' : 'text-muted-foreground'"
-          />
-          <div>
-            <p class="text-xs font-medium">{{ $t('settings.appearance.scrollMode.auto') }}</p>
-            <p class="text-[10px] text-muted-foreground mt-0.5">
-              {{ $t('settings.appearance.scrollMode.autoDesc') }}
-            </p>
-          </div>
-        </button>
-      </div>
-
-      <div v-if="scrollMode === 'auto'" class="pt-4 border-t space-y-1.5">
-        <div class="flex justify-between text-xs text-muted-foreground">
-          <span>{{ $t('settings.appearance.scrollMode.autoSpeed') }}</span>
-          <span>{{ config.readingSettings.autoScrollSpeed }}</span>
-        </div>
-        <Slider
-          :model-value="autoScrollSpeed"
-          :min="10"
-          :max="100"
-          :step="5"
-          @update:model-value="(v?: number[]) => v && (autoScrollSpeed = v)"
-        />
       </div>
     </section>
 

@@ -284,8 +284,7 @@ export interface ReadingSettings {
   fontSize: number
   lineHeight: number
   paragraphSpacing: number
-  scrollMode: 'scroll' | 'paged' | 'auto'
-  autoScrollSpeed: number
+  scrollMode: 'scroll' | 'paged'
 }
 
 // ---- Reading Progress ----
@@ -323,7 +322,6 @@ export const DEFAULT_CONFIG: AppConfig = {
     lineHeight: 1.6,
     paragraphSpacing: 1,
     scrollMode: 'scroll',
-    autoScrollSpeed: 50,
   },
   backgroundSettings: {
     activeImageId: null,

@@ -378,10 +378,7 @@
         "scroll": "Scroll",
         "scrollDesc": "Continuous scrolling",
         "paged": "Paged",
-        "pagedDesc": "Swipe left and right",
-        "auto": "Auto",
-        "autoDesc": "Auto-scroll",
-        "autoSpeed": "Auto-scroll Speed"
+        "pagedDesc": "Swipe left and right"
       },
       "preview": {
         "label": "Live Preview",
