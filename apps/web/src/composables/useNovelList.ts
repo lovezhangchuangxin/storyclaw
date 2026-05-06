@@ -2,6 +2,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getAllNovels, deleteNovel } from '@/db/novels'
+import { getChapterCountByNovelId } from '@/db/chapters'
 import type { Novel } from '@/db/types'
 import { toast } from 'vue-sonner'
 
@@ -10,6 +11,7 @@ export function useNovelList() {
   const { t } = useI18n()
 
   const novels = ref<Novel[]>([])
+  const chapterCounts = ref<Record<string, number>>({})
   const loading = ref(true)
   const error = ref(false)
   const searchQuery = ref('')
@@ -32,6 +34,13 @@ export function useNovelList() {
     try {
       const all = await getAllNovels()
       novels.value = all.sort((a, b) => b.updatedAt - a.updatedAt)
+      const counts: Record<string, number> = {}
+      await Promise.all(
+        novels.value.map(async (n) => {
+          counts[n.id] = await getChapterCountByNovelId(n.id)
+        }),
+      )
+      chapterCounts.value = counts
     } catch {
       error.value = true
     } finally {
@@ -70,6 +79,7 @@ export function useNovelList() {
 
   return {
     novels,
+    chapterCounts,
     loading,
     error,
     searchQuery,

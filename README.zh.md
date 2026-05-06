@@ -210,13 +210,13 @@ docker compose exec -it backend /app/create_admin
 
 Caddy 自动通过 Let's Encrypt 申请和续期 HTTPS 证书。
 
-| 服务        | 镜像                        | 端口           |
-| ----------- | --------------------------- | -------------- |
-| Caddy       | caddy:2-alpine              | 80, 443        |
-| Web (nginx) | 自定义 (node → nginx)       | 内部           |
-| Backend     | 自定义 (rust → debian-slim) | 3000（内部）   |
-| PostgreSQL  | postgres:16-alpine          | 5432（内部）   |
-| Redis       | redis:7-alpine              | 6379（内部）   |
+| 服务        | 镜像                        | 端口         |
+| ----------- | --------------------------- | ------------ |
+| Caddy       | caddy:2-alpine              | 80, 443      |
+| Web (nginx) | 自定义 (node → nginx)       | 内部         |
+| Backend     | 自定义 (rust → debian-slim) | 3000（内部） |
+| PostgreSQL  | postgres:16-alpine          | 5432（内部） |
+| Redis       | redis:7-alpine              | 6379（内部） |
 
 ### 源码构建
 

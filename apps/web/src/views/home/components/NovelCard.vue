@@ -5,6 +5,7 @@ import { relativeTime } from '@/lib/time'
 
 defineProps<{
   novel: Novel
+  chapterCount: number
   coverColor: string
 }>()
 
@@ -45,7 +46,7 @@ const emit = defineEmits<{
       </p>
       <div class="mt-3">
         <span class="text-[11px] text-muted-foreground">{{
-          $t('home.card.words', { count: novel.currentWordCount })
+          $t('home.card.words', { words: novel.currentWordCount, chapters: chapterCount })
         }}</span>
       </div>
       <div class="mt-1 text-[11px] text-muted-foreground/60">

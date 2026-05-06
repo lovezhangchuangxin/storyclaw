@@ -6,6 +6,11 @@ export async function getChaptersByNovelId(novelId: string): Promise<Chapter[]> 
   return db.getAllFromIndex('chapters', 'novelId', novelId)
 }
 
+export async function getChapterCountByNovelId(novelId: string): Promise<number> {
+  const db = await getDB()
+  return db.countFromIndex('chapters', 'novelId', novelId)
+}
+
 export async function getChapterByIndex(
   novelId: string,
   index: number,

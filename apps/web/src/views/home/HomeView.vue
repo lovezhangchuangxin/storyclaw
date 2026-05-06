@@ -45,6 +45,7 @@ function getCoverColor(id: string): string {
 
 const {
   novels,
+  chapterCounts,
   loading,
   error,
   searchQuery,
@@ -185,6 +186,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           v-for="novel in filteredNovels"
           :key="novel.id"
           :novel="novel"
+          :chapter-count="chapterCounts[novel.id] ?? 0"
           :cover-color="getCoverColor(novel.id)"
           @open="openStory"
           @delete="handleDelete"

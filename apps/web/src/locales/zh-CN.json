@@ -67,7 +67,7 @@
     "card": {
       "untitled": "未命名故事",
       "noSynopsis": "暂无简介",
-      "words": "{count} 字",
+      "words": "{words} 字 / {chapters} 章",
       "status": {
         "draft": "草稿",
         "writing": "创作中",

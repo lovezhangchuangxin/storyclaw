@@ -67,7 +67,7 @@
     "card": {
       "untitled": "Untitled Story",
       "noSynopsis": "No synopsis",
-      "words": "{count} words",
+      "words": "{words} words / {chapters} chapters",
       "status": {
         "draft": "Draft",
         "writing": "Writing",
