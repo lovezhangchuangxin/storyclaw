@@ -10,6 +10,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Shield,
+  Github,
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { computed } from 'vue'
@@ -108,7 +109,17 @@ function navigate(path: string) {
 
     <!-- Footer -->
     <div v-show="!(collapsed && variant === 'desktop')" class="shrink-0 px-4 pb-3 pt-1">
-      <p class="text-xs text-muted-foreground">{{ $t('sidebar.version') }} {{ appVersion }}</p>
+      <div class="flex items-center justify-between">
+        <p class="text-xs text-muted-foreground">{{ $t('sidebar.version') }} {{ appVersion }}</p>
+        <a
+          href="https://github.com/lovezhangchuangxin/storyclaw"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-muted-foreground/60 hover:text-foreground transition-colors"
+        >
+          <Github class="size-3.5" />
+        </a>
+      </div>
     </div>
   </aside>
 </template>
