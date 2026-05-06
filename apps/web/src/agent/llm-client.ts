@@ -4,6 +4,42 @@ import { i18n } from '@/i18n'
 import { getAccessToken } from '@/lib/api-client'
 import { isAbortError } from './utils'
 
+const MAX_RETRIES = 3
+const INITIAL_DELAY_MS = 1000
+const MAX_DELAY_MS = 15000
+
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof OpenAI.APIError) {
+    const status = error.status
+    return status === 429 || (status !== undefined && status >= 500 && status < 600)
+  }
+  return false
+}
+
+async function sleepWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'))
+      return
+    }
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
+function getRetryDelay(attempt: number): number {
+  const base = INITIAL_DELAY_MS * Math.pow(2, attempt)
+  const jitter = Math.random() * base * 0.3
+  return Math.min(base + jitter, MAX_DELAY_MS)
+}
+
 export interface LLMClientOptions {
   config: ModelConfig
   onToken?: (token: string) => void
@@ -74,19 +110,36 @@ export function createLLMClient(options: LLMClientOptions) {
       messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
       tools: OpenAI.Chat.Completions.ChatCompletionTool[],
     ) {
-      const stream = await client.chat.completions.create(
-        {
-          model: config.model,
-          messages,
-          tools,
-          max_tokens: config.maxOutputTokens,
-          temperature: 0.8,
-          stream: true,
-          stream_options: { include_usage: true },
-          ...(modelId ? { model_id: modelId } : {}),
-        } as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming,
-        { signal },
-      )
+      const params = {
+        model: config.model,
+        messages,
+        tools,
+        max_tokens: config.maxOutputTokens,
+        temperature: 0.8,
+        stream: true,
+        stream_options: { include_usage: true },
+        ...(modelId ? { model_id: modelId } : {}),
+      } as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming
+
+      // Retry on rate limits (429) and server errors (5xx)
+      let stream!: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          stream = await client.chat.completions.create(params, { signal })
+          break
+        } catch (error) {
+          if (signal?.aborted || isAbortError(error)) throw error
+          if (attempt < MAX_RETRIES && isRetryableError(error)) {
+            const delay = getRetryDelay(attempt)
+            console.warn(
+              `[LLM] ${attempt + 1}/${MAX_RETRIES} retry in ${Math.round(delay)}ms (status ${(error as { status?: number }).status})`,
+            )
+            await sleepWithAbort(delay, signal)
+            continue
+          }
+          throw error
+        }
+      }
 
       let content = ''
       let reasoningContent = ''

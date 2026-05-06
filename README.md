@@ -86,7 +86,7 @@ StoryClaw hands full creative control to the Agent. The user is only responsible
 ```
 User message → Context build → Token check → LLM call (stream) → Tool execution → Loop (≤15) → Reply
                                     │
-                           Token ≥ 85%
+                           Token ≥ 70%
                                ▼
                        Auto Compaction
                    (keeps last 3 turns)

@@ -86,7 +86,7 @@ StoryClaw 把创作权完全交给 Agent，用户只负责 **想象、阅读和�
 ```
 用户消息 → 上下文构建 → Token 检查 → LLM 调用(stream) → 工具执行 → 循环(≤15次) → 回复用户
                               │
-                     Token ≥ 85% 时
+                     Token ≥ 70% 时
                          ▼
                    自动 Compaction
                   (保留最近 3 轮对话)

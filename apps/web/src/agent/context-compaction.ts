@@ -445,12 +445,19 @@ function selectTailMessages(
     tokenCount += candidateTokens
   }
 
+  // Ensure conversation pairs are complete:
+  // If tail starts with an assistant message, it needs its preceding user message.
   const prevIndex = messages.length - tail.length - 1
-  if (prevIndex >= 0 && tail.length > 1 && tail[0]?.role === 'assistant') {
-    const previous = messages[prevIndex]
-    if (tokenCount + estimateTranscriptEntryTokens(previous) <= maxTailTokens) {
-      return [previous, ...tail]
+  if (tail.length > 1 && tail[0]?.role === 'assistant') {
+    if (prevIndex >= 0) {
+      const previous = messages[prevIndex]
+      if (tokenCount + estimateTranscriptEntryTokens(previous) <= maxTailTokens) {
+        return [previous, ...tail]
+      }
     }
+    // Cannot fit the preceding user message — drop the orphaned assistant
+    // so the tail always starts with a complete conversation pair.
+    tail.shift()
   }
 
   return tail

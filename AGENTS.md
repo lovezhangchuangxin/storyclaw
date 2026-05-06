@@ -74,7 +74,7 @@ storyclaw/
 
 - 采用 append-only 前缀匹配策略提高缓存命中率（DeepSeek 等均已支持）
 - 四层结构：persona → tools → story state → style → conversation → user message
-- Token 达 85% 时自动 compact：保留最近 3 轮对话，压缩之前历史为摘要
+- Token 达 70% 时自动 compact：保留最近 3 轮对话，压缩之前历史为摘要
 - Compaction 尊重 tool-call 边界，不切断 tool-call/result 配对
 
 ### 数据存储
