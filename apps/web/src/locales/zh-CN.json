@@ -154,6 +154,7 @@
         "outputReserve": "输出预留",
         "available": "剩余可用",
         "messages": "消息数",
+        "cacheHit": "缓存命中",
         "triggerAt": "自动压缩触发于 {percent}%，阈值",
         "estimated": "估算"
       }

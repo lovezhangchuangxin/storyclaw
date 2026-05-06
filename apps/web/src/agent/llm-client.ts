@@ -55,6 +55,7 @@ export interface LLMUsage {
   promptTokens: number
   completionTokens: number
   totalTokens: number
+  cachedTokens?: number
 }
 
 export function createLLMClient(options: LLMClientOptions) {
@@ -164,10 +165,12 @@ export function createLLMClient(options: LLMClientOptions) {
           }
 
           if (chunk.usage) {
+            const cached = chunk.usage.prompt_tokens_details?.cached_tokens
             usage = {
               promptTokens: chunk.usage.prompt_tokens,
               completionTokens: chunk.usage.completion_tokens,
               totalTokens: chunk.usage.total_tokens,
+              cachedTokens: cached,
             }
           }
 

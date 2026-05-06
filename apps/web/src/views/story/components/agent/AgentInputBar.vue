@@ -27,6 +27,7 @@ const props = defineProps<{
   compactionTriggerRatio: number
   contextMessageCount: number
   contextIsEstimated: boolean
+  contextCachedTokens?: number
 }>()
 
 const emit = defineEmits<{
@@ -258,6 +259,7 @@ function handleSend() {
               :compaction-trigger-ratio="compactionTriggerRatio"
               :message-count="contextMessageCount"
               :is-estimated="contextIsEstimated"
+              :cached-tokens="contextCachedTokens"
             />
             <Button
               v-if="!isGenerating"

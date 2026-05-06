@@ -266,6 +266,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
       assistantMessage.finishReason = response.finishReason
       assistantMessage.promptTokens = response.usage?.promptTokens
       assistantMessage.completionTokens = response.usage?.completionTokens
+      assistantMessage.cachedTokens = response.usage?.cachedTokens
 
       for (const toolCall of response.toolCalls) {
         const part = startAssistantToolUse(

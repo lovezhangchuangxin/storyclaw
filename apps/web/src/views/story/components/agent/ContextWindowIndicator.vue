@@ -11,6 +11,7 @@ const props = withDefaults(
     compactionTriggerRatio: number
     messageCount: number
     isEstimated: boolean
+    cachedTokens?: number
   }>(),
   {
     usedTokens: 0,
@@ -19,6 +20,7 @@ const props = withDefaults(
     compactionTriggerRatio: 0.7,
     messageCount: 0,
     isEstimated: false,
+    cachedTokens: 0,
   },
 )
 
@@ -31,8 +33,9 @@ const budget = computed(() => props.contextWindowTokens - props.outputReserveTok
 const ratio = computed(() => (budget.value > 0 ? Math.min(props.usedTokens / budget.value, 1) : 0))
 const dashOffset = computed(() => CIRCUMFERENCE * (1 - ratio.value))
 const percentage = computed(() => Math.round(ratio.value * 100))
-const triggerThreshold = computed(() => Math.floor(budget.value * props.compactionTriggerRatio))
-const remaining = computed(() => Math.max(0, budget.value - props.usedTokens))
+const cachePercent = computed(() =>
+  props.usedTokens > 0 ? Math.round(((props.cachedTokens ?? 0) / props.usedTokens) * 100) : 0,
+)
 
 const isAvailable = computed(() => props.contextWindowTokens > 0)
 
@@ -113,29 +116,17 @@ const barColor = computed(() => {
             <span class="text-muted-foreground">{{ t('story.agent.contextInfo.windowSize') }}</span>
             <span class="tabular-nums">{{ contextWindowTokens.toLocaleString() }}</span>
           </div>
-          <div class="flex justify-between gap-4">
-            <span class="text-muted-foreground">{{
-              t('story.agent.contextInfo.outputReserve')
-            }}</span>
-            <span class="tabular-nums">{{ outputReserveTokens.toLocaleString() }}</span>
-          </div>
-          <div class="flex justify-between gap-4">
-            <span class="text-muted-foreground">{{ t('story.agent.contextInfo.available') }}</span>
-            <span class="tabular-nums">{{ remaining.toLocaleString() }}</span>
+          <div v-if="cachedTokens" class="flex justify-between gap-4">
+            <span class="text-muted-foreground">{{ t('story.agent.contextInfo.cacheHit') }}</span>
+            <span class="tabular-nums"
+              >{{ cachedTokens.toLocaleString() }}
+              <span class="text-muted-foreground/60">({{ cachePercent }}%)</span></span
+            >
           </div>
           <div class="flex justify-between gap-4">
             <span class="text-muted-foreground">{{ t('story.agent.contextInfo.messages') }}</span>
             <span class="tabular-nums">{{ messageCount }}</span>
           </div>
-        </div>
-
-        <div class="border-t pt-2 text-[11px] text-muted-foreground">
-          {{
-            t('story.agent.contextInfo.triggerAt', {
-              percent: Math.round(compactionTriggerRatio * 100),
-            })
-          }}
-          <span class="font-medium tabular-nums">{{ triggerThreshold.toLocaleString() }}</span>
         </div>
       </div>
     </PopoverContent>

@@ -168,6 +168,7 @@ interface BaseMessage {
   timestamp: number
   promptTokens?: number
   completionTokens?: number
+  cachedTokens?: number
 }
 
 export interface UserMessage extends BaseMessage {

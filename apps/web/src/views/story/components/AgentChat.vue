@@ -63,15 +63,22 @@ const selectedModelProvider = computed(() => {
 
 const selectedModel = computed(() => models.value.find((item) => item.id === selectedModelId.value))
 
-const lastPromptTokens = computed(() => {
+const lastUsageInfo = computed(() => {
   for (let i = timelineMessages.value.length - 1; i >= 0; i--) {
     const msg = timelineMessages.value[i]
     if (msg?.role === 'assistant' && (msg as AssistantMessage).promptTokens != null) {
-      return (msg as AssistantMessage).promptTokens!
+      const assistant = msg as AssistantMessage
+      return {
+        promptTokens: assistant.promptTokens!,
+        cachedTokens: assistant.cachedTokens ?? null,
+      }
     }
   }
   return null
 })
+
+const lastPromptTokens = computed(() => lastUsageInfo.value?.promptTokens ?? null)
+const lastCachedTokens = computed(() => lastUsageInfo.value?.cachedTokens ?? null)
 
 const contextUsedTokens = computed(() => {
   if (lastPromptTokens.value != null) return lastPromptTokens.value
@@ -527,6 +534,7 @@ function onWelcomeFill(prompt: string) {
       :compaction-trigger-ratio="selectedModel?.compactionTriggerRatio ?? 0.7"
       :context-message-count="timelineMessages.length"
       :context-is-estimated="contextIsEstimated"
+      :context-cached-tokens="lastCachedTokens ?? undefined"
       @update:model-value="input = $event"
       @send="send"
       @cancel="cancel"

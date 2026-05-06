@@ -154,6 +154,7 @@
         "outputReserve": "Output Reserve",
         "available": "Available",
         "messages": "Messages",
+        "cacheHit": "Cache Hit",
         "triggerAt": "Auto-compact at {percent}%, threshold",
         "estimated": "estimated"
       }
