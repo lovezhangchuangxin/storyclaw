@@ -324,7 +324,10 @@ async function send() {
   const baseUnsavedMessages = cloneMessages(unsavedMessages.value)
   const baseHistoryMessages = cloneMessages(historyMessages.value)
   await nextTick()
-  forceScrollToBottom()
+
+  // Force-scroll on first onMessagesUpdated call (when user message enters DOM),
+  // not here — the DOM doesn't have the new message yet.
+  let needsForceScroll = true
 
   try {
     const result = await runAgentLoop({
@@ -336,7 +339,12 @@ async function send() {
       onMessagesUpdated(messages) {
         if (requestId !== activeRequestId) return
         transientMessages.value = messages
-        if (isNearBottom.value) scrollToBottom()
+        if (needsForceScroll) {
+          needsForceScroll = false
+          nextTick(() => forceScrollToBottom())
+        } else if (isNearBottom.value) {
+          scrollToBottom()
+        }
       },
       onError(error) {
         if (requestId !== activeRequestId) return
