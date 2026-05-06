@@ -59,8 +59,9 @@
     "newStory": "新故事",
     "noModel": {
       "title": "还没有配置模型",
-      "description": "创建故事前需要至少配置一个 AI 模型，用于驱动 Agent 创作引擎。",
-      "goConfig": "前往配置"
+      "description": "创建故事前需要至少配置一个 AI 模型。你可以在模型配置页面自定义模型，或者在后端连接页面注册账号使用后端提供的模型。",
+      "goConfig": "自定义模型",
+      "goServer": "前往后端连接"
     },
     "deleteConfirm": {
       "description": "确定要删除《{title}》吗？此操作不可撤销。"

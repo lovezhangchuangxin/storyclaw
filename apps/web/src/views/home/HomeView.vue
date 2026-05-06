@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BookOpen, Plus, Search, Settings } from 'lucide-vue-next'
+import { BookOpen, Plus, Search, Server, Settings } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { uuid } from '@/lib/utils'
@@ -204,12 +204,22 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           {{ $t('home.noModel.description') }}
         </DialogDescription>
       </DialogHeader>
-      <DialogFooter>
-        <DialogClose as-child>
-          <Button variant="outline">{{ $t('common.cancel') }}</Button>
-        </DialogClose>
+      <DialogFooter class="flex-col gap-2 sm:flex-col">
         <Button
-          class="gap-1.5"
+          class="w-full gap-1.5"
+          @click="
+            () => {
+              noModelDialogOpen = false
+              router.push('/settings/server')
+            }
+          "
+        >
+          <Server class="size-4" />
+          {{ $t('home.noModel.goServer') }}
+        </Button>
+        <Button
+          variant="outline"
+          class="w-full gap-1.5"
           @click="
             () => {
               noModelDialogOpen = false
@@ -220,6 +230,9 @@ async function handleCreateStory(selectedPromptIds: string[]) {
           <Settings class="size-4" />
           {{ $t('home.noModel.goConfig') }}
         </Button>
+        <DialogClose as-child>
+          <Button variant="ghost" class="w-full">{{ $t('common.cancel') }}</Button>
+        </DialogClose>
       </DialogFooter>
     </DialogContent>
   </Dialog>
