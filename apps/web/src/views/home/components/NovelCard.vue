@@ -44,13 +44,13 @@ const emit = defineEmits<{
       <p class="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
         {{ novel.synopsis || $t('home.card.noSynopsis') }}
       </p>
-      <div class="mt-3">
+      <div class="mt-3 flex items-center justify-between">
         <span class="text-[11px] text-muted-foreground">{{
           $t('home.card.words', { words: novel.currentWordCount, chapters: chapterCount })
         }}</span>
-      </div>
-      <div class="mt-1 text-[11px] text-muted-foreground/60">
-        {{ relativeTime(novel.updatedAt) }}
+        <span class="text-[11px] text-muted-foreground/60">
+          {{ relativeTime(novel.updatedAt) }}
+        </span>
       </div>
     </div>
   </div>
