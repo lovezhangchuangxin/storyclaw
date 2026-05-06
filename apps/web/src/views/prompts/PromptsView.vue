@@ -171,8 +171,8 @@ async function confirmDelete() {
                 </h3>
                 <Badge
                   v-if="prompt.isBuiltin"
-                  variant="secondary"
-                  class="shrink-0 text-[10px] px-1.5 py-0"
+                  variant="outline"
+                  class="shrink-0 text-[10px] px-1.5 py-px rounded border-dashed border-primary/30 text-primary/60"
                 >
                   {{ $t('common.builtin') }}
                 </Badge>

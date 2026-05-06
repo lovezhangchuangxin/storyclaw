@@ -186,8 +186,8 @@ function handleCreate() {
           <span class="text-sm flex-1 truncate">{{ prompt.name }}</span>
           <Badge
             v-if="prompt.isBuiltin"
-            variant="secondary"
-            class="text-[10px] px-1.5 py-0 shrink-0"
+            variant="outline"
+            class="text-[10px] px-1.5 py-px shrink-0 rounded border-dashed border-primary/30 text-primary/60"
           >
             {{ $t('common.builtin') }}
           </Badge>
