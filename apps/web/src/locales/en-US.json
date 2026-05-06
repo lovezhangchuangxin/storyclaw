@@ -312,7 +312,6 @@
     },
     "server": {
       "title": "Backend Connection",
-      "description": "Connect to backend for cross-device sync and LLM proxy",
       "connectionStatus": "Connection Status",
       "connectionStatusDesc": "Current backend service connection status",
       "connected": "Connected",

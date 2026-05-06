@@ -185,7 +185,6 @@ loadConfig()
           <Server class="size-4 text-muted-foreground" />
           <h3 class="text-sm font-medium">{{ $t('settings.server.title') }}</h3>
         </div>
-        <p class="text-xs text-muted-foreground">{{ $t('settings.server.description') }}</p>
       </div>
 
       <div class="space-y-3">

@@ -312,7 +312,6 @@
     },
     "server": {
       "title": "后端连接",
-      "description": "连接后端以跨设备同步数据和使用后端代理调用 LLM",
       "connectionStatus": "连接状态",
       "connectionStatusDesc": "后端服务的当前连接情况",
       "connected": "已连接",
