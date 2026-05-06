@@ -485,7 +485,7 @@
     "modelNotFound": "找不到模型（{modelId}），可能已被删除",
     "needLogin": "使用后端模型需要登录，请先登录或刷新页面。",
     "compaction": {
-      "command": "整理上下文，压缩对话历史，减少 Token 消耗"
+      "command": "整理上下文，压缩对话历史"
     },
     "newSession": {
       "command": "新建会话，清除当前对话记录"

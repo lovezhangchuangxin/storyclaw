@@ -485,7 +485,7 @@
     "modelNotFound": "Model not found ({modelId}), it may have been deleted",
     "needLogin": "Backend model requires login. Please log in or refresh the page.",
     "compaction": {
-      "command": "Compact context, compress conversation history to reduce token usage"
+      "command": "Compact context, compress conversation history"
     },
     "newSession": {
       "command": "New session, clear current conversation history"
