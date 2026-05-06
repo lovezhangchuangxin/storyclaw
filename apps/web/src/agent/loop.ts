@@ -316,6 +316,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
               toolCall.function.name,
               toolCall.function.arguments,
               toolContext,
+              signal,
             )
           } catch (error) {
             result = serializeToolExecutionError(error)

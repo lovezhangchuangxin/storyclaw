@@ -11,5 +11,5 @@ export interface ToolDefinition {
   description: string
   parameters: Record<string, unknown>
   validationSchema: z.ZodTypeAny
-  execute(args: Record<string, unknown>): Promise<unknown>
+  execute(args: Record<string, unknown>, signal?: AbortSignal): Promise<unknown>
 }

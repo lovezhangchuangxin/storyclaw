@@ -67,9 +67,11 @@ function tenseLabel(v: string): string {
 function statusLabel(v: string): string {
   const map: Record<string, string> = {
     drafting: t('story.tool.status.drafting'),
+    writing: t('story.tool.status.writing'),
     completed: t('story.tool.status.completed'),
     editing: t('story.tool.status.editing'),
     abandoned: t('story.tool.status.abandoned'),
+    paused: t('story.tool.status.paused'),
     planned: t('story.tool.status.planned'),
     draft: t('story.tool.status.draft'),
     archived: t('story.tool.status.archived'),

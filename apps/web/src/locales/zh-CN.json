@@ -180,9 +180,11 @@
       },
       "status": {
         "drafting": "起草中",
+        "writing": "创作中",
         "completed": "已完成",
         "editing": "编辑中",
         "abandoned": "已弃坑",
+        "paused": "已暂停",
         "planned": "已规划",
         "draft": "草稿",
         "archived": "已归档"

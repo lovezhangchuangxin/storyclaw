@@ -38,6 +38,7 @@ export async function executeToolCall(
   name: string,
   args: string,
   context: ToolContext,
+  signal?: AbortSignal,
 ): Promise<string> {
   const toolMap = getToolRegistry(context)
   const tool = toolMap.get(name)
@@ -49,7 +50,7 @@ export async function executeToolCall(
   try {
     const raw = JSON.parse(args)
     const validated = tool.validationSchema.parse(raw) as Record<string, unknown>
-    const result = await tool.execute(validated)
+    const result = await tool.execute(validated, signal)
     return JSON.stringify(result)
   } catch (err) {
     if (err instanceof z.ZodError) {

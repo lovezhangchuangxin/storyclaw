@@ -47,10 +47,14 @@ function badgeColor(raw: unknown): string {
     past: 'badge-orange',
     present: 'badge-teal',
     drafting: 'badge-yellow',
+    writing: 'badge-orange',
     completed: 'badge-green',
     editing: 'badge-blue',
     abandoned: 'badge-gray',
+    paused: 'badge-yellow',
     planned: 'badge-blue',
+    draft: 'badge-purple',
+    archived: 'badge-gray',
   }
   return colorMap[v] ?? 'badge-gray'
 }

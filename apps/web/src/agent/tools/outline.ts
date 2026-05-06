@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { ToolContext, ToolDefinition } from './types'
 import { getOutlineByNovelId, saveOutline } from '@/db/outlines'
+import { getNovelById } from '@/db/novels'
 
 export function createOutlineTools(context: ToolContext): ToolDefinition[] {
   return [
@@ -26,6 +27,9 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
         act3: z.string(),
       }),
       async execute(args: Record<string, unknown>) {
+        const novel = await getNovelById(context.novelId)
+        if (!novel) return { error: '小说不存在' }
+
         const existing = await getOutlineByNovelId(context.novelId)
         if (existing) {
           existing.premise = args.premise as string
@@ -146,6 +150,9 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
         act3_characterArcs_append: z.array(z.string()).optional(),
       }),
       async execute(args: Record<string, unknown>) {
+        const novel = await getNovelById(context.novelId)
+        if (!novel) return { error: '小说不存在' }
+
         const existing = await getOutlineByNovelId(context.novelId)
         if (!existing) return { error: '没有找到大纲，请先调用 upsert_outline' }
 

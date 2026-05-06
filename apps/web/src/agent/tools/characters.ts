@@ -7,6 +7,7 @@ import {
   saveCharacter,
   deleteCharacter,
 } from '@/db/characters'
+import { getNovelById } from '@/db/novels'
 import type { Character } from '@/db/types'
 
 export function createCharacterTools(context: ToolContext): ToolDefinition[] {
@@ -43,6 +44,9 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         arc: z.string().optional(),
       }),
       async execute(args: Record<string, unknown>) {
+        const novel = await getNovelById(context.novelId)
+        if (!novel) return { error: '小说不存在' }
+
         // Deduplicate by name: update existing character instead of creating a duplicate.
         const existing = await getCharactersByNovelId(context.novelId)
         const prev = existing.find(
@@ -132,6 +136,9 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
           .optional(),
       }),
       async execute(args: Record<string, unknown>) {
+        const novel = await getNovelById(context.novelId)
+        if (!novel) return { error: '小说不存在' }
+
         const existing = await getCharacterById(context.novelId, args.characterId as string)
         if (!existing) return { error: '角色不存在' }
 
@@ -173,6 +180,8 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         characterId: z.string(),
       }),
       async execute(args: Record<string, unknown>) {
+        const existing = await getCharacterById(context.novelId, args.characterId as string)
+        if (!existing) return { error: '角色不存在' }
         await deleteCharacter(context.novelId, args.characterId as string)
         return { success: true }
       },

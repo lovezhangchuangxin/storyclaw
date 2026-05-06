@@ -8,7 +8,10 @@ import type { Chapter } from '@/db/types'
 /** Recalculate novel.currentWordCount from non-archived chapters and persist it. */
 async function syncNovelWordCount(novelId: string): Promise<void> {
   const novel = await getNovelById(novelId)
-  if (!novel) return
+  if (!novel) {
+    console.warn(`[syncNovelWordCount] Novel not found: ${novelId}`)
+    return
+  }
   const chapters = await getChaptersByNovelId(novelId)
   novel.currentWordCount = chapters
     .filter((ch) => ch.status !== 'archived')
@@ -54,6 +57,9 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         ),
       }),
       async execute(args: Record<string, unknown>) {
+        const novel = await getNovelById(context.novelId)
+        if (!novel) return { error: '小说不存在' }
+
         const chapters = args.chapters as Array<Record<string, unknown>>
         const outline = await getOutlineByNovelId(context.novelId)
 
@@ -151,6 +157,9 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         content: z.string(),
       }),
       async execute(args: Record<string, unknown>) {
+        const novel = await getNovelById(context.novelId)
+        if (!novel) return { error: '小说不存在' }
+
         const index = args.index as number
         const content = args.content as string
         const existing = await getChapterByIndex(context.novelId, index)
@@ -219,6 +228,9 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         index: z.number(),
       }),
       async execute(args: Record<string, unknown>) {
+        const novel = await getNovelById(context.novelId)
+        if (!novel) return { error: '小说不存在' }
+
         const index = args.index as number
         const chapter = await getChapterByIndex(context.novelId, index)
         if (!chapter) return { error: '章节不存在' }
@@ -240,7 +252,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         required: ['query'],
       },
       validationSchema: z.object({
-        query: z.string(),
+        query: z.string().min(1),
       }),
       async execute(args: Record<string, unknown>) {
         const chapters = await getChaptersByNovelId(context.novelId)

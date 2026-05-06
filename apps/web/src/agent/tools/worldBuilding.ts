@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { ToolContext, ToolDefinition } from './types'
 import { getWorldBuildingByNovelId, saveWorldBuilding } from '@/db/worldBuilding'
+import { getNovelById } from '@/db/novels'
 import type { WorldBuilding } from '@/db/types'
 
 export function createWorldBuildingTools(context: ToolContext): ToolDefinition[] {
@@ -51,6 +52,9 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
           .optional(),
       }),
       async execute(args: Record<string, unknown>) {
+        const novel = await getNovelById(context.novelId)
+        if (!novel) return { error: '小说不存在' }
+
         const existing = await getWorldBuildingByNovelId(context.novelId)
         if (existing) {
           if ('era' in args && args.era != null) existing.era = args.era as string

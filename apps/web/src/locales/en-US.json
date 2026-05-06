@@ -180,9 +180,11 @@
       },
       "status": {
         "drafting": "Drafting",
+        "writing": "Writing",
         "completed": "Completed",
         "editing": "Editing",
         "abandoned": "Abandoned",
+        "paused": "Paused",
         "planned": "Planned",
         "draft": "Draft",
         "archived": "Archived"

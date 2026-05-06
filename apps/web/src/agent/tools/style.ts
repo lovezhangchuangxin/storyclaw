@@ -33,6 +33,7 @@ export function createStyleTools(context: ToolContext): ToolDefinition[] {
         const novel = await getNovelById(context.novelId)
         if (!novel) return { error: '小说不存在' }
 
+        novel.styleSettings ??= { narrativePerspective: '', tense: '', languageStyle: '' }
         if ('narrativePerspective' in args)
           novel.styleSettings.narrativePerspective = args.narrativePerspective as string
         if ('tense' in args) novel.styleSettings.tense = args.tense as string
