@@ -346,7 +346,7 @@
         "label": "Use backend proxy for LLM calls",
         "description": "Route model requests through the backend, no local API Key needed"
       },
-      "localModeHint": "You can also skip the backend entirely and use local mode. All data is stored in your browser.",
+      "localModeHint": "Connect to the backend to use backend models, or configure custom models on the model settings page. Backend models have a daily quota limit.",
       "saveSettingsFailed": "Failed to save settings",
       "admin": "Admin"
     },
