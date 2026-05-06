@@ -46,13 +46,12 @@ function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSett
       />
     </div>
 
-    <div class="px-5 pb-5 space-y-5">
+    <div class="px-5 pb-5 space-y-4">
       <!-- Theme -->
       <div>
-        <p class="text-xs font-medium text-muted-foreground mb-2.5">
-          {{ $t('settings.appearance.theme.label') }}
-        </p>
-        <div class="flex items-center gap-4 overflow-x-auto scrollbar-none">
+        <div
+          class="flex items-center gap-4 overflow-x-auto scrollbar-none pt-2 pb-1 px-0.5 -mx-0.5"
+        >
           <button
             v-for="t in themes"
             :key="t.id"
@@ -60,20 +59,15 @@ function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSett
             :title="t.name"
             @click="applyTheme?.(t.id)"
           >
-            <span class="relative">
-              <span
-                class="block size-9 rounded-full shadow-sm ring-1 ring-black/8 transition-all duration-200"
-                :style="{ backgroundColor: t.bg }"
-              />
-              <span
-                class="absolute inset-0 rounded-full ring-2 transition-all duration-200"
-                :class="
-                  appTheme === t.id
-                    ? 'ring-foreground/70 scale-[1.12]'
-                    : 'ring-transparent group-hover:ring-muted-foreground/25 group-hover:scale-105'
-                "
-              />
-            </span>
+            <span
+              class="block size-9 rounded-full transition-all duration-200"
+              :style="{ backgroundColor: t.bg }"
+              :class="
+                appTheme === t.id
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-sm'
+                  : 'ring-1 ring-black/10 shadow-sm hover:ring-black/20 hover:scale-105'
+              "
+            />
             <span
               class="text-[10px] leading-none transition-colors"
               :class="
@@ -88,9 +82,6 @@ function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSett
 
       <!-- Scroll mode -->
       <div>
-        <p class="text-xs font-medium text-muted-foreground mb-2.5">
-          {{ $t('settings.appearance.scrollMode.label') }}
-        </p>
         <div class="grid grid-cols-2 gap-2">
           <button
             class="flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs transition-all duration-200"
