@@ -2,39 +2,16 @@
 import { Trash2 } from 'lucide-vue-next'
 import type { Novel } from '@/db/types'
 import { relativeTime } from '@/lib/time'
-import { useI18n } from 'vue-i18n'
 
 defineProps<{
   novel: Novel
   coverColor: string
 }>()
 
-const { t } = useI18n()
-
 const emit = defineEmits<{
   open: [novel: Novel]
   delete: [novel: Novel]
 }>()
-
-function statusLabel(status: string): string {
-  if (status === 'completed') return t('home.card.status.completed')
-  if (status === 'writing') return t('home.card.status.writing')
-  if (status === 'paused') return t('home.card.status.paused')
-  return t('home.card.status.draft')
-}
-
-function statusBadgeClass(status: string): string {
-  if (status === 'completed') {
-    return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400'
-  }
-  if (status === 'writing') {
-    return 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300'
-  }
-  if (status === 'paused') {
-    return 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400'
-  }
-  return 'bg-muted text-muted-foreground'
-}
 </script>
 
 <template>
@@ -66,16 +43,10 @@ function statusBadgeClass(status: string): string {
       <p class="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
         {{ novel.synopsis || $t('home.card.noSynopsis') }}
       </p>
-      <div class="mt-3 flex items-center justify-between">
+      <div class="mt-3">
         <span class="text-[11px] text-muted-foreground">{{
           $t('home.card.words', { count: novel.currentWordCount })
         }}</span>
-        <span
-          class="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-          :class="statusBadgeClass(novel.status)"
-        >
-          {{ statusLabel(novel.status) }}
-        </span>
       </div>
       <div class="mt-1 text-[11px] text-muted-foreground/60">
         {{ relativeTime(novel.updatedAt) }}
