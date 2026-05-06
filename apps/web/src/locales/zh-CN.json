@@ -33,6 +33,7 @@
     "serverConnection": "后端连接",
     "appearance": "外观",
     "my": "我的",
+    "version": "版本",
     "admin": "管理后台",
     "mainNav": "主导航",
     "expandSidebar": "展开侧边栏",
@@ -93,6 +94,8 @@
     "todayDuration": "今日时长",
     "appName": "StoryClaw",
     "localMode": "本地模式 · 数据存储在浏览器中",
+    "version": "版本",
+    "github": "GitHub",
     "locale": {
       "label": "语言",
       "zhCN": "中文",

@@ -33,6 +33,7 @@
     "serverConnection": "Backend",
     "appearance": "Appearance",
     "my": "My",
+    "version": "Version",
     "admin": "Admin",
     "mainNav": "Main navigation",
     "expandSidebar": "Expand sidebar",
@@ -93,6 +94,8 @@
     "todayDuration": "Time Spent",
     "appName": "StoryClaw",
     "localMode": "Local Mode · Data stored in your browser",
+    "version": "Version",
+    "github": "GitHub",
     "locale": {
       "label": "Language",
       "zhCN": "中文",

@@ -39,6 +39,8 @@ const items = [
 
 const adminItem = { path: '/admin', label: 'sidebar.admin', icon: Shield }
 
+const appVersion = __APP_VERSION__
+
 const visibleItems = computed(() => {
   if (auth.isAdmin) {
     return [...items, adminItem]
@@ -103,5 +105,10 @@ function navigate(path: string) {
         }}</span>
       </button>
     </nav>
+
+    <!-- Footer -->
+    <div v-show="!(collapsed && variant === 'desktop')" class="shrink-0 px-4 pb-3 pt-1">
+      <p class="text-xs text-muted-foreground">{{ $t('sidebar.version') }} {{ appVersion }}</p>
+    </div>
   </aside>
 </template>

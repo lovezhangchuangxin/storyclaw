@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BookOpen, PenLine, BrainCircuit, Clock, Languages } from 'lucide-vue-next'
+import { BookOpen, PenLine, BrainCircuit, Clock, Languages, Github } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useStats } from '@/composables/useStats'
 import { useLocaleStore } from '@/stores/locale'
@@ -18,6 +18,8 @@ const availableLocales: { value: SupportedLocale; label: string }[] = [
   { value: 'zh-CN', label: '中文' },
   { value: 'en-US', label: 'English' },
 ]
+
+const appVersion = __APP_VERSION__
 </script>
 
 <template>
@@ -132,6 +134,18 @@ const availableLocales: { value: SupportedLocale; label: string }[] = [
           <p class="text-sm font-semibold">{{ t('my.appName') }}</p>
           <p class="text-xs text-muted-foreground">{{ t('my.localMode') }}</p>
         </div>
+      </div>
+      <div class="flex items-center justify-between mt-4 pt-3 border-t">
+        <span class="text-xs text-muted-foreground"> {{ t('my.version') }} {{ appVersion }} </span>
+        <a
+          href="https://github.com/lovezhangchuangxin/storyclaw"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Github class="size-3.5" />
+          {{ t('my.github') }}
+        </a>
       </div>
     </section>
   </div>
