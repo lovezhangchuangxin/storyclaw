@@ -752,6 +752,7 @@
 
   "db": {
     "defaultStyle": "StoryClaw Default Style",
-    "defaultRoleplay": "Ganyu · Liyue Yuehai Pavilion"
+    "defaultRoleplay": "Ganyu · Liyue Yuehai Pavilion",
+    "defaultCultivation": "Cultivation Simulator"
   }
 }

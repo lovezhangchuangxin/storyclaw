@@ -2,8 +2,10 @@ import { getDB } from './index'
 import type { Prompt } from './types'
 import { i18n } from '@/i18n'
 import { ROLEPLAY_DEFAULT_PERSONA } from '@/agent/roleplay-persona'
+import { CULTIVATION_PERSONA } from '@/agent/cultivation-persona'
 
 let roleplayPromptEnsured = false
+let cultivationPromptEnsured = false
 
 export async function ensureRoleplayBuiltinPrompt(): Promise<void> {
   if (roleplayPromptEnsured) return
@@ -22,6 +24,28 @@ export async function ensureRoleplayBuiltinPrompt(): Promise<void> {
     }
     await db.put('prompts', latest)
     roleplayPromptEnsured = true
+  } catch {
+    // Non-critical — will retry on next call
+  }
+}
+
+export async function ensureCultivationBuiltinPrompt(): Promise<void> {
+  if (cultivationPromptEnsured) return
+  try {
+    const db = await getDB()
+    const existing = await db.get('prompts', 'builtin-cultivation')
+    const latest = {
+      id: 'builtin-cultivation',
+      name: i18n.global.t('db.defaultCultivation'),
+      content: CULTIVATION_PERSONA,
+      initialMessage: '轮回百世、流连今生',
+      isBuiltin: true,
+      scenario: 'roleplay' as const,
+      createdAt: existing?.createdAt ?? 0,
+      updatedAt: Date.now(),
+    }
+    await db.put('prompts', latest)
+    cultivationPromptEnsured = true
   } catch {
     // Non-critical — will retry on next call
   }

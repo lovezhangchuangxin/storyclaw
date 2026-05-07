@@ -14,7 +14,11 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, Sparkles, FileText } from 'lucide-vue-next'
-import { getAllPrompts, ensureRoleplayBuiltinPrompt } from '@/db/prompts'
+import {
+  getAllPrompts,
+  ensureRoleplayBuiltinPrompt,
+  ensureCultivationBuiltinPrompt,
+} from '@/db/prompts'
 import type { Prompt } from '@/db/types'
 
 const { t } = useI18n()
@@ -43,7 +47,7 @@ watch(
     if (!val) return
     selectedPromptId.value = null
     promptSearch.value = ''
-    await ensureRoleplayBuiltinPrompt()
+    await Promise.all([ensureRoleplayBuiltinPrompt(), ensureCultivationBuiltinPrompt()])
     getAllPrompts()
       .then((ps) => {
         allPrompts.value = ps.filter((p) => p.scenario === 'roleplay' || p.scenario === 'both')
