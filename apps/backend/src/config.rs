@@ -14,6 +14,8 @@ pub struct Config {
     pub register_ip_window_hours: i64,
     pub register_fingerprint_limit: i32,
     pub fingerprint_retention_days: i64,
+    pub access_token_expire_hours: i64,
+    pub refresh_token_expire_days: i64,
 }
 
 fn require_env(key: &str) -> String {
@@ -89,6 +91,17 @@ impl Config {
                 .unwrap_or(3)
                 .max(1),
             fingerprint_retention_days: std::env::var("FINGERPRINT_RETENTION_DAYS")
+                .unwrap_or_else(|_| "30".to_string())
+                .parse()
+                .unwrap_or(30)
+                .max(1),
+            access_token_expire_hours: std::env::var("ACCESS_TOKEN_EXPIRE_HOURS")
+                .unwrap_or_else(|_| "168".to_string())
+                .parse()
+                .unwrap_or(168)
+                .max(1)
+                .min(720),
+            refresh_token_expire_days: std::env::var("REFRESH_TOKEN_EXPIRE_DAYS")
                 .unwrap_or_else(|_| "30".to_string())
                 .parse()
                 .unwrap_or(30)

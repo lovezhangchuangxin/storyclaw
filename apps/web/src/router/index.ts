@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
+import { watch } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 
@@ -77,8 +78,22 @@ export const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
+
+  if (auth.isInitializing) {
+    await new Promise<void>((resolve) => {
+      const stop = watch(
+        () => auth.isInitializing,
+        (val) => {
+          if (!val) {
+            stop()
+            resolve()
+          }
+        },
+      )
+    })
+  }
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     next({ name: 'server-config' })

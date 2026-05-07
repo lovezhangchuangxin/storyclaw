@@ -22,7 +22,7 @@ pub fn create_access_token(
     config: &Config,
 ) -> Result<String, jsonwebtoken::errors::Error> {
     let now = Utc::now();
-    let exp = now + Duration::minutes(15);
+    let exp = now + Duration::hours(config.access_token_expire_hours);
 
     let claims = Claims {
         sub: user_id,

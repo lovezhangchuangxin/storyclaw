@@ -9,6 +9,7 @@ import {
   ApiError,
 } from '@/lib/api-client'
 import { getDeviceFingerprint } from '@/lib/fingerprint'
+import { getConfig } from '@/db/config'
 import { i18n } from '@/i18n'
 import type { AuthResponse, UserInfo } from '@/db/types'
 
@@ -38,18 +39,35 @@ function clearUser() {
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<UserInfo | null>(null)
   const isLoading = ref(false)
+  const isInitializing = ref(true)
   const error = ref<string | null>(null)
 
   const isAuthenticated = computed(() => user.value !== null)
   const isAdmin = computed(() => user.value?.role === 'admin')
   const userId = computed(() => user.value?.id ?? null)
 
-  function initialize() {
+  async function initialize() {
     loadTokensFromStorage()
     const savedUser = loadUser()
     if (savedUser) {
       user.value = savedUser
     }
+
+    if (savedUser) {
+      try {
+        const config = await getConfig()
+        if (config.backendUrl) {
+          const ok = await refreshAuth()
+          if (!ok) {
+            logout()
+          }
+        }
+      } catch {
+        // No backend configured or unreachable — keep local state
+      }
+    }
+
+    isInitializing.value = false
   }
 
   async function login(email: string, password: string): Promise<boolean> {
@@ -118,11 +136,14 @@ export const useAuthStore = defineStore('auth', () => {
     clearUser()
   }
 
-  initialize()
+  initialize().catch(() => {
+    isInitializing.value = false
+  })
 
   return {
     user,
     isLoading,
+    isInitializing,
     error,
     isAuthenticated,
     isAdmin,

@@ -1,6 +1,7 @@
 use axum::extract::ConnectInfo;
 use axum::http::HeaderMap;
 use axum::{extract::State, Json};
+use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::net::SocketAddr;
@@ -164,11 +165,13 @@ pub async fn register(
         .map_err(|e| AppError::Internal(anyhow::anyhow!(e.to_string())))?;
     let refresh_token = jwt::create_refresh_token();
 
+    let expires_at = Utc::now() + Duration::days(state.config.refresh_token_expire_days);
     sqlx::query(
-        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 days')",
+        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)",
     )
     .bind(user.id)
     .bind(&refresh_token)
+    .bind(expires_at)
     .execute(&state.pool)
     .await?;
 
@@ -204,11 +207,13 @@ pub async fn login(
         .map_err(|e| AppError::Internal(anyhow::anyhow!(e.to_string())))?;
     let refresh_token = jwt::create_refresh_token();
 
+    let expires_at = Utc::now() + Duration::days(state.config.refresh_token_expire_days);
     sqlx::query(
-        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 days')",
+        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)",
     )
     .bind(user.id)
     .bind(&refresh_token)
+    .bind(expires_at)
     .execute(&state.pool)
     .await?;
 
@@ -267,11 +272,13 @@ pub async fn refresh(
         .map_err(|e| AppError::Internal(anyhow::anyhow!(e.to_string())))?;
     let new_refresh = jwt::create_refresh_token();
 
+    let expires_at = Utc::now() + Duration::days(state.config.refresh_token_expire_days);
     sqlx::query(
-        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 days')",
+        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)",
     )
     .bind(user_id)
     .bind(&new_refresh)
+    .bind(expires_at)
     .execute(&state.pool)
     .await?;
 

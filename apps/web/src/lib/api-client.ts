@@ -21,6 +21,39 @@ import type {
 const ACCESS_TOKEN_KEY = 'storyclaw_access_token'
 const REFRESH_TOKEN_KEY = 'storyclaw_refresh_token'
 
+interface JwtPayload {
+  exp: number
+  iat: number
+  sub: string
+  email: string
+  role: string
+}
+
+function parseJwtPayload(token: string): JwtPayload | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const payload = parts[1]
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const json = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join(''),
+    )
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
+function isTokenExpiringSoon(thresholdMs = 3600_000): boolean {
+  if (!tokens.accessToken) return false
+  const payload = parseJwtPayload(tokens.accessToken)
+  if (!payload?.exp) return false
+  return Date.now() > payload.exp * 1000 - thresholdMs
+}
+
 export class ApiError extends Error {
   status: number
   data: unknown
@@ -107,6 +140,13 @@ async function refreshTokensIfNeeded(): Promise<boolean> {
   return refreshPromise
 }
 
+async function ensureFreshToken(path?: string): Promise<void> {
+  if (path?.includes('/auth/refresh')) return
+  if (tokens.accessToken && isTokenExpiringSoon() && tokens.refreshToken) {
+    await refreshTokensIfNeeded()
+  }
+}
+
 async function fetchApi<T>(
   path: string,
   options: RequestInit = {},
@@ -124,7 +164,10 @@ async function fetchApi<T>(
   }
 
   if (requireAuth && tokens.accessToken) {
-    headers['Authorization'] = `Bearer ${tokens.accessToken}`
+    await ensureFreshToken(path)
+    if (tokens.accessToken) {
+      headers['Authorization'] = `Bearer ${tokens.accessToken}`
+    }
   }
 
   let resp = await fetch(url, { ...options, headers })
@@ -248,7 +291,10 @@ export async function llmChat(requestBody: unknown): Promise<Response> {
     'Content-Type': 'application/json',
   }
   if (tokens.accessToken) {
-    headers['Authorization'] = `Bearer ${tokens.accessToken}`
+    await ensureFreshToken('/api/llm/chat')
+    if (tokens.accessToken) {
+      headers['Authorization'] = `Bearer ${tokens.accessToken}`
+    }
   }
 
   let resp = await fetch(`${config.backendUrl}/api/llm/chat`, {
