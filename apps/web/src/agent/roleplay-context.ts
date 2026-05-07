@@ -4,7 +4,7 @@ import { getLatestContextSnapshot } from '@/db/context-snapshots'
 import { getRoleplayConversationBySessionId } from '@/db/roleplay-conversations'
 import { getRoleplaySessionById } from '@/db/roleplay-sessions'
 import { getPromptById } from '@/db/prompts'
-import type { ModelConfig } from '@/db/types'
+import type { Message, ModelConfig } from '@/db/types'
 import { supportsReasoningContent } from '@/lib/model-capabilities'
 import { serializeContextSnapshot } from './context-compaction'
 import { convertToApiMessages, getEffectiveConversationMessages } from './message-conversion'
@@ -23,6 +23,7 @@ export async function buildRoleplayContext(
   sessionId: string,
   userMessage: string,
   modelConfig: ModelConfig,
+  preloadedMessages?: Message[],
 ): Promise<RoleplayContextBuildResult> {
   const toolContext: ToolContext = { sessionId, scenario: 'roleplay' }
   const includeReasoningContent = supportsReasoningContent(modelConfig)
@@ -34,7 +35,9 @@ export async function buildRoleplayContext(
   const tools = getToolDefinitions(toolContext)
   const snapshot = await getLatestContextSnapshot(sessionId, 'roleplay')
 
-  const existingConversation = await getRoleplayConversationBySessionId(sessionId)
+  const existingConversation = preloadedMessages
+    ? { messages: preloadedMessages }
+    : await getRoleplayConversationBySessionId(sessionId)
   const historyMessagesSource = getEffectiveConversationMessages(
     existingConversation?.messages ?? [],
     snapshot?.compactedThroughMessageId ?? null,

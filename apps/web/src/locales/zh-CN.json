@@ -492,7 +492,7 @@
       "renderMessage": "渲染消息",
       "renderMessageDesc": "在对话中渲染一组消息，包括旁白、角色台词和系统提示。",
       "renderChoice": "提供选择",
-      "renderChoiceDesc": "向用户展示一组选项供选择，必须是本轮最后一个工具调用。",
+      "renderChoiceDesc": "向用户展示一组选项供选择。必须且只能是本轮唯一的工具调用，绝对不能与 render_message 或 update_sidebar 同时调用。",
       "updateSidebar": "更新场景数据",
       "updateSidebarDesc": "更新侧边栏的场景结构化数据，如角色状态、物品栏、任务进度等。",
       "messageCount": "{count} 条消息",

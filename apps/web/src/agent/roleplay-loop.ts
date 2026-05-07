@@ -636,7 +636,7 @@ export async function resumeFromChoice(options: ResumeChoiceOptions): Promise<Ro
   const userMsg = selectedChoiceId
     ? (selectedChoiceText ?? selectedChoiceId)
     : (freeTextInput ?? '')
-  const context = await buildRoleplayContext(sessionId, userMsg, modelConfig)
+  const context = await buildRoleplayContext(sessionId, userMsg, modelConfig, historyMessages)
 
   return runToolIterationLoop({
     sessionId,

@@ -492,7 +492,7 @@
       "renderMessage": "Render Messages",
       "renderMessageDesc": "Render a group of messages in the conversation, including narration, character dialogue, and system prompts.",
       "renderChoice": "Present Choice",
-      "renderChoiceDesc": "Present a set of choices for the user to select. Must be the last tool call in the turn.",
+      "renderChoiceDesc": "Present a set of choices for the user to select. Must be the ONLY tool call in this turn — never combine with render_message or update_sidebar.",
       "updateSidebar": "Update Scene Data",
       "updateSidebarDesc": "Update the sidebar structured scene data, such as character stats, inventory, quest progress, etc.",
       "messageCount": "{count} messages",
