@@ -13,6 +13,7 @@ import { getConfig } from '@/db/config'
 import { getAllModels } from '@/composables/useModels'
 import { getRoleplayConversationBySessionId } from '@/db/roleplay-conversations'
 import { getRoleplaySessionById } from '@/db/roleplay-sessions'
+import ThinkingCard from '@/views/story/components/ThinkingCard.vue'
 import { getPromptById } from '@/db/prompts'
 import { uuid } from '@/lib/utils'
 import { modelLabel } from '@/lib/model-utils'
@@ -133,7 +134,18 @@ function buildRoleplayDisplayItems(messages: Message[]): RoleplayDisplayItem[] {
         for (const [index, part] of assistant.parts.entries()) {
           const id = `${assistant.id}:${index}`
 
-          if (part.type === 'text' && part.text.trim()) {
+          if (part.type === 'reasoning' && part.text.trim()) {
+            const isStreaming =
+              !!streamingAssistant && isSameAssistantMessage(assistant, streamingAssistant)
+            if (isStreaming) {
+              items.push({
+                type: 'reasoning',
+                id,
+                content: part.text,
+                timestamp: assistant.timestamp,
+              })
+            }
+          } else if (part.type === 'text' && part.text.trim()) {
             items.push({
               type: 'assistant',
               id,
@@ -658,6 +670,11 @@ watch(
                     <span class="ml-0.5">┄</span>
                   </div>
                   <span v-else class="text-xs text-muted-foreground/50">{{ item.content }}</span>
+                </div>
+
+                <!-- THINKING (only visible during generation) -->
+                <div v-else-if="item.type === 'reasoning'" class="max-w-[85%]">
+                  <ThinkingCard :content="item.content" />
                 </div>
 
                 <!-- ASSISTANT TEXT (plain text with character name) -->
