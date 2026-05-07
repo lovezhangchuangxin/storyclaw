@@ -605,7 +605,7 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
 
   render_message: {
     argPreview: (args) => {
-      const messages = args.messages as Array<{ role: string; characterName?: string }> | undefined
+      const messages = args.messages as Array<{ role: string }> | undefined
       return messages?.length ? t('roleplay.tool.messageCount', { count: messages.length }) : ''
     },
     resultPreview: (r) =>

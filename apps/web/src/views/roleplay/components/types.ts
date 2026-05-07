@@ -1,8 +1,7 @@
 import type { StatusMessage } from '@/db/types'
 
 export interface RenderMessageItem {
-  role: 'narrator' | 'character' | 'system'
-  characterName?: string
+  role: 'narrator' | 'system'
   content: string
   emote?: string
 }

@@ -24,13 +24,8 @@ function renderMessageTool(_context: ToolContext): ToolDefinition {
             properties: {
               role: {
                 type: 'string',
-                enum: ['narrator', 'character', 'system'],
-                description:
-                  'narrator (旁白/description), character (角色台词/dialogue), system (系统提示/scene transition)',
-              },
-              characterName: {
-                type: 'string',
-                description: 'Character name (required when role=character)',
+                enum: ['narrator', 'system'],
+                description: 'narrator (旁白/description), system (系统提示/scene transition)',
               },
               content: {
                 type: 'string',
@@ -50,16 +45,11 @@ function renderMessageTool(_context: ToolContext): ToolDefinition {
     validationSchema: z.object({
       messages: z
         .array(
-          z
-            .object({
-              role: z.enum(['narrator', 'character', 'system']),
-              characterName: z.string().optional(),
-              content: z.string().min(1),
-              emote: z.string().optional(),
-            })
-            .refine((msg) => msg.role !== 'character' || msg.characterName, {
-              message: 'characterName is required when role=character',
-            }),
+          z.object({
+            role: z.enum(['narrator', 'system']),
+            content: z.string().min(1),
+            emote: z.string().optional(),
+          }),
         )
         .min(1),
     }),
