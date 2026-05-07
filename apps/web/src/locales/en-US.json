@@ -498,7 +498,6 @@
       "messageCount": "{count} messages",
       "choiceCount": "{count} choices",
       "groupCount": "{count} groups",
-      "awaitingChoice": "Awaiting choice...",
       "choiceMade": "Choice made"
     }
   },

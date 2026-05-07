@@ -60,6 +60,14 @@ const models = ref<ModelConfig[]>([])
 const selectedModelId = ref('')
 
 const selectedModel = computed(() => models.value.find((m) => m.id === selectedModelId.value))
+const isChoiceLoading = computed(() => {
+  if (awaitingChoice.value || pendingChoiceToolCallId.value) return false
+  for (const item of displayItems.value) {
+    if (item.type === 'roleplay_choice' && item.status === 'pending') return true
+  }
+  return false
+})
+
 const lastUsageInfo = ref<{ promptTokens?: number; cachedTokens?: number } | null>(null)
 const contextUsedTokens = computed(() => {
   if (lastUsageInfo.value?.promptTokens != null) return lastUsageInfo.value.promptTokens
@@ -317,8 +325,6 @@ async function send() {
     await handleFreeText(text)
     return
   }
-
-  input.value = ''
 
   input.value = ''
   transientMessages.value = []
@@ -699,6 +705,19 @@ watch(
                   />
                 </div>
               </template>
+
+              <!-- Choice loading skeleton: shown while render_choice is streaming -->
+              <div
+                v-if="gi === turnGroups.length - 1 && isChoiceLoading"
+                class="rounded-lg border bg-card p-3 shadow-sm space-y-2"
+              >
+                <div class="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                <div class="space-y-1.5 pt-1">
+                  <div class="h-[38px] w-full animate-pulse rounded-md bg-muted" />
+                  <div class="h-[38px] w-full animate-pulse rounded-md bg-muted" />
+                  <div class="h-[38px] w-2/3 animate-pulse rounded-md bg-muted" />
+                </div>
+              </div>
             </div>
           </div>
         </TransitionGroup>

@@ -498,7 +498,6 @@
       "messageCount": "{count} 条消息",
       "choiceCount": "{count} 个选项",
       "groupCount": "{count} 个分组",
-      "awaitingChoice": "等待选择...",
       "choiceMade": "已选择"
     }
   },
