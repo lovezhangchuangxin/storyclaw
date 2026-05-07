@@ -223,6 +223,7 @@ const turnGroups = computed<TurnGroup[]>(() => {
 
 // ---- Scroll-to-bottom ----
 const messagesContainer = ref<HTMLElement | null>(null)
+const bottomAnchor = ref<HTMLElement | null>(null)
 const isNearBottom = ref(true)
 
 function checkScrollPosition() {
@@ -268,8 +269,6 @@ function pushLocalStatus(kind: StatusMessage['kind'], content: string) {
 let lastAutoScrollTime = 0
 function scrollToBottom(smooth = false) {
   if (!isNearBottom.value) return
-  // Throttle instant scrolls during streaming to avoid layout jank.
-  // Smooth scrolls (final completion) always fire.
   if (!smooth) {
     const now = performance.now()
     if (now - lastAutoScrollTime < 30) return
@@ -277,16 +276,15 @@ function scrollToBottom(smooth = false) {
   }
   nextTick(() => {
     if (!isNearBottom.value) return
-    const el = messagesContainer.value
-    if (!el) return
-    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'instant' })
+    bottomAnchor.value?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'end' })
   })
 }
 
 function forceScrollToBottom() {
-  const el = messagesContainer.value
-  if (el) el.scrollTop = el.scrollHeight
-  isNearBottom.value = true
+  nextTick(() => {
+    bottomAnchor.value?.scrollIntoView({ behavior: 'instant', block: 'end' })
+    isNearBottom.value = true
+  })
 }
 
 async function reloadForNovel() {
@@ -506,6 +504,7 @@ function onWelcomeFill(prompt: string) {
         :copied-id="copiedId"
         @copy="copyAssistantText"
       />
+      <div ref="bottomAnchor" />
     </div>
 
     <!-- Scroll-to-bottom button -->
