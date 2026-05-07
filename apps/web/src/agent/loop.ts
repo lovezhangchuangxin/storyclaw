@@ -193,7 +193,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
     { compacted },
   )
   const localMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [...context.messages]
-  const toolContext: ToolContext = { novelId }
+  const toolContext: ToolContext = { novelId, scenario: 'novel' }
   let currentAssistantMessage: AssistantMessage | null = null
 
   const emitMessagesUpdated = () => {

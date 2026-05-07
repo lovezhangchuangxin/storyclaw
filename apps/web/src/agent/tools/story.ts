@@ -26,7 +26,7 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
         synopsis: z.string().optional(),
       }),
       async execute(args: Record<string, unknown>) {
-        const existing = await getNovelById(context.novelId)
+        const existing = await getNovelById(context.novelId!)
         if (existing) {
           if (!('title' in args) && !('synopsis' in args)) {
             return { success: true, id: existing.id, title: existing.title, unchanged: true }
@@ -43,7 +43,7 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
         }
 
         const novel: Novel = {
-          id: context.novelId,
+          id: context.novelId!,
           title: (args.title as string) || '未命名故事',
           synopsis: (args.synopsis as string) || '',
           genre: '',
@@ -67,12 +67,12 @@ export function createStoryManagementTools(context: ToolContext): ToolDefinition
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
-        const chapters = await getChaptersByNovelId(context.novelId)
-        const characters = await getCharactersByNovelId(context.novelId)
-        const outline = await getOutlineByNovelId(context.novelId)
+        const chapters = await getChaptersByNovelId(context.novelId!)
+        const characters = await getCharactersByNovelId(context.novelId!)
+        const outline = await getOutlineByNovelId(context.novelId!)
 
         return {
           id: novel.id,

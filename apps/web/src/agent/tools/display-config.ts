@@ -600,6 +600,31 @@ export const toolDisplayConfigs: Record<string, ToolDisplayConfig> = {
         ? `${perspectiveLabel(String(r.narrativePerspective ?? ''))} · ${tenseLabel(String(r.tense ?? ''))}`
         : '',
   },
+
+  // ── Roleplay ─────────────────────────────────────────────
+
+  render_message: {
+    argPreview: (args) => {
+      const messages = args.messages as Array<{ role: string; characterName?: string }> | undefined
+      return messages?.length ? t('roleplay.tool.messageCount', { count: messages.length }) : ''
+    },
+    resultPreview: (r) =>
+      r.success ? t('roleplay.tool.messageCount', { count: r.count ?? 0 }) : '',
+  },
+
+  render_choice: {
+    argPreview: (args) => String(args.prompt ?? ''),
+    resultPreview: (r) =>
+      r.pending ? t('roleplay.tool.awaitingChoice') : t('roleplay.tool.choiceMade'),
+  },
+
+  update_sidebar: {
+    argPreview: (args) => {
+      const groups = args.groups as Array<{ title: string }> | undefined
+      return groups?.length ? t('roleplay.tool.groupCount', { count: groups.length }) : ''
+    },
+    resultPreview: (r) => (r.success ? t('toolTransforms.success') : ''),
+  },
 }
 
 // ── Lookup ──────────────────────────────────────────────────

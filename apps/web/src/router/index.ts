@@ -33,6 +33,18 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: 'story.reader', back: true, internalScroll: true },
       },
       {
+        path: 'roleplay',
+        name: 'roleplay-list',
+        component: () => import('@/views/roleplay/RoleplayListView.vue'),
+        meta: { title: 'roleplay.title' },
+      },
+      {
+        path: 'roleplay/:id',
+        name: 'roleplay-session',
+        component: () => import('@/views/roleplay/RoleplaySessionView.vue'),
+        meta: { title: 'roleplay.session', back: true, internalScroll: true },
+      },
+      {
         path: 'settings/model',
         name: 'model-config',
         component: () => import('@/views/settings/ModelConfigView.vue'),

@@ -5,16 +5,20 @@ import { createChapterTools } from './chapters'
 import { createWorldBuildingTools } from './worldBuilding'
 import { createStyleTools } from './style'
 import { createStoryManagementTools } from './story'
+import { createRoleplayTools } from './roleplay'
 
 export function getToolRegistry(context: ToolContext): Map<string, ToolDefinition> {
-  const tools: ToolDefinition[] = [
-    ...createOutlineTools(context),
-    ...createCharacterTools(context),
-    ...createChapterTools(context),
-    ...createWorldBuildingTools(context),
-    ...createStyleTools(context),
-    ...createStoryManagementTools(context),
-  ]
+  const tools: ToolDefinition[] =
+    context.scenario === 'roleplay'
+      ? [...createRoleplayTools(context)]
+      : [
+          ...createOutlineTools(context),
+          ...createCharacterTools(context),
+          ...createChapterTools(context),
+          ...createWorldBuildingTools(context),
+          ...createStyleTools(context),
+          ...createStoryManagementTools(context),
+        ]
 
   const map = new Map<string, ToolDefinition>()
   for (const tool of tools) {

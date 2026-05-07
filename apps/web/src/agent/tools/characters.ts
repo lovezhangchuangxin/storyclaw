@@ -44,11 +44,11 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         arc: z.string().optional(),
       }),
       async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
         // Deduplicate by name: update existing character instead of creating a duplicate.
-        const existing = await getCharactersByNovelId(context.novelId)
+        const existing = await getCharactersByNovelId(context.novelId!)
         const prev = existing.find(
           (c) => c.name.toLowerCase() === (args.name as string).toLowerCase(),
         )
@@ -67,7 +67,7 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
 
         const character: Character = {
           id: uuid(),
-          novelId: context.novelId,
+          novelId: context.novelId!,
           name: args.name as string,
           role: args.role as Character['role'],
           appearance: (args.appearance as string) ?? '',
@@ -136,10 +136,10 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
           .optional(),
       }),
       async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
-        const existing = await getCharacterById(context.novelId, args.characterId as string)
+        const existing = await getCharacterById(context.novelId!, args.characterId as string)
         if (!existing) return { error: '角色不存在' }
 
         if ('name' in args) existing.name = args.name as string
@@ -180,9 +180,9 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         characterId: z.string(),
       }),
       async execute(args: Record<string, unknown>) {
-        const existing = await getCharacterById(context.novelId, args.characterId as string)
+        const existing = await getCharacterById(context.novelId!, args.characterId as string)
         if (!existing) return { error: '角色不存在' }
-        await deleteCharacter(context.novelId, args.characterId as string)
+        await deleteCharacter(context.novelId!, args.characterId as string)
         return { success: true }
       },
     },
@@ -200,7 +200,7 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
         characterId: z.string(),
       }),
       async execute(args: Record<string, unknown>) {
-        const character = await getCharacterById(context.novelId, args.characterId as string)
+        const character = await getCharacterById(context.novelId!, args.characterId as string)
         return character ?? { error: '角色不存在' }
       },
     },
@@ -212,7 +212,7 @@ export function createCharacterTools(context: ToolContext): ToolDefinition[] {
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {
-        const characters = await getCharactersByNovelId(context.novelId)
+        const characters = await getCharactersByNovelId(context.novelId!)
         return { count: characters.length, characters }
       },
     },

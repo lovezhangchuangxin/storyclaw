@@ -27,10 +27,10 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
         act3: z.string(),
       }),
       async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
-        const existing = await getOutlineByNovelId(context.novelId)
+        const existing = await getOutlineByNovelId(context.novelId!)
         if (existing) {
           existing.premise = args.premise as string
           existing.threeActs.act1.summary = args.act1 as string
@@ -42,7 +42,7 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
         }
 
         const outline = {
-          novelId: context.novelId,
+          novelId: context.novelId!,
           premise: args.premise as string,
           threeActs: {
             act1: { summary: args.act1 as string, keyEvents: [], characterArcs: [] },
@@ -150,10 +150,10 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
         act3_characterArcs_append: z.array(z.string()).optional(),
       }),
       async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
-        const existing = await getOutlineByNovelId(context.novelId)
+        const existing = await getOutlineByNovelId(context.novelId!)
         if (!existing) return { error: '没有找到大纲，请先调用 upsert_outline' }
 
         // Validate mutual exclusivity between replace and append modes
@@ -229,7 +229,7 @@ export function createOutlineTools(context: ToolContext): ToolDefinition[] {
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {
-        const outline = await getOutlineByNovelId(context.novelId)
+        const outline = await getOutlineByNovelId(context.novelId!)
         return outline ?? { error: '没有找到大纲' }
       },
     },

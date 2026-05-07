@@ -28,6 +28,7 @@
 
   "sidebar": {
     "bookshelf": "Bookshelf",
+    "roleplay": "Role Play",
     "prompts": "Prompts",
     "modelConfig": "Model Config",
     "serverConnection": "Backend",
@@ -281,7 +282,14 @@
       "contentPlaceholder": "Enter prompt content...",
       "nameRequired": "Name is required",
       "contentRequired": "Content is required",
-      "nameDuplicate": "Prompt name already exists"
+      "nameDuplicate": "Prompt name already exists",
+      "scenario": "Scenario",
+      "scenarioNovel": "Novel Writing",
+      "scenarioRoleplay": "Role Play",
+      "scenarioBoth": "Both",
+      "initialMessage": "Initial Message",
+      "initialMessageHint": "Optional, auto-sent when session is created",
+      "contentCopy": "Copy"
     }
   },
 
@@ -433,6 +441,65 @@
     },
     "combobox": {
       "placeholder": "Select or type"
+    }
+  },
+
+  "roleplay": {
+    "title": "Role Play",
+    "session": "Session",
+    "list": {
+      "empty": {
+        "title": "No roleplay sessions yet",
+        "description": "Create a new session to start your roleplay adventure",
+        "button": "Start your first session"
+      },
+      "newSession": "New Session",
+      "deleteConfirm": {
+        "description": "Are you sure you want to delete \"{title}\"? This action cannot be undone."
+      },
+      "card": {
+        "untitled": "Untitled Session",
+        "lastActive": "Last active"
+      }
+    },
+    "newDialog": {
+      "title": "Start Role Play",
+      "description": "Select a scenario prompt to begin a new roleplay session.",
+      "searchPrompts": "Search scenarios...",
+      "start": "Start Playing",
+      "noPrompts": "No roleplay prompts available",
+      "noMorePrompts": "No more prompts"
+    },
+    "agent": {
+      "welcome": {
+        "greeting": "Choose a scenario to begin",
+        "hint": "Create a new session or select an existing scenario"
+      },
+      "inputPlaceholder": "Enter your action...",
+      "freeTextPlaceholder": "Type a free action (skip choice)...",
+      "selectChoice": "Select an option",
+      "orType": "Or type a free action",
+      "choiceSelected": "Selected: {choice}",
+      "freeTextSent": "Free action sent"
+    },
+    "sidebar": {
+      "title": "Scene Data",
+      "empty": "No data yet",
+      "collapse": "Collapse",
+      "expandAll": "Expand all"
+    },
+    "tool": {
+      "renderMessage": "Render Messages",
+      "renderMessageDesc": "Render a group of messages in the conversation, including narration, character dialogue, and system prompts.",
+      "renderChoice": "Present Choice",
+      "renderChoiceDesc": "Present a set of choices for the user to select. Must be the last tool call in the turn.",
+      "updateSidebar": "Update Scene Data",
+      "updateSidebarDesc": "Update the sidebar structured scene data, such as character stats, inventory, quest progress, etc.",
+      "messageCount": "{count} messages",
+      "choiceCount": "{count} choices",
+      "groupCount": "{count} groups",
+      "awaitingChoice": "Awaiting choice...",
+      "choiceMade": "Choice made"
     }
   },
 
@@ -684,6 +751,7 @@
   },
 
   "db": {
-    "defaultStyle": "StoryClaw Default Style"
+    "defaultStyle": "StoryClaw Default Style",
+    "defaultRoleplay": "Ganyu · Liyue Yuehai Pavilion"
   }
 }

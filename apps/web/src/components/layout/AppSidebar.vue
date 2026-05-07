@@ -2,6 +2,7 @@
 import { useRouter, useRoute } from 'vue-router'
 import {
   BookOpen,
+  Drama,
   MessageSquareText,
   User,
   Settings,
@@ -31,6 +32,7 @@ const auth = useAuthStore()
 
 const items = [
   { path: '/', label: 'sidebar.bookshelf', icon: BookOpen },
+  { path: '/roleplay', label: 'sidebar.roleplay', icon: Drama },
   { path: '/prompts', label: 'sidebar.prompts', icon: MessageSquareText },
   { path: '/settings/model', label: 'sidebar.modelConfig', icon: Settings },
   { path: '/settings/server', label: 'sidebar.serverConnection', icon: Server },

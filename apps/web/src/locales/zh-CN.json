@@ -28,6 +28,7 @@
 
   "sidebar": {
     "bookshelf": "书架",
+    "roleplay": "角色扮演",
     "prompts": "提示词",
     "modelConfig": "模型配置",
     "serverConnection": "后端连接",
@@ -281,7 +282,14 @@
       "contentPlaceholder": "请输入提示词内容...",
       "nameRequired": "名称不能为空",
       "contentRequired": "内容不能为空",
-      "nameDuplicate": "提示词名称已存在"
+      "nameDuplicate": "提示词名称已存在",
+      "scenario": "适用场景",
+      "scenarioNovel": "小说创作",
+      "scenarioRoleplay": "角色扮演",
+      "scenarioBoth": "两者皆可",
+      "initialMessage": "初始消息",
+      "initialMessageHint": "可选，会话创建时自动发送",
+      "contentCopy": "复制"
     }
   },
 
@@ -433,6 +441,65 @@
     },
     "combobox": {
       "placeholder": "请选择或输入"
+    }
+  },
+
+  "roleplay": {
+    "title": "角色扮演",
+    "session": "对话",
+    "list": {
+      "empty": {
+        "title": "还没有角色扮演会话",
+        "description": "创建一个新会话，开始你的角色扮演之旅",
+        "button": "开始第一个会话"
+      },
+      "newSession": "新建会话",
+      "deleteConfirm": {
+        "description": "确定要删除「{title}」吗？此操作不可撤销。"
+      },
+      "card": {
+        "untitled": "未命名会话",
+        "lastActive": "最后活跃"
+      }
+    },
+    "newDialog": {
+      "title": "开始角色扮演",
+      "description": "选择一个场景提示词开始新的角色扮演会话。",
+      "searchPrompts": "搜索场景...",
+      "start": "开始扮演",
+      "noPrompts": "没有可用的角色扮演提示词",
+      "noMorePrompts": "没有更多提示词"
+    },
+    "agent": {
+      "welcome": {
+        "greeting": "选择一个场景开始",
+        "hint": "创建新会话，或选择一个已有的场景"
+      },
+      "inputPlaceholder": "输入你的行动...",
+      "freeTextPlaceholder": "输入自由行动（跳过选择）...",
+      "selectChoice": "选择一个选项",
+      "orType": "或输入自由行动",
+      "choiceSelected": "已选择：{choice}",
+      "freeTextSent": "自由行动已发送"
+    },
+    "sidebar": {
+      "title": "场景数据",
+      "empty": "暂无数据",
+      "collapse": "收起",
+      "expandAll": "展开全部"
+    },
+    "tool": {
+      "renderMessage": "渲染消息",
+      "renderMessageDesc": "在对话中渲染一组消息，包括旁白、角色台词和系统提示。",
+      "renderChoice": "提供选择",
+      "renderChoiceDesc": "向用户展示一组选项供选择，必须是本轮最后一个工具调用。",
+      "updateSidebar": "更新场景数据",
+      "updateSidebarDesc": "更新侧边栏的场景结构化数据，如角色状态、物品栏、任务进度等。",
+      "messageCount": "{count} 条消息",
+      "choiceCount": "{count} 个选项",
+      "groupCount": "{count} 个分组",
+      "awaitingChoice": "等待选择...",
+      "choiceMade": "已选择"
     }
   },
 
@@ -660,6 +727,7 @@
   },
 
   "db": {
-    "defaultStyle": "StoryClaw 默认风格"
+    "defaultStyle": "StoryClaw 默认风格",
+    "defaultRoleplay": "甘雨·璃月月海亭"
   }
 }

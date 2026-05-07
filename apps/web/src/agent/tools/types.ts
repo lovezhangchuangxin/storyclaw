@@ -1,7 +1,9 @@
 import { z } from 'zod'
 
 export interface ToolContext {
-  novelId: string
+  novelId?: string
+  sessionId?: string
+  scenario: 'novel' | 'roleplay'
 }
 
 export interface ToolDefinition {

@@ -2,7 +2,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { STORYCLAW_PERSONA } from '@/agent/persona'
 
 const DB_NAME = 'storyclaw'
-const DB_VERSION = 6
+const DB_VERSION = 8
 
 export interface StoryClawDBSchema extends DBSchema {
   novels: {
@@ -61,6 +61,14 @@ export interface StoryClawDBSchema extends DBSchema {
   assets: {
     key: string
     value: import('./types').BackgroundImage
+  }
+  roleplaySessions: {
+    key: string
+    value: import('./roleplay-types').RoleplaySession
+  }
+  roleplayConversations: {
+    key: string
+    value: import('./roleplay-types').RoleplayConversation
   }
 }
 
@@ -130,6 +138,26 @@ export async function getDB(): Promise<IDBPDatabase<StoryClawDBSchema>> {
 
       if (!db.objectStoreNames.contains('assets')) {
         db.createObjectStore('assets', { keyPath: 'id' })
+      }
+
+      if (oldVersion < 7) {
+        if (!db.objectStoreNames.contains('roleplaySessions')) {
+          db.createObjectStore('roleplaySessions', { keyPath: 'id' })
+        }
+        if (!db.objectStoreNames.contains('roleplayConversations')) {
+          db.createObjectStore('roleplayConversations', { keyPath: 'sessionId' })
+        }
+      }
+
+      if (oldVersion < 8) {
+        // v7 upgrade may have failed due to illegal db.transaction() call.
+        // v8 ensures stores exist even if v7 was skipped.
+        if (!db.objectStoreNames.contains('roleplaySessions')) {
+          db.createObjectStore('roleplaySessions', { keyPath: 'id' })
+        }
+        if (!db.objectStoreNames.contains('roleplayConversations')) {
+          db.createObjectStore('roleplayConversations', { keyPath: 'sessionId' })
+        }
       }
     },
   })

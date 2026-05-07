@@ -57,11 +57,11 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         ),
       }),
       async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
         const chapters = args.chapters as Array<Record<string, unknown>>
-        const outline = await getOutlineByNovelId(context.novelId)
+        const outline = await getOutlineByNovelId(context.novelId!)
 
         const chapterPlans = chapters.map((c, i) => ({
           index: i,
@@ -73,7 +73,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         }))
 
         // Fetch existing chapters to preserve already-written content.
-        const existing = await getChaptersByNovelId(context.novelId)
+        const existing = await getChaptersByNovelId(context.novelId!)
         const existingMap = new Map(existing.map((ch) => [ch.index, ch]))
 
         await Promise.all(
@@ -88,7 +88,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
                   updatedAt: Date.now(),
                 }
               : {
-                  novelId: context.novelId,
+                  novelId: context.novelId!,
                   index: plan.index,
                   title: plan.title,
                   summary: plan.summary,
@@ -114,7 +114,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
               return saveChapter(ch)
             }),
           )
-          await syncNovelWordCount(context.novelId)
+          await syncNovelWordCount(context.novelId!)
         }
 
         if (outline) {
@@ -157,12 +157,12 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         content: z.string(),
       }),
       async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
         const index = args.index as number
         const content = args.content as string
-        const existing = await getChapterByIndex(context.novelId, index)
+        const existing = await getChapterByIndex(context.novelId!, index)
         if (!existing) return { error: '章节不存在，请先调用 plan_chapters' }
 
         existing.content = content
@@ -170,7 +170,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         existing.status = 'completed'
         existing.updatedAt = Date.now()
         await saveChapter(existing)
-        await syncNovelWordCount(context.novelId)
+        await syncNovelWordCount(context.novelId!)
         return { success: true, index, wordCount: existing.wordCount }
       },
     },
@@ -188,7 +188,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         index: z.number(),
       }),
       async execute(args: Record<string, unknown>) {
-        const chapter = await getChapterByIndex(context.novelId, args.index as number)
+        const chapter = await getChapterByIndex(context.novelId!, args.index as number)
         return chapter ?? { error: '章节不存在' }
       },
     },
@@ -200,7 +200,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {
-        const chapters = await getChaptersByNovelId(context.novelId)
+        const chapters = await getChaptersByNovelId(context.novelId!)
         const sorted = chapters.slice().sort((a, b) => a.index - b.index)
         return {
           count: sorted.length,
@@ -228,14 +228,14 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         index: z.number(),
       }),
       async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
         const index = args.index as number
-        const chapter = await getChapterByIndex(context.novelId, index)
+        const chapter = await getChapterByIndex(context.novelId!, index)
         if (!chapter) return { error: '章节不存在' }
-        await deleteChapter(context.novelId, index)
-        await syncNovelWordCount(context.novelId)
+        await deleteChapter(context.novelId!, index)
+        await syncNovelWordCount(context.novelId!)
         return { success: true, deletedIndex: index, title: chapter.title }
       },
     },
@@ -255,7 +255,7 @@ export function createChapterTools(context: ToolContext): ToolDefinition[] {
         query: z.string().min(1),
       }),
       async execute(args: Record<string, unknown>) {
-        const chapters = await getChaptersByNovelId(context.novelId)
+        const chapters = await getChaptersByNovelId(context.novelId!)
         const query = (args.query as string).toLowerCase()
         const results = chapters
           .filter((ch) => ch.content && ch.content.toLowerCase().includes(query))

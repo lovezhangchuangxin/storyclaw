@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
+import { Copy } from 'lucide-vue-next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -32,8 +33,29 @@ const title = computed(() => {
 
 const name = ref('')
 const content = ref('')
+const scenario = ref<'novel' | 'roleplay' | 'both'>('novel')
+const initialMessage = ref('')
 const saving = ref(false)
 const nameError = ref('')
+const contentCopied = ref(false)
+
+async function copyContent() {
+  try {
+    await navigator.clipboard.writeText(content.value)
+    contentCopied.value = true
+    setTimeout(() => {
+      contentCopied.value = false
+    }, 2000)
+  } catch {
+    toast.error(t('story.agent.copyFailed'))
+  }
+}
+
+const scenarioOptions = computed(() => [
+  { value: 'novel' as const, label: t('prompts.dialog.scenarioNovel') },
+  { value: 'roleplay' as const, label: t('prompts.dialog.scenarioRoleplay') },
+  { value: 'both' as const, label: t('prompts.dialog.scenarioBoth') },
+])
 
 watch(
   () => props.open,
@@ -42,9 +64,13 @@ watch(
     if (props.prompt) {
       name.value = props.prompt.name
       content.value = props.prompt.content
+      scenario.value = props.prompt.scenario ?? 'novel'
+      initialMessage.value = props.prompt.initialMessage ?? ''
     } else {
       name.value = ''
       content.value = ''
+      scenario.value = 'novel'
+      initialMessage.value = ''
     }
     nameError.value = ''
   },
@@ -77,6 +103,11 @@ async function handleSave() {
       name: trimmedName,
       content: trimmedContent,
       isBuiltin: props.prompt?.isBuiltin ?? false,
+      scenario: scenario.value,
+      initialMessage:
+        scenario.value !== 'novel' && initialMessage.value.trim()
+          ? initialMessage.value.trim()
+          : undefined,
       createdAt: props.prompt?.createdAt ?? Date.now(),
       updatedAt: Date.now(),
     })
@@ -98,7 +129,7 @@ async function handleSave() {
         <DialogTitle>{{ title }}</DialogTitle>
       </DialogHeader>
 
-      <div class="space-y-4 mt-2">
+      <div class="space-y-4 mt-2 overflow-y-auto">
         <div class="space-y-1.5">
           <Label>{{ $t('prompts.dialog.nameLabel') }}</Label>
           <Input
@@ -112,12 +143,58 @@ async function handleSave() {
         </div>
 
         <div class="space-y-1.5">
-          <Label>{{ $t('prompts.dialog.contentLabel') }}</Label>
+          <Label>{{ $t('prompts.dialog.scenario') }}</Label>
+          <div class="flex gap-1.5" v-if="!readonly">
+            <button
+              v-for="opt in scenarioOptions"
+              :key="opt.value"
+              class="flex-1 rounded-md border px-3 py-1.5 text-xs transition-colors"
+              :class="{
+                'border-primary bg-primary/10 text-primary': scenario === opt.value,
+                'border-border hover:bg-muted': scenario !== opt.value,
+              }"
+              @click="scenario = opt.value"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+          <p v-else class="text-sm text-muted-foreground">
+            {{
+              scenario === 'roleplay'
+                ? $t('prompts.dialog.scenarioRoleplay')
+                : scenario === 'both'
+                  ? $t('prompts.dialog.scenarioBoth')
+                  : $t('prompts.dialog.scenarioNovel')
+            }}
+          </p>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <Label>{{ $t('prompts.dialog.contentLabel') }}</Label>
+            <button
+              v-if="readonly"
+              class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              @click="copyContent"
+            >
+              <Copy class="size-3" />
+              {{ contentCopied ? '✓' : $t('prompts.dialog.contentCopy') }}
+            </button>
+          </div>
           <Textarea
             v-model="content"
             :placeholder="readonly ? '' : $t('prompts.dialog.contentPlaceholder')"
             :disabled="readonly"
             class="min-h-[200px] max-h-[50vh] resize-none"
+          />
+        </div>
+
+        <div v-if="scenario !== 'novel'" class="space-y-1.5">
+          <Label>{{ $t('prompts.dialog.initialMessage') }}</Label>
+          <Input
+            v-model="initialMessage"
+            :placeholder="$t('prompts.dialog.initialMessageHint')"
+            :disabled="readonly"
           />
         </div>
       </div>

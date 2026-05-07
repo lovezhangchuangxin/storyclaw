@@ -52,10 +52,10 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
           .optional(),
       }),
       async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
-        const existing = await getWorldBuildingByNovelId(context.novelId)
+        const existing = await getWorldBuildingByNovelId(context.novelId!)
         if (existing) {
           if ('era' in args && args.era != null) existing.era = args.era as string
           if ('location' in args && args.location != null)
@@ -80,7 +80,7 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
         }
 
         const wb: WorldBuilding = {
-          novelId: context.novelId,
+          novelId: context.novelId!,
           era: (args.era as string) ?? '',
           location: (args.location as string) ?? '',
           rules: (args.rules as string) ?? '',
@@ -107,7 +107,7 @@ export function createWorldBuildingTools(context: ToolContext): ToolDefinition[]
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {
-        const wb = await getWorldBuildingByNovelId(context.novelId)
+        const wb = await getWorldBuildingByNovelId(context.novelId!)
         return wb ?? { error: '世界观设定不存在' }
       },
     },

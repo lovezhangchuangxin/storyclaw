@@ -19,7 +19,7 @@ let _displayMap: Map<string, { displayName: string; icon: string }> | null = nul
 function ensureDisplayMap(): Map<string, { displayName: string; icon: string }> {
   if (!_displayMap) {
     const { t } = i18n.global
-    const tools = getToolRegistry({ novelId: '' })
+    const tools = getToolRegistry({ novelId: '', scenario: 'novel' })
     _displayMap = new Map(
       [...tools.values()].map((tool) => [
         tool.name,

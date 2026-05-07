@@ -1,6 +1,31 @@
 import { getDB } from './index'
 import type { Prompt } from './types'
 import { i18n } from '@/i18n'
+import { ROLEPLAY_DEFAULT_PERSONA } from '@/agent/roleplay-persona'
+
+let roleplayPromptEnsured = false
+
+export async function ensureRoleplayBuiltinPrompt(): Promise<void> {
+  if (roleplayPromptEnsured) return
+  try {
+    const db = await getDB()
+    const existing = await db.get('prompts', 'builtin-roleplay-default')
+    const latest = {
+      id: 'builtin-roleplay-default',
+      name: i18n.global.t('db.defaultRoleplay'),
+      content: ROLEPLAY_DEFAULT_PERSONA,
+      initialMessage: '',
+      isBuiltin: true,
+      scenario: 'roleplay' as const,
+      createdAt: existing?.createdAt ?? 0,
+      updatedAt: Date.now(),
+    }
+    await db.put('prompts', latest)
+    roleplayPromptEnsured = true
+  } catch {
+    // Non-critical — will retry on next call
+  }
+}
 
 export async function getAllPrompts(): Promise<Prompt[]> {
   const db = await getDB()

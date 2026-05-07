@@ -4,19 +4,14 @@ import { getLatestContextSnapshot } from '@/db/context-snapshots'
 import { getConversationByNovelId } from '@/db/conversations'
 import { getNovelById } from '@/db/novels'
 import { getPromptsByIds } from '@/db/prompts'
-import type { Conversation, Message, ModelConfig } from '@/db/types'
+import type { Conversation, ModelConfig } from '@/db/types'
 import { supportsReasoningContent } from '@/lib/model-capabilities'
 import {
   compactConversationContext,
   CONTEXT_SCOPE_MAIN,
   serializeContextSnapshot,
 } from './context-compaction'
-import {
-  getAssistantReasoningParts,
-  getAssistantTextParts,
-  getAssistantToolUses,
-  isMessageIncludedInContext,
-} from './message-state'
+import { convertToApiMessages, getEffectiveConversationMessages } from './message-conversion'
 import { loadStoryState, serializeStoryState } from './story-state'
 import { calculateTriggerThreshold, estimatePromptTokens } from './token-estimator'
 import { getToolDefinitions } from './tools'
@@ -32,93 +27,6 @@ export interface ContextBuildResult {
 
 function buildPersonaPrompt(): string {
   return STORYCLAW_PERSONA
-}
-
-function getEffectiveConversationMessages(
-  messages: Message[],
-  compactedThroughMessageId: string | null,
-): Message[] {
-  const includedMessages = messages.filter(isMessageIncludedInContext)
-  if (!compactedThroughMessageId) {
-    return includedMessages
-  }
-
-  const boundaryIndex = includedMessages.findIndex(
-    (message) => message.id === compactedThroughMessageId,
-  )
-  if (boundaryIndex === -1) {
-    return includedMessages
-  }
-
-  return includedMessages.slice(boundaryIndex + 1)
-}
-
-function convertToApiMessages(
-  messages: Message[],
-  includeReasoningContent: boolean,
-): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
-  const result: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = []
-
-  for (const message of messages) {
-    if (!isMessageIncludedInContext(message)) continue
-
-    switch (message.role) {
-      case 'user':
-        result.push({ role: 'user', content: message.content })
-        break
-      case 'assistant': {
-        const includeAssistantContent = message.state === 'completed'
-        const textContent = includeAssistantContent ? getAssistantTextParts(message).join('') : ''
-        const reasoningContent = includeAssistantContent
-          ? getAssistantReasoningParts(message).join('')
-          : ''
-        const toolUses = getAssistantToolUses(message).filter(
-          (toolUse) => toolUse.status !== 'cancelled' && toolUse.result !== null,
-        )
-
-        if (!textContent && toolUses.length === 0) {
-          break
-        }
-
-        const assistantMessage: Record<string, unknown> = {
-          role: 'assistant',
-          content: textContent || null,
-        }
-
-        if (includeAssistantContent && includeReasoningContent && reasoningContent) {
-          assistantMessage.reasoning_content = reasoningContent
-        }
-
-        if (toolUses.length > 0) {
-          assistantMessage.tool_calls = toolUses.map((toolUse) => ({
-            id: toolUse.toolCallId,
-            type: 'function' as const,
-            function: {
-              name: toolUse.toolName,
-              arguments: toolUse.rawArguments,
-            },
-          }))
-        }
-
-        result.push(
-          assistantMessage as unknown as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam,
-        )
-
-        for (const toolUse of toolUses) {
-          result.push({
-            role: 'tool',
-            content: toolUse.result!,
-            tool_call_id: toolUse.toolCallId,
-          })
-        }
-        break
-      }
-      case 'status':
-        break
-    }
-  }
-
-  return result
 }
 
 export async function maybeCompactBeforeBuild(
@@ -138,7 +46,7 @@ export async function maybeCompactBeforeBuild(
     selectedPromptIds.length > 0 ? await getPromptsByIds(selectedPromptIds) : []
   const customPromptContents = selectedPrompts.filter((p) => !p.isBuiltin).map((p) => p.content)
 
-  const tools = getToolDefinitions({ novelId })
+  const tools = getToolDefinitions({ novelId, scenario: 'novel' })
   const tokens = estimatePromptTokens(
     [
       buildPersonaPrompt(),
@@ -177,7 +85,7 @@ export async function buildContext(
   options?: { compacted?: boolean },
 ): Promise<ContextBuildResult> {
   const conversation = existingConversation ?? (await getConversationByNovelId(novelId))
-  const toolContext: ToolContext = { novelId }
+  const toolContext: ToolContext = { novelId, scenario: 'novel' }
   const includeReasoningContent = supportsReasoningContent(modelConfig)
   const personaPrompt = buildPersonaPrompt()
 

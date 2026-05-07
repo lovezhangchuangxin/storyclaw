@@ -30,7 +30,7 @@ export function createStyleTools(context: ToolContext): ToolDefinition[] {
         languageStyle: z.string().optional(),
       }),
       async execute(args: Record<string, unknown>) {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
 
         novel.styleSettings ??= { narrativePerspective: '', tense: '', languageStyle: '' }
@@ -52,7 +52,7 @@ export function createStyleTools(context: ToolContext): ToolDefinition[] {
       parameters: { type: 'object', properties: {}, required: [] },
       validationSchema: z.object({}),
       async execute() {
-        const novel = await getNovelById(context.novelId)
+        const novel = await getNovelById(context.novelId!)
         if (!novel) return { error: '小说不存在' }
         return novel.styleSettings
       },

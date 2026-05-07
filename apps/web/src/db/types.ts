@@ -30,6 +30,8 @@ export interface Prompt {
   id: string
   name: string
   content: string
+  initialMessage?: string
+  scenario?: 'novel' | 'roleplay' | 'both'
   isBuiltin: boolean
   createdAt: number
   updatedAt: number
