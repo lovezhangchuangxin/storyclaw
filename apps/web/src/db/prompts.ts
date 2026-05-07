@@ -1,8 +1,8 @@
 import { getDB } from './index'
 import type { Prompt } from './types'
 import { i18n } from '@/i18n'
-import { ROLEPLAY_DEFAULT_PERSONA } from '@/agent/roleplay-persona'
-import { CULTIVATION_PERSONA } from '@/agent/cultivation-persona'
+import { ROLEPLAY_DEFAULT_PERSONA } from '@/agent/prompts/roleplay-persona'
+import { CULTIVATION_PERSONA } from '@/agent/prompts/cultivation-persona'
 
 let roleplayPromptEnsured = false
 let cultivationPromptEnsured = false

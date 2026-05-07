@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import { STORYCLAW_PERSONA } from '@/agent/persona'
+import { STORYCLAW_PERSONA } from '@/agent/prompts/storyclaw-persona'
 
 const DB_NAME = 'storyclaw'
 const DB_VERSION = 8

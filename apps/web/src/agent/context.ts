@@ -16,7 +16,7 @@ import { loadStoryState, serializeStoryState } from './story-state'
 import { calculateTriggerThreshold, estimatePromptTokens } from './token-estimator'
 import { getToolDefinitions } from './tools'
 import type { ToolContext } from './tools/types'
-import { STORYCLAW_PERSONA } from './persona'
+import { STORYCLAW_PERSONA } from './prompts/storyclaw-persona'
 
 export interface ContextBuildResult {
   messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
