@@ -124,12 +124,14 @@ async function handleSave() {
 
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent class="max-w-[calc(100vw-2rem)] sm:max-w-lg max-h-[85vh] overflow-hidden">
+    <DialogContent
+      class="max-w-[calc(100vw-2rem)] sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
+    >
       <DialogHeader>
         <DialogTitle>{{ title }}</DialogTitle>
       </DialogHeader>
 
-      <div class="space-y-4 mt-2 overflow-y-auto">
+      <div class="space-y-4 mt-2 flex-1 overflow-y-auto min-h-0">
         <div class="space-y-1.5">
           <Label>{{ $t('prompts.dialog.nameLabel') }}</Label>
           <Input
@@ -185,7 +187,7 @@ async function handleSave() {
             v-model="content"
             :placeholder="readonly ? '' : $t('prompts.dialog.contentPlaceholder')"
             :disabled="readonly"
-            class="min-h-[200px] max-h-[50vh] resize-none"
+            class="min-h-[160px] max-h-[40vh] resize-none"
           />
         </div>
 
