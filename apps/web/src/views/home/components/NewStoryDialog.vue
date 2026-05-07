@@ -70,7 +70,9 @@ watch(
     promptPopoverOpen.value = false
     getAllPrompts()
       .then((ps) => {
-        allPrompts.value = ps
+        allPrompts.value = ps.filter(
+          (p) => p.scenario === 'novel' || p.scenario === 'both' || !p.scenario,
+        )
       })
       .catch((e) => {
         toast.error(t('home.newStoryDialog.loadPromptsFailed'), {
