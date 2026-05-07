@@ -16,7 +16,6 @@ import { getRoleplaySessionById } from '@/db/roleplay-sessions'
 import { getPromptById } from '@/db/prompts'
 import { uuid } from '@/lib/utils'
 import { modelLabel } from '@/lib/model-utils'
-import { relativeTime } from '@/lib/time'
 import type { RoleplaySidebarData } from '@/db/roleplay-types'
 import { Button } from '@/components/ui/button'
 import {
@@ -605,22 +604,13 @@ watch(
     >
       <RoleplayWelcome v-if="displayItems.length === 0" />
       <div v-else class="mx-auto max-w-3xl px-4 py-4">
-        <TransitionGroup name="message-enter" tag="div">
+        <TransitionGroup name="message-enter" tag="div" class="space-y-4">
           <div
             v-for="(group, gi) in turnGroups"
             :key="group.turnId"
             :style="{ '--stagger': gi }"
             :class="{ 'cv-auto': gi < turnGroups.length - 1 }"
           >
-            <!-- Turn divider -->
-            <div class="my-3 flex items-center gap-3 first:mt-0">
-              <div class="h-px flex-1 bg-border/60" />
-              <span class="shrink-0 text-[11px] text-muted-foreground/50">
-                {{ relativeTime(group.timestamp) }}
-              </span>
-              <div class="h-px flex-1 bg-border/60" />
-            </div>
-
             <!-- Items in this turn -->
             <div class="space-y-2">
               <template v-for="item in group.items" :key="item.id">
