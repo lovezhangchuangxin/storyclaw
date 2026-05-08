@@ -10,7 +10,7 @@ const { t } = useI18n()
 
 const themes: { id: AppTheme; name: string; bg: string }[] = [
   { id: 'light', name: t('settings.appearance.theme.light'), bg: '#FCFAF7' },
-  { id: 'dark', name: t('settings.appearance.theme.dark'), bg: '#1A1A1E' },
+  { id: 'dark', name: t('settings.appearance.theme.dark'), bg: '#2A2A28' },
   { id: 'parchment', name: t('settings.appearance.theme.parchment'), bg: '#F4E4C1' },
   { id: 'frost', name: t('settings.appearance.theme.frost'), bg: '#F0F4FA' },
   { id: 'peach', name: t('settings.appearance.theme.peach'), bg: '#FBEDE8' },

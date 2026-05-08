@@ -95,9 +95,9 @@ const themeCards = [
     id: 'dark' as AppTheme,
     name: 'settings.appearance.theme.dark',
     icon: Moon,
-    bg: '#1A1A1E',
-    text: '#E0E0E0',
-    accent: '#8B8B8B',
+    bg: '#2A2A28',
+    text: '#DEDCD8',
+    accent: '#C5BFAF',
   },
   {
     id: 'parchment' as AppTheme,
