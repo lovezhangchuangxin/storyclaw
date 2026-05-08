@@ -72,7 +72,7 @@ function closeMobile() {
 </script>
 
 <template>
-  <div class="flex h-dvh bg-background">
+  <div class="flex h-dvh">
     <!-- Background image layer -->
     <div
       v-if="backgroundUrl"

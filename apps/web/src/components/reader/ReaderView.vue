@@ -288,7 +288,7 @@ defineExpose({ scrollToPos })
   <div
     v-if="!isPaged"
     ref="container"
-    class="reader h-full overflow-y-auto overscroll-none bg-background/65 text-foreground"
+    class="reader h-full overflow-y-auto overscroll-none bg-background/50 text-foreground"
     :style="readerStyle"
     @scroll="onScroll"
     @click="onClickScroll"
@@ -354,7 +354,7 @@ defineExpose({ scrollToPos })
   <div
     v-else
     ref="pagedContainer"
-    class="reader-paged h-full overflow-hidden bg-background/65 text-foreground relative"
+    class="reader-paged h-full overflow-hidden bg-background/50 text-foreground relative"
     :style="readerStyle"
     @click="onClickPaged"
     @touchstart="onTouchStart"
