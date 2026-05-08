@@ -105,7 +105,7 @@ async function openCreateDialog() {
   }
 }
 
-async function handleCreateSession(promptId: string) {
+async function handleCreateSession(promptId: string, modelId: string) {
   try {
     const prompt = await getPromptById(promptId)
     const id = uuid()
@@ -115,6 +115,7 @@ async function handleCreateSession(promptId: string) {
       promptId,
       title: prompt?.name ?? t('roleplay.list.card.untitled'),
       sidebarData: null,
+      modelId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })

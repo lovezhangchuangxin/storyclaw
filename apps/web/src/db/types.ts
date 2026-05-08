@@ -13,6 +13,7 @@ export interface Novel {
   createdAt: number
   updatedAt: number
   selectedPromptIds?: string[]
+  modelId?: string
   version: number
   backendId?: string
 }

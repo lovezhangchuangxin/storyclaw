@@ -76,7 +76,7 @@ async function openCreateDialog() {
   }
 }
 
-async function handleCreateStory(selectedPromptIds: string[]) {
+async function handleCreateStory(selectedPromptIds: string[], modelId: string) {
   try {
     const id = uuid()
     await createNovel({
@@ -93,6 +93,7 @@ async function handleCreateStory(selectedPromptIds: string[]) {
         languageStyle: '',
       },
       selectedPromptIds,
+      modelId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       version: 1,

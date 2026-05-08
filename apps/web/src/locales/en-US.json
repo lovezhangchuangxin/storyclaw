@@ -84,7 +84,8 @@
       "searchPrompts": "Search prompts...",
       "startWriting": "Start Writing",
       "loadPromptsFailed": "Failed to load prompts",
-      "noMorePrompts": "No more prompts"
+      "noMorePrompts": "No more prompts",
+      "selectModel": "Select model"
     }
   },
 
@@ -468,7 +469,8 @@
       "searchPrompts": "Search scenarios...",
       "start": "Start Playing",
       "noPrompts": "No roleplay prompts available",
-      "noMorePrompts": "No more prompts"
+      "noMorePrompts": "No more prompts",
+      "selectModel": "Select model"
     },
     "agent": {
       "welcome": {

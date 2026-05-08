@@ -10,12 +10,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getAllPrompts } from '@/db/prompts'
-import type { Prompt } from '@/db/types'
+import { getConfig } from '@/db/config'
+import { getAllModels } from '@/composables/useModels'
+import { modelLabel } from '@/lib/model-utils'
+import type { Prompt, ModelConfig } from '@/db/types'
 import { useI18n } from 'vue-i18n'
 import { usePromptDrag } from '@/composables/usePromptDrag'
 import { toast } from 'vue-sonner'
@@ -28,13 +37,19 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:open': [v: boolean]
-  create: [selectedPromptIds: string[]]
+  create: [selectedPromptIds: string[], modelId: string]
 }>()
 
 const allPrompts = ref<Prompt[]>([])
 const selectedPromptIds = ref<string[]>(['builtin-persona'])
 const promptSearch = ref('')
 const promptPopoverOpen = ref(false)
+
+const models = ref<ModelConfig[]>([])
+const selectedModelId = ref('')
+let loadSeq = 0
+
+const selectedModel = computed(() => models.value.find((m) => m.id === selectedModelId.value))
 
 const {
   dragIndex,
@@ -68,8 +83,10 @@ watch(
     selectedPromptIds.value = ['builtin-persona']
     promptSearch.value = ''
     promptPopoverOpen.value = false
+    const seq = ++loadSeq
     getAllPrompts()
       .then((ps) => {
+        if (seq !== loadSeq) return
         allPrompts.value = ps.filter(
           (p) => p.scenario === 'novel' || p.scenario === 'both' || !p.scenario,
         )
@@ -78,6 +95,17 @@ watch(
         toast.error(t('home.newStoryDialog.loadPromptsFailed'), {
           description: e instanceof Error ? e.message : String(e),
         })
+      })
+    // Load models and select default
+    Promise.all([getAllModels(), getConfig()])
+      .then(([ms, config]) => {
+        if (seq !== loadSeq) return
+        models.value = ms
+        const defaultExists = ms.some((m) => m.id === config.defaultModelId)
+        selectedModelId.value = defaultExists ? config.defaultModelId : ms[0]?.id || ''
+      })
+      .catch(() => {
+        // Models failed to load - selector stays hidden (v-if="models.length > 0")
       })
   },
 )
@@ -97,7 +125,7 @@ function removePrompt(id: string) {
 }
 
 function handleCreate() {
-  emit('create', [...selectedPromptIds.value])
+  emit('create', [...selectedPromptIds.value], selectedModelId.value)
 }
 </script>
 
@@ -110,6 +138,39 @@ function handleCreate() {
           {{ $t('home.newStoryDialog.description') }}
         </DialogDescription>
       </DialogHeader>
+
+      <!-- Model selector -->
+      <DropdownMenu v-if="models.length > 0">
+        <DropdownMenuTrigger
+          as="button"
+          class="flex items-center gap-1.5 border border-input rounded-lg px-2.5 py-1.5 text-sm h-9 w-full bg-transparent hover:border-primary/50 transition-colors outline-none"
+        >
+          <span
+            class="flex size-4 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70 shrink-0"
+          >
+            {{ selectedModel?.provider?.[0]?.toUpperCase() ?? '?' }}
+          </span>
+          <span class="flex-1 text-left truncate">
+            {{ selectedModel ? modelLabel(selectedModel) : $t('home.newStoryDialog.selectModel') }}
+          </span>
+          <ChevronDown class="size-3.5 text-muted-foreground shrink-0" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" class="min-w-[200px]">
+          <DropdownMenuItem
+            v-for="model in models"
+            :key="model.id"
+            class="flex items-center gap-2"
+            @click="selectedModelId = model.id"
+          >
+            <span
+              class="flex size-5 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70"
+            >
+              {{ model.provider?.[0]?.toUpperCase() ?? '?' }}
+            </span>
+            <span class="text-xs">{{ modelLabel(model) }}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Popover v-model:open="promptPopoverOpen">
         <PopoverTrigger as-child>

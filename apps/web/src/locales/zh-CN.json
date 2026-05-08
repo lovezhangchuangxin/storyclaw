@@ -84,7 +84,8 @@
       "searchPrompts": "搜索提示词...",
       "startWriting": "开始创作",
       "loadPromptsFailed": "加载提示词失败",
-      "noMorePrompts": "没有更多提示词"
+      "noMorePrompts": "没有更多提示词",
+      "selectModel": "选择模型"
     }
   },
 
@@ -468,7 +469,8 @@
       "searchPrompts": "搜索场景...",
       "start": "开始扮演",
       "noPrompts": "没有可用的角色扮演提示词",
-      "noMorePrompts": "没有更多提示词"
+      "noMorePrompts": "没有更多提示词",
+      "selectModel": "选择模型"
     },
     "agent": {
       "welcome": {

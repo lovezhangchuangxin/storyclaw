@@ -254,6 +254,13 @@ function forceScrollToBottom() {
 async function loadModels() {
   const config = await getConfig()
   models.value = await getAllModels()
+  // Prefer saved modelId from session
+  const session = await getRoleplaySessionById(props.sessionId)
+  const savedId = session?.modelId
+  if (savedId && models.value.some((m) => m.id === savedId)) {
+    selectedModelId.value = savedId
+    return
+  }
   const defaultExists = models.value.some((m) => m.id === config.defaultModelId)
   selectedModelId.value = defaultExists ? config.defaultModelId : models.value[0]?.id || ''
 }
@@ -782,7 +789,9 @@ watch(
                 >
                   {{ selectedModel?.provider?.[0]?.toUpperCase() ?? '?' }}
                 </span>
-                <span class="max-w-[120px] truncate">{{ modelLabel(selectedModel!) }}</span>
+                <span class="max-w-[120px] truncate">{{
+                  selectedModel ? modelLabel(selectedModel) : ''
+                }}</span>
                 <ChevronDown class="size-3 shrink-0" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" class="min-w-[200px]">

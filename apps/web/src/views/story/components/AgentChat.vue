@@ -13,6 +13,7 @@ import { uuid } from '@/lib/utils'
 import { getConfig } from '@/db/config'
 import { getAllModels } from '@/composables/useModels'
 import { deleteConversation, getConversationByNovelId } from '@/db/conversations'
+import { getNovelById } from '@/db/novels'
 import { deleteContextSnapshotsByNovelId } from '@/db/context-snapshots'
 import type {
   AssistantMessage,
@@ -235,6 +236,13 @@ function checkScrollPosition() {
 async function loadModels() {
   const config = await getConfig()
   models.value = await getAllModels()
+  // Prefer saved modelId from novel
+  const novel = await getNovelById(props.novelId)
+  const savedId = novel?.modelId
+  if (savedId && models.value.some((m) => m.id === savedId)) {
+    selectedModelId.value = savedId
+    return
+  }
   // Validate that defaultModelId still exists in available models
   const defaultExists = models.value.some((m) => m.id === config.defaultModelId)
   selectedModelId.value = defaultExists ? config.defaultModelId : models.value[0]?.id || ''

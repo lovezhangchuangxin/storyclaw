@@ -11,15 +11,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Search, Sparkles, FileText } from 'lucide-vue-next'
+import { Search, Sparkles, FileText, ChevronDown } from 'lucide-vue-next'
 import {
   getAllPrompts,
   ensureRoleplayBuiltinPrompt,
   ensureCultivationBuiltinPrompt,
 } from '@/db/prompts'
-import type { Prompt } from '@/db/types'
+import { getConfig } from '@/db/config'
+import { getAllModels } from '@/composables/useModels'
+import { modelLabel } from '@/lib/model-utils'
+import type { Prompt, ModelConfig } from '@/db/types'
 
 const { t } = useI18n()
 
@@ -29,12 +38,18 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:open': [v: boolean]
-  create: [promptId: string]
+  create: [promptId: string, modelId: string]
 }>()
 
 const allPrompts = ref<Prompt[]>([])
 const selectedPromptId = ref<string | null>(null)
 const promptSearch = ref('')
+
+const models = ref<ModelConfig[]>([])
+const selectedModelId = ref('')
+let loadSeq = 0
+
+const selectedModel = computed(() => models.value.find((m) => m.id === selectedModelId.value))
 
 const availablePrompts = computed(() => {
   const q = promptSearch.value.toLowerCase()
@@ -48,8 +63,10 @@ watch(
     selectedPromptId.value = null
     promptSearch.value = ''
     await Promise.all([ensureRoleplayBuiltinPrompt(), ensureCultivationBuiltinPrompt()])
+    const seq = ++loadSeq
     getAllPrompts()
       .then((ps) => {
+        if (seq !== loadSeq) return
         allPrompts.value = ps.filter((p) => p.scenario === 'roleplay' || p.scenario === 'both')
       })
       .catch((e) => {
@@ -57,12 +74,23 @@ watch(
           description: e instanceof Error ? e.message : String(e),
         })
       })
+    // Load models and select default
+    Promise.all([getAllModels(), getConfig()])
+      .then(([ms, config]) => {
+        if (seq !== loadSeq) return
+        models.value = ms
+        const defaultExists = ms.some((m) => m.id === config.defaultModelId)
+        selectedModelId.value = defaultExists ? config.defaultModelId : ms[0]?.id || ''
+      })
+      .catch(() => {
+        // Models failed to load - selector stays hidden (v-if="models.length > 0")
+      })
   },
 )
 
 function handleCreate() {
   if (selectedPromptId.value) {
-    emit('create', selectedPromptId.value)
+    emit('create', selectedPromptId.value, selectedModelId.value)
   }
 }
 </script>
@@ -78,6 +106,39 @@ function handleCreate() {
           {{ $t('roleplay.newDialog.description') }}
         </DialogDescription>
       </DialogHeader>
+
+      <!-- Model selector -->
+      <DropdownMenu v-if="models.length > 0">
+        <DropdownMenuTrigger
+          as="button"
+          class="flex items-center gap-1.5 border border-input rounded-lg px-2.5 py-1.5 text-sm h-9 w-full bg-transparent hover:border-primary/50 transition-colors outline-none"
+        >
+          <span
+            class="flex size-4 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70 shrink-0"
+          >
+            {{ selectedModel?.provider?.[0]?.toUpperCase() ?? '?' }}
+          </span>
+          <span class="flex-1 text-left truncate">
+            {{ selectedModel ? modelLabel(selectedModel) : $t('roleplay.newDialog.selectModel') }}
+          </span>
+          <ChevronDown class="size-3.5 text-muted-foreground shrink-0" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" class="min-w-[200px]">
+          <DropdownMenuItem
+            v-for="model in models"
+            :key="model.id"
+            class="flex items-center gap-2"
+            @click="selectedModelId = model.id"
+          >
+            <span
+              class="flex size-5 items-center justify-center rounded bg-primary/10 text-[10px] font-semibold text-primary/70"
+            >
+              {{ model.provider?.[0]?.toUpperCase() ?? '?' }}
+            </span>
+            <span class="text-xs">{{ modelLabel(model) }}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <div class="relative shrink-0">
         <Search

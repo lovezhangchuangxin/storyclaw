@@ -5,6 +5,7 @@ export interface RoleplaySession {
   promptId: string
   title: string
   sidebarData: RoleplaySidebarData | null
+  modelId?: string
   createdAt: number
   updatedAt: number
 }
