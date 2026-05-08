@@ -6,15 +6,15 @@ import type { AppTheme } from '@/db/types'
 
 const appTheme = ref<AppTheme>('light')
 
+const THEME_CLASSES: AppTheme[] = ['dark', 'parchment', 'frost', 'peach', 'pine']
+
 async function applyTheme(theme: AppTheme) {
   appTheme.value = theme
   const el = document.documentElement
-  el.classList.remove('dark', 'parchment', 'frost', 'peach', 'pine')
-  if (theme === 'dark') el.classList.add('dark')
-  if (theme === 'parchment') el.classList.add('parchment')
-  if (theme === 'frost') el.classList.add('frost')
-  if (theme === 'peach') el.classList.add('peach')
-  if (theme === 'pine') el.classList.add('pine')
+  el.classList.remove(...THEME_CLASSES)
+  if (theme !== 'light') {
+    el.classList.add(theme)
+  }
   try {
     localStorage.setItem('app-theme', theme)
   } catch {
