@@ -1,4 +1,4 @@
-import OpenAI from 'openai'
+import OpenAI, { APIConnectionError, APIConnectionTimeoutError, APIError } from 'openai'
 import type { ModelConfig } from '@/db/types'
 import { i18n } from '@/i18n'
 import { getAccessToken } from '@/lib/api-client'
@@ -9,11 +9,29 @@ const INITIAL_DELAY_MS = 1000
 const MAX_DELAY_MS = 15000
 
 function isRetryableError(error: unknown): boolean {
-  if (error instanceof OpenAI.APIError) {
-    const status = error.status
-    return status === 429 || (status !== undefined && status >= 500 && status < 600)
+  if (error instanceof APIConnectionError || error instanceof APIConnectionTimeoutError) {
+    return true
   }
-  return false
+
+  if (error instanceof APIError) {
+    const status = error.status
+    return (
+      status === 408 || status === 429 || (status !== undefined && status >= 500 && status < 600)
+    )
+  }
+
+  if (error instanceof TypeError) {
+    return /failed to fetch|load failed|network|connection/i.test(error.message)
+  }
+
+  if (error instanceof Error) {
+    return (
+      /APIConnectionError|NetworkError/i.test(error.name) ||
+      /connection error|network error/i.test(error.message)
+    )
+  }
+
+  return /connection error|network error/i.test(String(error))
 }
 
 async function sleepWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
@@ -46,6 +64,7 @@ export interface LLMClientOptions {
   onToolCallStart?: (toolCallId: string, toolName: string, rawArguments: string) => void
   onToolStreamToken?: (toolCallId: string, toolName: string, token: string) => void
   onReasoningToken?: (token: string) => void
+  onRetry?: (attempt: number, maxRetries: number, delayMs: number, error: unknown) => void
   signal?: AbortSignal
   backendUrl?: string
   modelId?: string
@@ -65,6 +84,7 @@ export function createLLMClient(options: LLMClientOptions) {
     onToolCallStart,
     onToolStreamToken,
     onReasoningToken,
+    onRetry,
     signal,
     backendUrl,
     modelId,
@@ -122,18 +142,121 @@ export function createLLMClient(options: LLMClientOptions) {
         ...(modelId ? { model_id: modelId } : {}),
       } as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming
 
-      // Retry on rate limits (429) and server errors (5xx)
-      let stream!: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>
+      async function consumeStream(
+        stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
+      ) {
+        let content = ''
+        let reasoningContent = ''
+        const toolCalls: Map<
+          number,
+          {
+            id: string
+            name: string
+            arguments: string
+            started: boolean
+          }
+        > = new Map()
+        let usage: LLMUsage | undefined
+        let finishReason = 'stop'
+        let aborted = false
+
+        try {
+          for await (const chunk of stream) {
+            if (signal?.aborted) {
+              aborted = true
+              break
+            }
+
+            if (chunk.usage) {
+              const cached = chunk.usage.prompt_tokens_details?.cached_tokens
+              usage = {
+                promptTokens: chunk.usage.prompt_tokens,
+                completionTokens: chunk.usage.completion_tokens,
+                totalTokens: chunk.usage.total_tokens,
+                cachedTokens: cached,
+              }
+            }
+
+            const choice = chunk.choices?.[0]
+            if (choice?.finish_reason) {
+              finishReason = choice.finish_reason
+            }
+
+            const delta = choice?.delta
+
+            if (delta?.content) {
+              content += delta.content
+              onToken?.(delta.content)
+            }
+
+            if ((delta as any)?.reasoning_content) {
+              reasoningContent += (delta as any).reasoning_content
+              onReasoningToken?.((delta as any).reasoning_content)
+            }
+
+            if (delta?.tool_calls) {
+              for (const tc of delta.tool_calls) {
+                const idx = tc.index
+                if (!toolCalls.has(idx)) {
+                  if (!tc.id) continue
+                  toolCalls.set(idx, {
+                    id: tc.id,
+                    name: tc.function?.name ?? '',
+                    arguments: '',
+                    started: false,
+                  })
+                }
+                const entry = toolCalls.get(idx)!
+                if (tc.function?.name) entry.name = tc.function.name
+                if (tc.function?.arguments) {
+                  entry.arguments += tc.function.arguments
+                  if (entry.started && entry.name && onToolStreamToken) {
+                    onToolStreamToken(entry.id, entry.name, tc.function.arguments)
+                  }
+                }
+                if (!entry.started && entry.id && entry.name) {
+                  entry.started = true
+                  onToolCallStart?.(entry.id, entry.name, entry.arguments)
+                }
+              }
+            }
+          }
+        } catch (error) {
+          if (signal?.aborted || isAbortError(error)) {
+            aborted = true
+          } else {
+            throw error
+          }
+        }
+
+        const mappedToolCalls = [...toolCalls.entries()]
+          .toSorted(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+          .map(([, tc]) => ({
+            id: tc.id,
+            function: { name: tc.name, arguments: tc.arguments },
+          }))
+
+        return {
+          content,
+          toolCalls: mappedToolCalls,
+          usage,
+          finishReason,
+          aborted,
+          reasoningContent: reasoningContent || undefined,
+        }
+      }
+
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
-          stream = await client.chat.completions.create(params, { signal })
-          break
+          const stream = await client.chat.completions.create(params, { signal })
+          return await consumeStream(stream)
         } catch (error) {
           if (signal?.aborted || isAbortError(error)) throw error
           if (attempt < MAX_RETRIES && isRetryableError(error)) {
             const delay = getRetryDelay(attempt)
+            onRetry?.(attempt + 1, MAX_RETRIES, delay, error)
             console.warn(
-              `[LLM] ${attempt + 1}/${MAX_RETRIES} retry in ${Math.round(delay)}ms (status ${(error as { status?: number }).status})`,
+              `[LLM] ${attempt + 1}/${MAX_RETRIES} retry in ${Math.round(delay)}ms (${error instanceof Error ? error.message : String(error)})`,
             )
             await sleepWithAbort(delay, signal)
             continue
@@ -142,105 +265,7 @@ export function createLLMClient(options: LLMClientOptions) {
         }
       }
 
-      let content = ''
-      let reasoningContent = ''
-      const toolCalls: Map<
-        number,
-        {
-          id: string
-          name: string
-          arguments: string
-          started: boolean
-        }
-      > = new Map()
-      let usage: LLMUsage | undefined
-      let finishReason = 'stop'
-      let aborted = false
-
-      try {
-        for await (const chunk of stream) {
-          if (signal?.aborted) {
-            aborted = true
-            break
-          }
-
-          if (chunk.usage) {
-            const cached = chunk.usage.prompt_tokens_details?.cached_tokens
-            usage = {
-              promptTokens: chunk.usage.prompt_tokens,
-              completionTokens: chunk.usage.completion_tokens,
-              totalTokens: chunk.usage.total_tokens,
-              cachedTokens: cached,
-            }
-          }
-
-          const choice = chunk.choices?.[0]
-          if (choice?.finish_reason) {
-            finishReason = choice.finish_reason
-          }
-
-          const delta = choice?.delta
-
-          if (delta?.content) {
-            content += delta.content
-            onToken?.(delta.content)
-          }
-
-          if ((delta as any)?.reasoning_content) {
-            reasoningContent += (delta as any).reasoning_content
-            onReasoningToken?.((delta as any).reasoning_content)
-          }
-
-          if (delta?.tool_calls) {
-            for (const tc of delta.tool_calls) {
-              const idx = tc.index
-              if (!toolCalls.has(idx)) {
-                if (!tc.id) continue
-                toolCalls.set(idx, {
-                  id: tc.id,
-                  name: tc.function?.name ?? '',
-                  arguments: '',
-                  started: false,
-                })
-              }
-              const entry = toolCalls.get(idx)!
-              if (tc.function?.name) entry.name = tc.function.name
-              if (tc.function?.arguments) {
-                entry.arguments += tc.function.arguments
-                if (entry.started && entry.name && onToolStreamToken) {
-                  onToolStreamToken(entry.id, entry.name, tc.function.arguments)
-                }
-              }
-              if (!entry.started && entry.id && entry.name) {
-                entry.started = true
-                onToolCallStart?.(entry.id, entry.name, entry.arguments)
-              }
-            }
-          }
-        }
-      } catch (error) {
-        if (signal?.aborted || isAbortError(error)) {
-          aborted = true
-        } else {
-          throw error
-        }
-      }
-
-      const mappedToolCalls = [...toolCalls.entries()]
-        .toSorted(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
-        .map(([, tc]) => ({
-          id: tc.id,
-          function: { name: tc.name, arguments: tc.arguments },
-        }))
-
-      return {
-        content,
-        toolCalls: mappedToolCalls,
-        usage,
-        finishReason,
-        aborted,
-        reasoningContent: reasoningContent || undefined,
-      }
+      throw new Error('LLM stream ended without a response')
     },
   }
 }

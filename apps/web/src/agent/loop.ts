@@ -21,6 +21,7 @@ import {
   getAssistantToolUses,
   isToolResultError,
   parseToolArguments,
+  resetAssistantForRetry,
   startAssistantToolUse,
 } from './message-state'
 import { executeToolCall } from './tools'
@@ -240,6 +241,11 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentTurn
       part.arguments = parseToolArguments(part.rawArguments)
       emitMessagesUpdated()
       onToolStreamToken?.(toolCallId, toolName, token)
+    },
+    onRetry() {
+      if (!currentAssistantMessage) return
+      resetAssistantForRetry(currentAssistantMessage)
+      emitMessagesUpdated()
     },
   })
 

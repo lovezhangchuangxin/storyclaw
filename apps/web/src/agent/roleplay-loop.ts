@@ -25,6 +25,7 @@ import {
   getAssistantToolUses,
   isToolResultError,
   parseToolArguments,
+  resetAssistantForRetry,
   startAssistantToolUse,
 } from './message-state'
 import { executeToolCall } from './tools'
@@ -305,6 +306,11 @@ async function runToolIterationLoop(params: InternalLoopParams): Promise<Rolepla
       part.arguments = parseToolArguments(part.rawArguments)
       emitMessagesUpdated()
       onToolStreamToken?.(toolCallId, toolName, token)
+    },
+    onRetry() {
+      if (!currentAssistantMessage) return
+      resetAssistantForRetry(currentAssistantMessage)
+      emitMessagesUpdated()
     },
   })
 

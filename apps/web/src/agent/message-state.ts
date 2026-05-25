@@ -157,6 +157,15 @@ export function cancelPendingToolUses(message: AssistantMessage): void {
   }
 }
 
+export function resetAssistantForRetry(message: AssistantMessage): void {
+  message.parts = []
+  message.state = 'completed'
+  message.finishReason = undefined
+  message.promptTokens = undefined
+  message.completionTokens = undefined
+  message.cachedTokens = undefined
+}
+
 export function assistantHasRenderableContent(message: AssistantMessage): boolean {
   return message.parts.length > 0
 }
